@@ -16,18 +16,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
 import java.util.UUID
 
 /**
- * Manages specialized Cambridge O-Level AI Tutoring Agents via Firebase AI Logic (Gemini).
+ * Manages specialized Cambridge O-Level AI Tutoring Agents.
  *
- * Each agent operates with an explicit, distinct pedagogical system instruction:
- * - DANISH: Cambridge Mathematics (4024) algebra and problem-solving specialist.
- *   Strict separation of concerns: deterministic math checks run through SymbolicMathVerifier
- *   before LLM natural language explanation.
- * - ZOYA: Cambridge Sciences (Physics 5054, Chemistry 5070, Biology 5090) conceptual tutor.
- * - EXAM COACH: Past-paper strategy, scoring rubrics, examiner reports, and IRT diagnostics.
+ * Model routing (per message):
+ *   1. If a local llama-server is connected (Audit → Local LLM), chat is
+ *      served by the local model — fully offline-capable.
+ *   2. Otherwise, Firebase AI Logic (Gemini) is used when a real
+ *      GEMINI_API_KEY is configured (BuildConfig, injected from .env).
+ *   3. Otherwise the student gets an honest offline notice (plus the
+ *      deterministic verifier trace when one was computed).
+ *
+ * SECURITY FIX: no placeholder API key is fabricated anymore; the app
+ * degrades gracefully instead of sending requests with a fake key.
+ *
+ * Agents:
+ * - DANISH: Cambridge Mathematics (4024) specialist. Deterministic
+ *   SymbolicMathVerifier runs FIRST on step submissions, then the model
+ *   explains the trace.
+ * - ZOYA: Sciences (Physics 5054 / Chemistry 5070 / Biology 5090).
+ * - EXAM COACH: Past-paper strategy, rubrics, IRT diagnostics.
  */
 class NoorixAiAgentManager(
     private val context: Context,
@@ -35,20 +45,38 @@ class NoorixAiAgentManager(
 ) {
     private val mathVerifier = SymbolicMathVerifier()
     private val models = mutableMapOf<String, GenerativeModel>()
+    private val systemPrompts = mutableMapOf<String, String>()
+    private var geminiAvailable = false
+
+    private var localEngine: LlamaCppEngine? = null
 
     init {
         ensureFirebase()
         initModels()
     }
 
+    // ------------------------------------------------------------------
+    // Engine configuration
+    // ------------------------------------------------------------------
+
+    /** Routes agent chat through the given local llama-server engine (or null for Gemini). */
+    fun setLocalEngine(engine: LlamaCppEngine?) {
+        this.localEngine = engine
+    }
+
+    fun localEngine(): LlamaCppEngine? = localEngine
+
+    val geminiReady: Boolean get() = geminiAvailable
+
     private fun ensureFirebase() {
+        val apiKey = BuildConfig.GEMINI_API_KEY
+        if (apiKey.isNullOrBlank() || apiKey == "MY_GEMINI_API_KEY") {
+            // No real key configured — Gemini path disabled, local engine may still work.
+            geminiAvailable = false
+            return
+        }
         try {
             if (FirebaseApp.getApps(context).isEmpty()) {
-                val apiKey = try {
-                    BuildConfig.GEMINI_API_KEY.ifBlank { "AIzaSyNoorixLearningPlaceholderKey" }
-                } catch (_: Exception) {
-                    "AIzaSyNoorixLearningPlaceholderKey"
-                }
                 val options = FirebaseOptions.Builder()
                     .setApplicationId(context.packageName)
                     .setApiKey(apiKey)
@@ -56,89 +84,60 @@ class NoorixAiAgentManager(
                     .build()
                 FirebaseApp.initializeApp(context, options)
             }
+            geminiAvailable = true
         } catch (e: Exception) {
-            android.util.Log.w("NoorixAiAgentManager", "FirebaseApp initialization fallback: ${e.message}")
+            android.util.Log.w("NoorixAiAgentManager", "FirebaseApp initialization failed: ${e.message}")
+            geminiAvailable = false
         }
     }
 
     private fun initModels() {
+        if (!geminiAvailable) return
         try {
-            // DANISH: Math 4024
-            models["danish"] = Firebase.ai.generativeModel(
-                modelName = "gemini-2.5-flash",
-                systemInstruction = content {
-                    text(
-                        "You are Danish, the dedicated Cambridge O-Level Mathematics (Syllabus 4024) " +
-                        "AI tutor for Noorix Learning Solutions. Your specialty is algebra, quadratic factorisation, " +
-                        "geometric proofs, and step-by-step problem solving. " +
-                        "PEDAGOGICAL INVARIANT: When a student submits steps, explain the mathematical reasoning, " +
-                        "why algebraic rules apply, and address misconceptions gently. " +
-                        "Tone: supportive, mathematically rigorous, cyber-tech tutor."
-                    )
-                }
-            )
+            systemPrompts["danish"] =
+                "You are Danish, the dedicated Cambridge O-Level Mathematics (Syllabus 4024) " +
+                "AI tutor for Noorix Learning Solutions. Your specialty is algebra, quadratic factorisation, " +
+                "geometric proofs, and step-by-step problem solving. " +
+                "PEDAGOGICAL INVARIANT: When a student submits steps, explain the mathematical reasoning, " +
+                "why algebraic rules apply, and address misconceptions gently. " +
+                "Tone: supportive, mathematically rigorous, cyber-tech tutor."
 
-            // ZOYA: Sciences (5054 / 5070 / 5090)
-            models["zoya"] = Firebase.ai.generativeModel(
-                modelName = "gemini-2.5-flash",
-                systemInstruction = content {
-                    text(
-                        "You are Zoya, the dedicated Cambridge O-Level Sciences AI tutor for Noorix Learning Solutions, " +
-                        "specializing in Physics (5054), Chemistry, and Biology. You explain kinematic graphs, " +
-                        "Newton's laws, energy conservation, circuit electricity, and molecular dynamics. " +
-                        "Use vivid conceptual analogies, clear unit conversions, and intuitive mental models. " +
-                        "Tone: energetic, highly visual, encouraging STEM mentor."
-                    )
-                }
-            )
+            systemPrompts["zoya"] =
+                "You are Zoya, the dedicated Cambridge O-Level Sciences AI tutor for Noorix Learning Solutions, " +
+                "specializing in Physics (5054), Chemistry, and Biology. You explain kinematic graphs, " +
+                "Newton's laws, energy conservation, circuit electricity, and molecular dynamics. " +
+                "Use vivid conceptual analogies, clear unit conversions, and intuitive mental models. " +
+                "Tone: energetic, highly visual, encouraging STEM mentor."
 
-            // EXAM COACH: Past paper strategy & IRT diagnostics
-            models["exam_coach"] = Firebase.ai.generativeModel(
-                modelName = "gemini-2.5-flash",
-                systemInstruction = content {
-                    text(
-                        "You are Exam Coach, the Cambridge O-Level Examination Strategy mentor for Noorix Learning Solutions. " +
-                        "You provide tactical advice on past papers, mark schemes, method marks vs accuracy marks, " +
-                        "time management per question, examiner report pitfalls, and exam room psychology. " +
-                        "Tone: strategic, focused, confidence-building exam trainer."
-                    )
-                }
-            )
+            systemPrompts["exam_coach"] =
+                "You are Exam Coach, the Cambridge O-Level Examination Strategy mentor for Noorix Learning Solutions. " +
+                "You provide tactical advice on past papers, mark schemes, method marks vs accuracy marks, " +
+                "time management per question, examiner report pitfalls, and exam room psychology. " +
+                "Tone: strategic, focused, confidence-building exam trainer."
 
-            // AYESHA: Language & Communication
-            models["ayesha"] = Firebase.ai.generativeModel(
-                modelName = "gemini-2.5-flash",
-                systemInstruction = content {
-                    text(
-                        "You are Ayesha, the Cambridge O-Level English (1123) tutor for Noorix Learning Solutions. " +
-                        "You guide students in reading comprehension analysis, summary writing, and formal persuasive essays."
-                    )
-                }
-            )
+            systemPrompts["ayesha"] =
+                "You are Ayesha, the Cambridge O-Level English (1123) tutor for Noorix Learning Solutions. " +
+                "You guide students in reading comprehension analysis, summary writing, and formal persuasive essays."
 
-            // BILAL: Aptitude & Logic
-            models["bilal"] = Firebase.ai.generativeModel(
-                modelName = "gemini-2.5-flash",
-                systemInstruction = content {
-                    text(
-                        "You are Bilal, the Logic and Aptitude mentor for Noorix Learning Solutions, training students " +
-                        "in pattern sequences, mathematical puzzles, and deductive proofs."
-                    )
-                }
-            )
+            systemPrompts["bilal"] =
+                "You are Bilal, the Logic and Aptitude mentor for Noorix Learning Solutions, training students " +
+                "in pattern sequences, mathematical puzzles, and deductive proofs."
 
-            // CAREER GUIDE
-            models["career_guide"] = Firebase.ai.generativeModel(
-                modelName = "gemini-2.5-flash",
-                systemInstruction = content {
-                    text(
-                        "You are Career Guide, the Cambridge O-Level Academic Advisor for Noorix Learning Solutions. " +
-                        "You map O-Level subject clusters to A-Level prerequisites and future university engineering/medical/CS degrees."
-                    )
-                }
-            )
+            systemPrompts["career_guide"] =
+                "You are Career Guide, the Cambridge O-Level Academic Advisor for Noorix Learning Solutions. " +
+                "You map O-Level subject clusters to A-Level prerequisites and future university engineering/medical/CS degrees."
+
+            for (agentId in systemPrompts.keys) {
+                models[agentId] = Firebase.ai.generativeModel(
+                    modelName = "gemini-2.5-flash",
+                    systemInstruction = content {
+                        text(systemPrompts[agentId])
+                    }
+                )
+            }
         } catch (e: Exception) {
             android.util.Log.e("NoorixAiAgentManager", "Error initializing GenerativeModels: ${e.message}")
+            geminiAvailable = false
         }
     }
 
@@ -150,12 +149,10 @@ class NoorixAiAgentManager(
         chatMessageDao.clearAgentChat(agentId)
     }
 
-    /**
-     * Sends a message to the specified agent with real streaming tokens.
-     *
-     * Invariant for DANISH: If the message contains algebraic step lines (e.g. multi-step working),
-     * it executes SymbolicMathVerifier FIRST deterministically, then asks Gemini to explain the trace.
-     */
+    // ------------------------------------------------------------------
+    // Messaging with real streaming (local llama-server preferred, Gemini fallback)
+    // ------------------------------------------------------------------
+
     fun sendMessageStream(
         agentId: String,
         userMessageText: String,
@@ -164,7 +161,7 @@ class NoorixAiAgentManager(
         val userMsgId = "msg-u-" + UUID.randomUUID().toString().take(6)
         val timestamp = System.currentTimeMillis()
 
-        // 1. Check if Danish deterministic verifier should run
+        // 1. DANISH invariant: deterministic verifier runs FIRST on step submissions
         var mathVerificationTrace: String? = null
         var isMathVerified = false
         var enrichedPrompt = userMessageText
@@ -210,35 +207,64 @@ class NoorixAiAgentManager(
         )
         chatMessageDao.insertMessage(userEntity)
 
-        // 2. Invoke real Firebase AI GenerativeModel stream
-        val model = models[agentId] ?: models["danish"]
+        // 2. Stream: local llama-server first, then Gemini, then honest offline notice
+        val local = localEngine
+        val geminiModel = models[agentId] ?: if (agentId != "danish") models["danish"] else null
         val agentMsgId = "msg-a-" + UUID.randomUUID().toString().take(6)
         val responseBuilder = StringBuilder()
 
-        if (model != null) {
-            try {
-                val responseFlow = model.generateContentStream(enrichedPrompt)
-                responseFlow.collect { chunk ->
-                    val text = chunk.text ?: ""
-                    if (text.isNotEmpty()) {
-                        responseBuilder.append(text)
-                        emit(responseBuilder.toString())
+        when {
+            local != null && local.isConnected -> {
+                try {
+                    local.streamChat(systemPrompts[agentId] ?: DEFAULT_PROMPT, enrichedPrompt).collect { partial ->
+                        responseBuilder.setLength(0)
+                        responseBuilder.append(partial)
+                        emit(partial)
+                    }
+                } catch (e: Exception) {
+                    val notice = if (responseBuilder.isEmpty()) {
+                        "Local LLM stream failed (${e.localizedMessage ?: "connection error"}). " +
+                            "Re-check host:port in Audit → Local LLM."
+                    } else {
+                        "\n[Local LLM stream interrupted: ${e.localizedMessage}]"
+                    }
+                    responseBuilder.append(if (responseBuilder.isEmpty()) notice else "\n$notice")
+                    emit(responseBuilder.toString())
+                }
+            }
+
+            geminiModel != null -> {
+                try {
+                    geminiModel.generateContentStream(enrichedPrompt).collect { chunk ->
+                        val text = chunk.text ?: ""
+                        if (text.isNotEmpty()) {
+                            responseBuilder.append(text)
+                            emit(responseBuilder.toString())
+                        }
+                    }
+                } catch (e: Exception) {
+                    val fallbackNotice = if (responseBuilder.isEmpty()) {
+                        "Note: Gemini encountered a connection notice (${e.localizedMessage ?: "Offline"}). " +
+                            (if (isMathVerified) "\nDeterministic Verifier Result:\n$mathVerificationTrace" else "")
+                    } else {
+                        "\n[Stream interrupted: ${e.localizedMessage}]"
+                    }
+                    responseBuilder.append(fallbackNotice)
+                    emit(responseBuilder.toString())
+                }
+            }
+
+            else -> {
+                val notice = buildString {
+                    append("No tutor model is reachable right now. Connect a local llama-server (Audit → Local LLM) ")
+                    append("or configure GEMINI_API_KEY to enable ${agentId}.")
+                    if (isMathVerified && mathVerificationTrace != null) {
+                        append("\n\nDeterministic Verifier Result:\n$mathVerificationTrace")
                     }
                 }
-            } catch (e: Exception) {
-                val fallbackNotice = if (responseBuilder.isEmpty()) {
-                    "Note: Firebase AI encountered a connection notice (${e.localizedMessage ?: "Offline"}). " +
-                    (if (isMathVerified) "\nDeterministic Verifier Result:\n$mathVerificationTrace" else "")
-                } else {
-                    "\n[Stream interrupted: ${e.localizedMessage}]"
-                }
-                responseBuilder.append(fallbackNotice)
+                responseBuilder.append(notice)
                 emit(responseBuilder.toString())
             }
-        } else {
-            val notice = "Agent $agentId initialized. Ready to solve Cambridge O-Level topics."
-            responseBuilder.append(notice)
-            emit(responseBuilder.toString())
         }
 
         // 3. Store completed agent response in Room
@@ -254,9 +280,33 @@ class NoorixAiAgentManager(
         chatMessageDao.insertMessage(agentEntity)
     }.flowOn(Dispatchers.IO)
 
-    private fun containsAlgebraicSteps(text: String): Boolean {
+    private companion object {
+        const val DEFAULT_PROMPT =
+            "You are a Cambridge O-Level AI tutor for Noorix Learning Solutions. Be supportive and rigorous."
+    }
+
+    // ------------------------------------------------------------------
+    // Step detection (FIX: strict — a message only counts as "step work"
+    // when at least 2 lines are pure algebraic expressions)
+    // ------------------------------------------------------------------
+
+    private val MATH_LINE_CHARS = Regex("^[0-9a-zA-Z()\\.^*\\+/=\\-\\s,²³\u00B2\u00B3]*$")
+    private val LONG_WORD = Regex("[A-Za-z]{3,}")
+
+    private fun isMathLine(line: String): Boolean {
+        if (line.isEmpty() || !MATH_LINE_CHARS.matches(line)) return false
+        val hasMathContent = line.any { it.isDigit() } || line.any { it in "=^*/()" } ||
+            line.contains("x", true) || line.contains("a") || line.contains("b")
+        if (!hasMathContent) return false
+        // Reject prose that happens to be letter-only ("Isolvedit" style)
+        if (LONG_WORD.containsMatchIn(line)) return false
+        return true
+    }
+
+    fun containsAlgebraicSteps(text: String): Boolean {
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
-        return lines.size >= 2 && lines.any { it.contains("=") || it.contains("+") || it.contains("-") || it.contains("x") }
+        val mathLines = lines.count { isMathLine(it) }
+        return mathLines >= 2
     }
 
     private data class ExtractedMath(val problem: String, val steps: List<Step>)
@@ -264,9 +314,11 @@ class NoorixAiAgentManager(
     private fun extractMathSteps(text: String): ExtractedMath {
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
         if (lines.isEmpty()) return ExtractedMath(text, emptyList())
-
-        val problem = lines.first()
-        val steps = lines.drop(1).mapIndexed { index, line ->
+        // Use the pure-math lines as the step work; fall back to the raw lines
+        val mathLines = lines.filter { isMathLine(it) }
+        val workLines = if (mathLines.size >= 2) mathLines else lines
+        val problem = workLines.first()
+        val steps = workLines.drop(1).mapIndexed { index, line ->
             Step(
                 stepIndex = index + 1,
                 expression = line,

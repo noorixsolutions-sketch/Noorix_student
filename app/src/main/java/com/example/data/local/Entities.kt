@@ -48,7 +48,20 @@ data class AuditLogEntity(
     val action: String,
     val timestampMs: Long,
     val details: String,
-    val verificationHash: String
+    val verificationHash: String,
+    // Hash of the previous audit entry (GENESIS for the first) — makes the
+    // audit log a tamper-evident hash chain (v3 schema).
+    val prevHash: String = ""
+)
+
+@Entity(tableName = "user_accounts")
+data class UserAccountEntity(
+    @PrimaryKey val userId: String,
+    val displayName: String,
+    val email: String,
+    val photoUrl: String? = null,
+    val active: Boolean = true,
+    val updatedAtMs: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "agent_chat_messages")

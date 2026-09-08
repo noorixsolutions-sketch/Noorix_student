@@ -27,7 +27,12 @@ import com.example.ui.theme.GoldAccent
 @Composable
 fun DiagnosticScreen(viewModel: OLevelViewModel) {
     val session by viewModel.diagnosticSession.collectAsState()
-    val nextQuestion = remember(session) { viewModel.getNextDiagnosticQuestion() }
+    val activePackage by viewModel.activePackage.collectAsState()
+    // FIX (onboarding stuck): the question bank comes from the signed course
+    // package; on first launch it loads asynchronously. Show a preparing
+    // state instead of dead-ending on the completion card.
+    val bankReady = activePackage != null
+    val nextQuestion = remember(session, bankReady) { if (bankReady) viewModel.getNextDiagnosticQuestion() else null }
     var selectedOption by remember { mutableIntStateOf(-1) }
 
     LazyColumn(
@@ -115,8 +120,39 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 2. Active Question Card or Completion State
-        if (session.isCompleted || nextQuestion == null) {
+        // 2. Active Question Card, Preparing state, or Completion State
+        if (!bankReady) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column {
+                            Text(
+                                text = "Preparing question bank…",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Loading the signed course package from local storage.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        } else if (session.isCompleted || nextQuestion == null) {
             item {
                 Card(
                     modifier = Modifier
@@ -272,7 +308,7 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         ) {
                             Text("Submit Answer", fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
                         }
                     }
                 }

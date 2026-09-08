@@ -1,9 +1,16 @@
 package com.example.presentation
 
+import android.app.Activity
 import android.app.Application
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.core.model.CoursePackage
+import com.example.core.model.CurriculumGraph
 import com.example.core.model.LearningEvent
 import com.example.core.model.LearningPlan
 import com.example.core.model.MediaArtifact
@@ -12,9 +19,11 @@ import com.example.core.model.QuestionItem
 import com.example.core.model.Step
 import com.example.core.model.StudentModel
 import com.example.core.model.TransferTask
+import com.example.core.model.UserProfile
 import com.example.core.model.VerificationResult
 import com.example.data.curriculum.CoursePackageProvider
 import com.example.data.local.AuditLogEntity
+import com.example.domain.ai.LlamaCppEngine
 import com.example.domain.ai.NoorixAiAgentManager
 import com.example.data.local.ChatMessageEntity
 import com.example.domain.diagnostic.DiagnosticSessionState
@@ -22,6 +31,9 @@ import com.example.domain.planner.AdaptivePlannerEngine
 import com.example.domain.repository.LearningRepository
 import com.example.domain.sync.SyncBatchResult
 import com.example.domain.vision.NotebookParseResult
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -123,6 +135,157 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     val diagnosticSession: StateFlow<DiagnosticSessionState> = repository.diagnosticSession
     val mediaRecord: StateFlow<MediaLearningRecord?> = repository.mediaRecord
 
+    // ==========================================
+    // Google sign-in (Credential Manager OAuth)
+    // ==========================================
+
+    val userAccount: StateFlow<UserProfile?> = repository.userAccount
+
+    private val _googleSignInBusy = MutableStateFlow(false)
+    val googleSignInBusy: StateFlow<Boolean> = _googleSignInBusy.asStateFlow()
+
+    fun signInWithGoogle(activity: Activity) {
+        if (_googleSignInBusy.value) return
+        viewModelScope.launch {
+            _googleSignInBusy.value = true
+            try {
+                val serverClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
+                if (serverClientId.isBlank() || serverClientId == "YOUR_GOOGLE_WEB_CLIENT_ID") {
+                    _statusBanner.value = "Google sign-in not configured: set GOOGLE_WEB_CLIENT_ID in local.properties (see .env.example)."
+                    return@launch
+                }
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setServerClientId(serverClientId)
+                    .setFilterByAuthorizedAccounts(false)
+                    .setAutoSelectEnabled(true)
+                    .build()
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+                val response: GetCredentialResponse = try {
+                    CredentialManager.create(activity).getCredential(activity, request)
+                } catch (e: GetCredentialException) {
+                    _statusBanner.value = "Google sign-in failed: ${e.localizedMessage ?: e.message}"
+                    return@launch
+                }
+                val credential = response.credential
+                if (credential !is CustomCredential ||
+                    credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    _statusBanner.value = "Unexpected credential type: ${credential?.type}"
+                    return@launch
+                }
+                val googleCredential: GoogleIdTokenCredential =
+                    try {
+                        GoogleIdTokenCredential.createFrom(credential.data)
+                    } catch (e: GoogleIdTokenParsingException) {
+                        _statusBanner.value = "Failed to parse the Google ID token."
+                        return@launch
+                    }
+                val account = UserProfile(
+                    userId = googleCredential.id,
+                    displayName = googleCredential.displayName ?: "Google user",
+                    email = googleCredential.email.orEmpty(),
+                    photoUrl = googleCredential.profilePictureUri?.toString()
+                )
+                repository.saveUserAccount(account)
+                _statusBanner.value = "Signed in as ${account.email.ifEmpty { account.displayName }}."
+            } catch (e: Exception) {
+                _statusBanner.value = "Google sign-in failed: ${e.localizedMessage}"
+            } finally {
+                _googleSignInBusy.value = false
+            }
+        }
+    }
+
+    fun signOutGoogle() {
+        viewModelScope.launch {
+            repository.clearUserAccount()
+            _statusBanner.value = "Signed out of Google."
+        }
+    }
+
+    // ==========================================
+    // Local LlamaCpp server (llama.cpp / llama-server)
+    // ==========================================
+
+    private val _localLlamaHost = MutableStateFlow("127.0.0.1")
+    val localLlamaHost: StateFlow<String> = _localLlamaHost.asStateFlow()
+
+    private val _localLlamaPort = MutableStateFlow("8080")
+    val localLlamaPort: StateFlow<String> = _localLlamaPort.asStateFlow()
+
+    private val _localLlamaConnected = MutableStateFlow(false)
+    val localLlamaConnected: StateFlow<Boolean> = _localLlamaConnected.asStateFlow()
+
+    private val _localLlamaStatus = MutableStateFlow<String?>(null)
+    val localLlamaStatus: StateFlow<String?> = _localLlamaStatus.asStateFlow()
+
+    private val _localLlamaModels = MutableStateFlow<List<String>>(emptyList())
+    val localLlamaModels: StateFlow<List<String>> = _localLlamaModels.asStateFlow()
+
+    private val _selectedLocalLlamaModel = MutableStateFlow<String?>(null)
+    val selectedLocalLlamaModel: StateFlow<String?> = _selectedLocalLlamaModel.asStateFlow()
+
+    private var localLlamaEngine: LlamaCppEngine? = null
+
+    fun setLocalLlamaHost(host: String) {
+        _localLlamaHost.value = host
+    }
+
+    fun setLocalLlamaPort(port: String) {
+        _localLlamaPort.value = port
+    }
+
+    /**
+     * Connects to a local llama.cpp server (e.g. `llama-server -m model.gguf
+     * --host 127.0.0.1 --port 8080`). On success the AI agents prefer the
+     * local engine over Gemini, and all agent traffic stays on-device.
+     */
+    fun connectLocalLlama() {
+        if (_localLlamaConnected.value) return
+        viewModelScope.launch {
+            val host = _localLlamaHost.value.trim().ifBlank { "127.0.0.1" }
+            val port = _localLlamaPort.value.trim().toIntOrNull()
+            if (port == null) {
+                _localLlamaStatus.value = "Invalid port: '${_localLlamaPort.value}'"
+                return@launch
+            }
+            _localLlamaStatus.value = "Connecting to $host:$port …"
+            val engine = LlamaCppEngine()
+            when (val result = engine.connect(host, port)) {
+                is Result.Success -> {
+                    localLlamaEngine = engine
+                    agentManager.setLocalEngine(engine)
+                    _localLlamaConnected.value = true
+                    _localLlamaModels.value = engine.models
+                    _selectedLocalLlamaModel.value = engine.selectedModel
+                    _localLlamaStatus.value =
+                        "Connected to llama.cpp @ $host:$port — ${engine.models.size} model(s)"
+                }
+                is Result.Failure -> {
+                    _localLlamaStatus.value =
+                        "Connection failed: ${result.exceptionOrNull()?.localizedMessage ?: "unknown error"}"
+                }
+            }
+        }
+    }
+
+    fun disconnectLocalLlama() {
+        localLlamaEngine?.disconnect()
+        localLlamaEngine = null
+        agentManager.setLocalEngine(null)
+        _localLlamaConnected.value = false
+        _localLlamaModels.value = emptyList()
+        _selectedLocalLlamaModel.value = null
+        _localLlamaStatus.value = "Disconnected — agents fall back to Gemini / offline."
+    }
+
+    fun selectLocalLlamaModel(modelId: String) {
+        _selectedLocalLlamaModel.value = modelId
+        localLlamaEngine?.selectModel(modelId)
+    }
+
     // Onboarding State
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
@@ -206,6 +369,9 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+
+    /** Knowledge graph built from the Cambridge_Curriculum_Library (master branch). */
+    val curriculumGraph: StateFlow<CurriculumGraph?> = repository.curriculumGraph
 
     // Symbolic verifier state
     private val _verificationResult = MutableStateFlow<VerificationResult?>(null)
@@ -298,7 +464,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun installMathCourse() {
         viewModelScope.launch {
-            val mathPkg = CoursePackageProvider.createMath4024Package()
+            val mathPkg = CoursePackageProvider(application.applicationContext).createMath4024Package()
             val (success, msg) = repository.installAndActivatePackage(mathPkg)
             _statusBanner.value = msg
         }
@@ -306,7 +472,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun installPhysicsCourse() {
         viewModelScope.launch {
-            val physicsPkg = CoursePackageProvider.createPhysics5054Package()
+            val physicsPkg = CoursePackageProvider(application.applicationContext).createPhysics5054Package()
             val (success, msg) = repository.installAndActivatePackage(physicsPkg)
             _statusBanner.value = msg
         }
@@ -314,7 +480,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun installTamperedPackageTest() {
         viewModelScope.launch {
-            val mathPkg = CoursePackageProvider.createMath4024Package()
+            val mathPkg = CoursePackageProvider(application.applicationContext).createMath4024Package()
             val tamperedManifest = mathPkg.manifest.copy(
                 contentHash = "tampered_hash_00000000000000000000000000000000",
                 signature = "TAMPERED_FORGED_SIGNATURE"
@@ -375,6 +541,10 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     // ==========================================
 
     fun startDiagnostic() {
+        // Onboarding gate: Test C must not run the diagnostic before the
+        // signed course package (question bank) has loaded — that race is
+        // what used to leave onboarding stuck. The UI (TestCPhase and
+        // DiagnosticScreen) gates rendering on `activePackage != null`.
         repository.startDiagnostic()
     }
 
@@ -460,6 +630,12 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     // ==========================================
     // Audit & Purge
     // ==========================================
+
+    /**
+     * Synchronous re-verification of the audit hash chain (tamper-evidence).
+     * UI calls this whenever [auditLogs] changes and displays the result.
+     */
+    fun verifyAuditChainNow(): Boolean = repository.verifyAuditChain(auditLogs.value)
 
     fun purgeStudentData() {
         viewModelScope.launch {

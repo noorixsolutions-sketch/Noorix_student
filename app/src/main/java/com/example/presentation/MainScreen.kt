@@ -115,6 +115,7 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 .padding(innerPadding)
         ) {
             // Main Screen Routing
+            val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
             when (currentTab) {
                 AppNavigationTab.ONBOARDING -> OnboardingScreen(viewModel)
                 AppNavigationTab.DASHBOARD -> DashboardScreen(viewModel)
@@ -124,7 +125,7 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 AppNavigationTab.MEDIA_TRANSFER -> MediaTransferScreen(viewModel)
                 AppNavigationTab.DECAY_SYNC -> DecaySyncScreen(viewModel)
                 AppNavigationTab.PACKAGES -> PackagesScreen(viewModel)
-                AppNavigationTab.AUDIT -> AuditScreen(viewModel)
+                AppNavigationTab.AUDIT -> AuditScreen(viewModel, activity)
             }
 
             // High-Tech Cyber Notification Banner -> Calm Notification Banner

@@ -94,7 +94,14 @@ class HlcSyncEngine(
         val existingEvents = eventDao.getAllEvents().associateBy { it.eventId }
 
         for (remote in remoteEvents) {
-            val remoteHlc = HlcTimestamp.parse(remote.hlcTimestamp)
+            // Null-safe parse: a malformed remote HLC string degrades to a
+            // physicalMs-derived timestamp instead of crashing the batch.
+            val remoteHlc = HlcTimestamp.parseOrNull(remote.hlcTimestamp)
+                ?: HlcTimestamp(
+                    physicalMs = remote.physicalMs,
+                    logicalCounter = 0,
+                    nodeId = "remote-fallback"
+                )
             hybridClock.update(remoteHlc, currentSimulatedTimeMs)
 
             if (existingEvents.containsKey(remote.eventId)) {

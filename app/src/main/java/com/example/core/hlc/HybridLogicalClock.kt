@@ -26,14 +26,29 @@ data class HlcTimestamp(
     override fun toString(): String = "$physicalMs:$logicalCounter:$nodeId"
 
     companion object {
-        fun parse(str: String): HlcTimestamp {
+        /**
+         * Parses an HLC string. Returns null on malformed input instead of
+         * throwing, so a single corrupted remote timestamp can't crash a sync
+         * batch (callers fall back to the event's physicalMs).
+         */
+        fun parseOrNull(str: String): HlcTimestamp? {
             val parts = str.split(":")
-            require(parts.size == 3) { "Invalid HLC string: $str" }
-            return HlcTimestamp(
-                physicalMs = parts[0].toLong(),
-                logicalCounter = parts[1].toInt(),
-                nodeId = parts[2]
-            )
+            if (parts.size != 3) return null
+            val physical = parts[0].toLongOrNull() ?: return null
+            val logical = parts[1].toIntOrNull() ?: return null
+            if (parts[2].isEmpty()) return null
+            return HlcTimestamp(physicalMs = physical, logicalCounter = logical, nodeId = parts[2])
+        }
+
+        /**
+         * Legacy lenient parser: falls back to a zero-counter timestamp derived
+         * from the physical component when the string is only partially valid.
+         */
+        fun parse(str: String, fallbackPhysicalMs: Long = 0L, fallbackNode: String = "unknown"): HlcTimestamp {
+            parseOrNull(str)?.let { return it }
+            // Try to recover at least the physical component
+            val physical = str.substringBefore(":").toLongOrNull() ?: fallbackPhysicalMs
+            return HlcTimestamp(physicalMs = physical, logicalCounter = 0, nodeId = fallbackNode)
         }
     }
 }

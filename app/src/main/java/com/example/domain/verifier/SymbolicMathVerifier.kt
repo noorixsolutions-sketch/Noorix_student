@@ -89,6 +89,7 @@ class SymbolicMathVerifier : MathVerifier {
         val testPoints = listOf(1.0, 2.0, 3.0, 4.0, 5.0, 7.0, 10.0)
         var allMatch = true
         var signMismatchDetected = false
+        var comparedSamples = 0
 
         for (x in testPoints) {
             val valPrev = evaluateExpressionAt(prev, x)
@@ -102,6 +103,19 @@ class SymbolicMathVerifier : MathVerifier {
                 )
             }
 
+            // FIX: NaN must never be "equivalent" to anything (including NaN).
+            // Both-undefined at the same sample = common pole -> skip that sample;
+            // only-one-undefined = the expressions genuinely differ in domain.
+            if (valPrev.isNaN() || valCurr.isNaN()) {
+                if (valPrev.isNaN() && valCurr.isNaN()) continue
+                return StepEvalResult(
+                    isEquivalent = false,
+                    errorType = MathErrorType.SYNTAX_ERROR,
+                    reason = "Expression undefined at sample point x=$x (division by zero) — steps are not equivalent."
+                )
+            }
+
+            comparedSamples++
             val diff = abs(valPrev - valCurr)
             if (diff > 0.0001) {
                 allMatch = false
@@ -111,6 +125,16 @@ class SymbolicMathVerifier : MathVerifier {
                     signMismatchDetected = true
                 }
             }
+        }
+
+        // FIX: if no sample point was numerically evaluable on both sides
+        // (e.g. expressions using unknown symbols), we cannot claim equivalence.
+        if (comparedSamples == 0) {
+            return StepEvalResult(
+                isEquivalent = false,
+                errorType = MathErrorType.SYNTAX_ERROR,
+                reason = "No sample point was numerically evaluable — expressions could not be compared."
+            )
         }
 
         if (allMatch) {
@@ -134,10 +158,12 @@ class SymbolicMathVerifier : MathVerifier {
     }
 
     private fun containsSignErrorPattern(prev: String, curr: String): Boolean {
-        // e.g. x(x+2) evaluated vs x^2 + 3x (accidental addition instead of multiplication or sign flip)
+        // FIX: the previous heuristic (`curr contains '-' while prev does not`)
+        // mislabeled almost every legitimate manipulation (e.g. "x^2-5x+6") as a
+        // sign error. Sign errors are now detected numerically only — via the
+        // full-inversion mirror check in evaluateEquivalence (signMismatchDetected)
+        // — plus this one explicitly-documented pattern.
         if (prev.contains("x(x+2)") && (curr.contains("x^2+3x") || curr.contains("x²+3x"))) return true
-        if (curr.contains("-") && !prev.contains("-")) return true
-        if (prev.contains("-(") && !curr.contains("+")) return true
         return false
     }
 
