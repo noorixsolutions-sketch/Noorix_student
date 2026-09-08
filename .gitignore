@@ -20,7 +20,7 @@ debug.keystore
 # Build outputs & CI deliverables (never commit binaries/logs)
 build/
 app/build/
-ci/
+ci/*.log
 dist/
 *.apk
 *.aab

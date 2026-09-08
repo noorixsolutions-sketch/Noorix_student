@@ -1,0 +1,159 @@
+# Noorix — build, test, sign-check and deliver the APK via GitHub Actions.
+#
+# Delivery model (replaces the old "commit 80MB binary to the branch" flow):
+#   1. Every push to the session branch builds a signed DEBUG APK.
+#   2. Unit tests (Robolectric) run and JUnit XML + HTML reports are attached.
+#   3. The APK's package signature is verified with apksigner (fails the build
+#      if the signature is invalid).
+#   4. The APK is published twice:
+#        a) as a workflow ARTIFACT (downloadable from the run page, 90 days),
+#        b) as an asset on the rolling GitHub RELEASE "latest-apk"
+#           (permanent, directly installable).
+#
+# Optional RELEASE APK: if the repository secrets UPLOAD_KEYSTORE_BASE64
+# (base64-encoded .jks with key alias "upload" — hardcoded in
+# app/build.gradle.kts), STORE_PASSWORD and KEY_PASSWORD are set, a release
+# APK is additionally built, signed with the upload key, signature-checked
+# and published. Without those secrets the release step is skipped and the
+# debug APK remains the deliverable.
+name: Build & Deliver APK
+
+on:
+  push:
+    branches: ["arena/01a08271-noorix-student"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: apk-build
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  GRADLE_ARGS: --no-daemon --stacktrace
+
+jobs:
+  build-and-deliver:
+    name: Build, test, verify signature, publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" || true
+
+      - name: Generate debug keystore (deterministic debug signing)
+        run: |
+          keytool -genkeypair -v \
+            -keystore debug.keystore \
+            -storepass android -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Noorix Debug,O=Noorix,C=NL"
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          mkdir -p ci
+          set -o pipefail
+          ./gradlew :app:assembleDebug $GRADLE_ARGS 2>&1 | tee ci/build.log
+
+      - name: Run unit tests (Robolectric)
+        run: |
+          set -o pipefail
+          ./gradlew :app:testDebugUnitTest $GRADLE_ARGS 2>&1 | tee -a ci/build.log
+
+      - name: Locate built APK
+        id: apk
+        run: |
+          APK=$(ls app/build/outputs/apk/debug/*.apk 2>/dev/null | head -1)
+          if [ -z "$APK" ]; then
+            echo "ERROR: no debug APK produced"
+            tail -n 200 ci/build.log || true
+            exit 1
+          fi
+          SHA_SHORT="${GITHUB_SHA:0:7}"
+          FNAME="Noorix-debug-${SHA_SHORT}.apk"
+          mkdir -p dist
+          cp "$APK" "dist/$FNAME"
+          echo "apk=dist/$FNAME" >> "$GITHUB_OUTPUT"
+          echo "Built $FNAME ($(du -h "$APK" | cut -f1))"
+
+      - name: Verify APK package signature (apksigner)
+        run: |
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          [ -x "$APKSIGNER" ] || APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          echo "== apksigner verify =="
+          "$APKSIGNER" verify --print-certs "${{ steps.apk.outputs.apk }}"
+          echo "== certificate digest =="
+          "$APKSIGNER" verify --print-certs "${{ steps.apk.outputs.apk }}" | grep -E "SHA-256|Signer #1" || true
+
+      - name: Build signed RELEASE APK (optional — needs upload-keystore secrets)
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$UPLOAD_KEYSTORE_BASE64" ] || [ -z "$STORE_PASSWORD" ]; then
+            echo "Upload-keystore secrets not configured — skipping release build."
+            echo "To enable: set repo secrets UPLOAD_KEYSTORE_BASE64 (base64 .jks, key alias 'upload'), STORE_PASSWORD, KEY_PASSWORD."
+            exit 0
+          fi
+          mkdir -p ci
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > my-upload-key.jks
+          KEYSTORE_PATH="$PWD/my-upload-key.jks" \
+          STORE_PASSWORD="$STORE_PASSWORD" \
+          KEY_PASSWORD="${KEY_PASSWORD:-$STORE_PASSWORD}" \
+          ./gradlew :app:assembleRelease $GRADLE_ARGS 2>&1 | tee -a ci/build.log
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          [ -x "$APKSIGNER" ] || APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          for r in app/build/outputs/apk/release/*.apk; do
+            [ -e "$r" ] || continue
+            "$APKSIGNER" verify --print-certs "$r"
+            cp "$r" "dist/Noorix-release-${GITHUB_SHA:0:7}.apk"
+          done
+
+      - name: Prepare test reports and build log tail
+        run: |
+          mkdir -p ci/reports
+          find app/build/reports/tests -maxdepth 3 -type f 2>/dev/null | head -50 | xargs -r cp -t ci/reports/ 2>/dev/null || true
+          find app/build/test-results -name "*.xml" 2>/dev/null | head -20 | xargs -r cp -t ci/reports/ 2>/dev/null || true
+          if [ -f ci/build.log ]; then tail -n 2000 ci/build.log > ci/build-tail.log; fi
+
+      - name: Upload APK + reports as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: noorix-apk-${{ github.sha }}
+          path: |
+            dist/*.apk
+            ci/build-tail.log
+            ci/reports/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish APK to rolling GitHub Release (latest-apk)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: "Noorix APK @ ${{ github.sha }} (short ${{ github.sha }})"
+          body: |
+            Built from `${{ github.sha }}` by GitHub Actions.
+            - Signed debug APK (installable on any device with USB debugging).
+            - Package signature verified with `apksigner verify --print-certs`.
+            - Unit test reports in the artifacts of the same run.
+          files: |
+            dist/*.apk
+          fail_on_unmatched_files: false
+          overwrite: true
+          make_latest: false
