@@ -87,6 +87,7 @@ fun WelcomePhase(onStart: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TestAPhase(viewModel: OLevelViewModel) {
     val state by viewModel.onboardingState.collectAsState()
@@ -128,6 +129,7 @@ fun TestAPhase(viewModel: OLevelViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TestBPhase(viewModel: OLevelViewModel) {
     val state by viewModel.onboardingState.collectAsState()
@@ -166,19 +168,43 @@ fun TestBPhase(viewModel: OLevelViewModel) {
 @Composable
 fun TestCPhase(viewModel: OLevelViewModel) {
     val session by viewModel.diagnosticSession.collectAsState()
+    val activePackage by viewModel.activePackage.collectAsState()
+    // FIX (onboarding stuck): wait for the signed course package (question
+    // bank) instead of running the diagnostic against an empty bank.
+    val bankReady = activePackage != null
 
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text("Test C: Curriculum Diagnostic", color = TealAccent, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 16.dp))
         Spacer(modifier = Modifier.height(8.dp))
-        
-        if (session.isCompleted) {
-            CompletePhase { viewModel.startOnboardingPhase(OnboardingPhase.COMPLETE) }
-        } else {
-            // Re-use the existing diagnostic screen layout logic
-            Box(modifier = Modifier.weight(1f)) {
-                DiagnosticScreen(viewModel = viewModel)
+
+        when {
+            session.isCompleted ->
+                CompletePhase { viewModel.startOnboardingPhase(OnboardingPhase.COMPLETE) }
+
+            !bankReady ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(color = TealAccent)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Preparing question bank…",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+
+            else -> {
+                // Re-use the existing diagnostic screen layout logic
+                Box(modifier = Modifier.weight(1f)) {
+                    DiagnosticScreen(viewModel = viewModel)
+                }
             }
         }
     }

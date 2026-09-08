@@ -54,9 +54,9 @@ class ExampleRobolectricTest {
 
     @Test
     fun `package verifier accepts valid signed package and rejects tampered package`() {
-        val mathPkg = CoursePackageProvider.createMath4024Package()
-        val json = CoursePackageProvider.serializePackageToJson(mathPkg)
-        val validStatus = PackageVerifier.verifyPackage(mathPkg, json)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val mathPkg = CoursePackageProvider(context).createMath4024Package()
+        val validStatus = PackageVerifier.verifyPackage(mathPkg)
         assertTrue("Expected valid package status", validStatus is VerificationStatus.Valid)
 
         // Tamper test
@@ -65,7 +65,7 @@ class ExampleRobolectricTest {
                 contentHash = "tampered_fake_hash_00000000000000000000"
             )
         )
-        val tamperedStatus = PackageVerifier.verifyPackage(tamperedPkg, json)
+        val tamperedStatus = PackageVerifier.verifyPackage(tamperedPkg)
         assertTrue("Expected tampered package to be rejected", tamperedStatus is VerificationStatus.HashMismatch)
     }
 

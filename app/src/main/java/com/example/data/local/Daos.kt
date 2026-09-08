@@ -85,6 +85,18 @@ interface AuditDao {
 }
 
 @Dao
+interface UserAccountDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(account: UserAccountEntity)
+
+    @Query("SELECT * FROM user_accounts WHERE active = 1 LIMIT 1")
+    suspend fun getActiveAccount(): UserAccountEntity?
+
+    @Query("DELETE FROM user_accounts")
+    suspend fun clear()
+}
+
+@Dao
 interface ChatMessageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity)

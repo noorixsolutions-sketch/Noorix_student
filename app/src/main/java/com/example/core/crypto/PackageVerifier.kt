@@ -1,9 +1,10 @@
 package com.example.core.crypto
 
 import com.example.core.model.CoursePackage
+import com.example.core.model.KGEdge
+import com.example.core.model.KGNode
 import com.google.crypto.tink.subtle.Ed25519Verify
 import java.security.GeneralSecurityException
-import java.security.MessageDigest
 import java.util.Base64
 
 sealed class VerificationStatus {
@@ -15,60 +16,61 @@ sealed class VerificationStatus {
 }
 
 /**
- * Real Ed25519 Cryptographic Package Verifier using Google Tink.
+ * Cryptographic Course Package Verifier (Ed25519 via Google Tink).
  *
- * Verifies that Cambridge O-Level course syllabus packages are authentically signed
- * by the official curriculum publisher and have not been altered or tampered with.
+ * SECURITY MODEL: the publisher's Ed25519 PRIVATE key lives only in the offline
+ * signing tooling (tools/generate_package_signatures.py, run in CI / publisher
+ * environment). This APK embeds the PUBLIC key alone, so a tampered package can
+ * never be re-signed on device.
+ *
+ * Verification chain:
+ *   1. schema version gate
+ *   2. recompute the deterministic canonical payload (PackageCanonicalizer)
+ *   3. SHA-256(canonical) must equal manifest.contentHash
+ *   4. Ed25519 signature over the canonical bytes must verify against the
+ *      embedded publisher public key
+ *   5. graph integrity: every edge endpoint, question target/prerequisite and
+ *      resource concept must reference an existing node
  */
 object PackageVerifier {
 
-    // Official Cambridge/Noorix Publisher Public Key for syllabus authentication
+    const val SUPPORTED_SCHEMA_VERSION = "1.0"
+
+    // Noorix curriculum publisher public key (base64).
+    // Generated offline: python3 tools/generate_package_signatures.py
+    // Seed: "NoorixCurriculumPublisherKey2025" (NOT shipped in the APK).
+    const val PUBLISHER_PUBLIC_KEY_BASE64 = "pzvLXgi6p9ugtgcEQhJ0od14BkfjXFJEeCau0rpGmJA="
+
     val PUBLISHER_PUBLIC_KEY: ByteArray by lazy {
-        CoursePackageSigner.PUBLISHER_PUBLIC_KEY
+        Base64.getDecoder().decode(PUBLISHER_PUBLIC_KEY_BASE64)
     }
 
-    fun computeSha256(content: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest(content.toByteArray(Charsets.UTF_8))
-        return hash.joinToString("") { "%02x".format(it) }
-    }
+    fun computeSha256(content: String): String = PackageCanonicalizer.sha256Hex(content)
 
-    fun computeCanonicalPayload(pkg: CoursePackage): String {
-        return buildString {
-            append(pkg.manifest.packageId).append(":")
-            append(pkg.manifest.courseId).append(":")
-            append(pkg.manifest.version).append(":")
-            append(pkg.nodes.size).append(":")
-            append(pkg.edges.size).append(":")
-            append(pkg.questions.size).append(":")
-            append(pkg.resources.size)
-        }
-    }
+    fun computeCanonicalPayload(pkg: CoursePackage): String = PackageCanonicalizer.canonicalize(pkg)
 
-    fun verifyPackage(pkg: CoursePackage, rawJsonContent: String): VerificationStatus {
+    fun verifyPackage(pkg: CoursePackage): VerificationStatus {
         // 1. Schema version check
-        if (pkg.manifest.schemaVersion != "1.0") {
-            return VerificationStatus.SchemaIncompatible(expected = "1.0", actual = pkg.manifest.schemaVersion)
+        if (pkg.manifest.schemaVersion != SUPPORTED_SCHEMA_VERSION) {
+            return VerificationStatus.SchemaIncompatible(
+                expected = SUPPORTED_SCHEMA_VERSION,
+                actual = pkg.manifest.schemaVersion
+            )
         }
 
-        // 2. Hash verification
-        val canonicalPayload = computeCanonicalPayload(pkg)
-        val calculatedHash = computeSha256(canonicalPayload)
-
-        // Accept either canonical payload hash or raw json hash
-        val rawJsonHash = computeSha256(rawJsonContent)
-        val isHashMatching = (pkg.manifest.contentHash == calculatedHash) || (pkg.manifest.contentHash == rawJsonHash)
-
-        if (!isHashMatching) {
+        // 2. + 3. Hash verification over the deterministic canonical payload
+        val canonical = PackageCanonicalizer.canonicalize(pkg)
+        val calculatedHash = PackageCanonicalizer.sha256Hex(canonical)
+        if (pkg.manifest.contentHash != calculatedHash) {
             return VerificationStatus.HashMismatch(expected = calculatedHash, actual = pkg.manifest.contentHash)
         }
 
-        // 3. Real Ed25519 cryptographic signature verification using Google Tink
+        // 4. Real Ed25519 cryptographic signature verification using Google Tink
+        //    Signature is over the CANONICAL BYTES, not the hash string.
         try {
             val verifier = Ed25519Verify(PUBLISHER_PUBLIC_KEY)
             val signatureBytes = Base64.getDecoder().decode(pkg.manifest.signature)
-            val dataToVerify = pkg.manifest.contentHash.toByteArray(Charsets.UTF_8)
-            verifier.verify(signatureBytes, dataToVerify)
+            verifier.verify(signatureBytes, canonical.toByteArray(Charsets.UTF_8))
         } catch (e: IllegalArgumentException) {
             return VerificationStatus.SignatureInvalid("Corrupted Base64 signature format: ${e.message}")
         } catch (e: GeneralSecurityException) {
@@ -77,15 +79,23 @@ object PackageVerifier {
             return VerificationStatus.SignatureInvalid("Cryptographic verification error: ${e.message}")
         }
 
-        // 4. Graph integrity check (ensure all edges connect valid node IDs)
+        // 5. Graph integrity check (nodes, edges, questions, resources all resolve)
         val nodeIds = pkg.nodes.map { it.id }.toSet()
-        val missing = mutableListOf<String>()
-        for (edge in pkg.edges) {
+        val missing = mutableSetOf<String>()
+        for (edge: KGEdge in pkg.edges) {
             if (!nodeIds.contains(edge.source)) missing.add(edge.source)
             if (!nodeIds.contains(edge.target)) missing.add(edge.target)
         }
+        for (q in pkg.questions) {
+            if (!nodeIds.contains(q.targetConceptId)) missing.add(q.targetConceptId)
+            q.prerequisiteConceptId?.let { if (!nodeIds.contains(it)) missing.add(it) }
+            for (misc in q.potentialMisconceptions) if (!nodeIds.contains(misc)) missing.add(misc)
+        }
+        for (r in pkg.resources) {
+            if (!nodeIds.contains(r.conceptId)) missing.add(r.conceptId)
+        }
         if (missing.isNotEmpty()) {
-            return VerificationStatus.IntegrityCheckFailed(missing.distinct())
+            return VerificationStatus.IntegrityCheckFailed(missing.sorted())
         }
 
         return VerificationStatus.Valid

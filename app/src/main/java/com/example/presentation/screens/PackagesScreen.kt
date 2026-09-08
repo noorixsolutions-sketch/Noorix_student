@@ -2,6 +2,7 @@ package com.example.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,9 +22,11 @@ import com.example.presentation.OLevelViewModel
 import com.example.ui.theme.CyanAccent
 import com.example.ui.theme.GoldAccent
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun PackagesScreen(viewModel: OLevelViewModel) {
     val activePkg by viewModel.activePackage.collectAsState()
+    val curriculumGraph by viewModel.curriculumGraph.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -56,6 +59,147 @@ fun PackagesScreen(viewModel: OLevelViewModel) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+        }
+
+        // Curriculum Library — knowledge graph generated from the master branch
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("curriculum_library_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "CURRICULUM LIBRARY (KNOWLEDGE GRAPH)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (curriculumGraph != null) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = GoldAccent.copy(alpha = 0.2f)
+                            ) {
+                                Text(
+                                    text = "master @ ${curriculumGraph?.source?.commit?.take(7) ?: "?"}",
+                                    color = GoldAccent,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val graph = curriculumGraph
+                    if (graph == null) {
+                        Text(
+                            text = "Loading curriculum knowledge graph…",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = "${graph.stageCount} stages · ${graph.subjectCount} subjects · ${graph.nodes.size} graph nodes · ${graph.edges.size} edges — scanned from Cambridge_Curriculum_Library (${graph.source.library}).",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        var expandedStageId by remember { mutableStateOf<String?>(null) }
+                        graph.stages.forEach { stage ->
+                            val expanded = expandedStageId == stage.id
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        expandedStageId = if (expanded) null else stage.id
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stage.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "${stage.subjectCount} subjects",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    text = if (expanded) "▲" else "▼",
+                                    color = CyanAccent,
+                                    fontSize = 10.sp
+                                )
+                            }
+                            if (expanded) {
+                                stage.subjects.forEach { subject ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 12.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = subject.name,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            // Content-area badges present for this subject
+                                            FlowRow(
+                                                modifier = Modifier.padding(top = 2.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                subject.areas.forEach { area ->
+                                                    Surface(
+                                                        shape = RoundedCornerShape(3.dp),
+                                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+                                                    ) {
+                                                        Text(
+                                                            text = area,
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            fontSize = 9.sp,
+                                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        subject.syllabusCode?.let { code ->
+                                            Surface(
+                                                shape = RoundedCornerShape(3.dp),
+                                                color = CyanAccent.copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = code,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontSize = 9.sp,
+                                                    color = CyanAccent,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

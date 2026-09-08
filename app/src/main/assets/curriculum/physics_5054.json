@@ -6,49 +6,73 @@
     "version": "2025-2027",
     "schemaVersion": "1.0",
     "createdAt": "2026-09-08T00:00:00Z",
-    "contentHash": "aefdf60e7db7e88f97ae022422c487ad1496c4e86ff9a5c4b865768cfe8de397",
     "parentVersion": null,
-    "deltaBase": null,
-    "signature": "WjD2JQysucUW+E09hJ+ZqY//1KCNAWUaeOagzWKtpxNJcD1C9tab1smU9/TJg15BMzu4/vCV+ce4vvgoIUiNDA=="
+    "contentHash": "3f2d95836bb85025affa78aca9dcc371a45e9ca0eb4b3807d7cd23e9d798bbaf",
+    "signature": "uG7H+i1bHupn/koELsgQPFAREgNYqiufkyssKD8dvvXWQe7PceMDqlhV9Jj4d7amrjq/dTBQk6epUbnkK8QKBQ=="
   },
   "nodes": [
     {
       "id": "course:physics-5054",
       "type": "COURSE",
       "name": "Physics 5054",
-      "properties": { "code": "5054" }
+      "properties": {}
     },
     {
       "id": "topic:5054:mechanics",
       "type": "TOPIC",
       "name": "Newtonian Mechanics",
-      "properties": { "course": "course:physics-5054" }
+      "properties": {}
     },
     {
       "id": "concept:5054:kinematics",
       "type": "CONCEPT",
       "name": "Speed, Velocity & Acceleration",
-      "properties": { "difficulty": "0.40" }
+      "properties": {}
     },
     {
       "id": "concept:5054:forces",
       "type": "CONCEPT",
       "name": "Newton's Laws of Motion",
-      "properties": { "difficulty": "0.55" }
+      "properties": {}
     },
     {
       "id": "concept:5054:energy",
       "type": "CONCEPT",
       "name": "Work, Energy & Power",
-      "properties": { "difficulty": "0.65" }
+      "properties": {}
     }
   ],
   "edges": [
-    { "id": "pe1", "type": "CONTAINS", "source": "course:physics-5054", "target": "topic:5054:mechanics" },
-    { "id": "pe2", "type": "CONTAINS", "source": "topic:5054:mechanics", "target": "concept:5054:kinematics" },
-    { "id": "pe3", "type": "CONTAINS", "source": "topic:5054:mechanics", "target": "concept:5054:forces" },
-    { "id": "pe4", "type": "PREREQUISITE_OF", "source": "concept:5054:kinematics", "target": "concept:5054:forces" },
-    { "id": "pe5", "type": "PREREQUISITE_OF", "source": "concept:5054:forces", "target": "concept:5054:energy" }
+    {
+      "id": "pe1",
+      "type": "CONTAINS",
+      "source": "course:physics-5054",
+      "target": "topic:5054:mechanics"
+    },
+    {
+      "id": "pe2",
+      "type": "CONTAINS",
+      "source": "topic:5054:mechanics",
+      "target": "concept:5054:kinematics"
+    },
+    {
+      "id": "pe3",
+      "type": "CONTAINS",
+      "source": "topic:5054:mechanics",
+      "target": "concept:5054:forces"
+    },
+    {
+      "id": "pe4",
+      "type": "PREREQUISITE_OF",
+      "source": "concept:5054:kinematics",
+      "target": "concept:5054:forces"
+    },
+    {
+      "id": "pe5",
+      "type": "PREREQUISITE_OF",
+      "source": "concept:5054:forces",
+      "target": "concept:5054:energy"
+    }
   ],
   "questions": [
     {
@@ -57,12 +81,20 @@
       "targetConceptId": "concept:5054:forces",
       "questionType": "STRUCTURED",
       "prompt": "A constant resultant force of 15 N acts on a mass of 3.0 kg. What is the acceleration?",
-      "options": ["5.0 m/s²", "45 m/s²", "0.20 m/s²", "12 m/s²"],
+      "options": [
+        "5.0 m/s²",
+        "45 m/s²",
+        "0.20 m/s²",
+        "12 m/s²"
+      ],
       "correctIndex": 0,
+      "targetLaTeX": "",
       "difficulty": 0.45,
-      "maxMarks": 2,
+      "maxMarks": 4,
       "bloomLevel": "APPLICATION",
-      "prerequisiteConceptId": "concept:5054:kinematics"
+      "rubrics": "",
+      "prerequisiteConceptId": "concept:5054:kinematics",
+      "potentialMisconceptions": []
     }
   ],
   "resources": []

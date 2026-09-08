@@ -16,3 +16,11 @@
 local.properties
 .env
 debug.keystore
+
+# Build outputs & CI deliverables (never commit binaries/logs)
+build/
+app/build/
+ci/*.log
+dist/
+*.apk
+*.aab

@@ -1,8 +1,0 @@
-        topBar = {
-            if (currentTab != AppNavigationTab.ONBOARDING) {
-                NoorixTopBar(
-                    onSystemHudClick = { viewModel.setTab(AppNavigationTab.AUDIT) }, 
-                    onProfileClick = { viewModel.setTab(AppNavigationTab.AUDIT) }
-                )
-            }
-        },
