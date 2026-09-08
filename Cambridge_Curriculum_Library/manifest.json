@@ -1,0 +1,2046 @@
+{
+  "generated_at": "2026-06-06T10:28:10",
+  "base_directory": "Cambridge_Curriculum_Library",
+  "total_subjects": 165,
+  "stages": {
+    "1_Early_Years_Pre-K": {
+      "display_name": "1 Early Years Pre-K",
+      "subjects": [
+        {
+          "folder": "Communication_Language_and_Literacy",
+          "display_name": "Communication Language and Literacy",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Mathematics",
+          "display_name": "Mathematics",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Understanding_the_World",
+          "display_name": "Understanding the World",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Creative_Expression",
+          "display_name": "Creative Expression",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physical_Development",
+          "display_name": "Physical Development",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Personal_Social_and_Emotional_Development",
+          "display_name": "Personal Social and Emotional Development",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "2_Primary_Stages_1-6": {
+      "display_name": "2 Primary Stages 1-6",
+      "subjects": [
+        {
+          "folder": "Mathematics_0096",
+          "display_name": "Mathematics",
+          "syllabus_code": "0096",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Science_0097",
+          "display_name": "Science",
+          "syllabus_code": "0097",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "English_0058",
+          "display_name": "English",
+          "syllabus_code": "0058",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Computing_0059",
+          "display_name": "Computing",
+          "syllabus_code": "0059",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Digital_Literacy_0072",
+          "display_name": "Digital Literacy",
+          "syllabus_code": "0072",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Global_Perspectives_0838",
+          "display_name": "Global Perspectives",
+          "syllabus_code": "0838",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Humanities_0065",
+          "display_name": "Humanities",
+          "syllabus_code": "0065",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Art_and_Design_0067",
+          "display_name": "Art and Design",
+          "syllabus_code": "0067",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Music_0068",
+          "display_name": "Music",
+          "syllabus_code": "0068",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physical_Education_0069",
+          "display_name": "Physical Education",
+          "syllabus_code": "0069",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Wellbeing_0034",
+          "display_name": "Wellbeing",
+          "syllabus_code": "0034",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "3_Lower_Secondary_Stages_7-9": {
+      "display_name": "3 Lower Secondary Stages 7-9",
+      "subjects": [
+        {
+          "folder": "Mathematics_0862",
+          "display_name": "Mathematics",
+          "syllabus_code": "0862",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Science_0893",
+          "display_name": "Science",
+          "syllabus_code": "0893",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "English_0861",
+          "display_name": "English",
+          "syllabus_code": "0861",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Computing_0860",
+          "display_name": "Computing",
+          "syllabus_code": "0860",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Digital_Literacy_0839",
+          "display_name": "Digital Literacy",
+          "syllabus_code": "0839",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Global_Perspectives_1129",
+          "display_name": "Global Perspectives",
+          "syllabus_code": "1129",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Humanities_0857",
+          "display_name": "Humanities",
+          "syllabus_code": "0857",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Art_and_Design_0859",
+          "display_name": "Art and Design",
+          "syllabus_code": "0859",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Music_0863",
+          "display_name": "Music",
+          "syllabus_code": "0863",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physical_Education_0856",
+          "display_name": "Physical Education",
+          "syllabus_code": "0856",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "4_O_Level_Upper_Secondary": {
+      "display_name": "4 O Level Upper Secondary",
+      "subjects": [
+        {
+          "folder": "Mathematics_D_4024",
+          "display_name": "Mathematics D",
+          "syllabus_code": "4024",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Additional_Mathematics_4037",
+          "display_name": "Additional Mathematics",
+          "syllabus_code": "4037",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physics_5054",
+          "display_name": "Physics",
+          "syllabus_code": "5054",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Chemistry_5070",
+          "display_name": "Chemistry",
+          "syllabus_code": "5070",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Biology_5090",
+          "display_name": "Biology",
+          "syllabus_code": "5090",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Computer_Science_2210",
+          "display_name": "Computer Science",
+          "syllabus_code": "2210",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "English_Language_1123",
+          "display_name": "English Language",
+          "syllabus_code": "1123",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Literature_in_English_2010",
+          "display_name": "Literature in English",
+          "syllabus_code": "2010",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Pakistan_Studies_2059",
+          "display_name": "Pakistan Studies",
+          "syllabus_code": "2059",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Islamiyat_2058",
+          "display_name": "Islamiyat",
+          "syllabus_code": "2058",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "History_2147",
+          "display_name": "History",
+          "syllabus_code": "2147",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Geography_2217",
+          "display_name": "Geography",
+          "syllabus_code": "2217",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Economics_2281",
+          "display_name": "Economics",
+          "syllabus_code": "2281",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Business_Studies_7115",
+          "display_name": "Business Studies",
+          "syllabus_code": "7115",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Accounting_7707",
+          "display_name": "Accounting",
+          "syllabus_code": "7707",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Commerce_7100",
+          "display_name": "Commerce",
+          "syllabus_code": "7100",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "5_IGCSE_Upper_Secondary": {
+      "display_name": "5 IGCSE Upper Secondary",
+      "subjects": [
+        {
+          "folder": "Mathematics_0580",
+          "display_name": "Mathematics",
+          "syllabus_code": "0580",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Additional_Mathematics_0606",
+          "display_name": "Additional Mathematics",
+          "syllabus_code": "0606",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "International_Mathematics_0607",
+          "display_name": "International Mathematics",
+          "syllabus_code": "0607",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physics_0625",
+          "display_name": "Physics",
+          "syllabus_code": "0625",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Chemistry_0620",
+          "display_name": "Chemistry",
+          "syllabus_code": "0620",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Biology_0610",
+          "display_name": "Biology",
+          "syllabus_code": "0610",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Combined_Science_0653",
+          "display_name": "Combined Science",
+          "syllabus_code": "0653",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Computer_Science_0478",
+          "display_name": "Computer Science",
+          "syllabus_code": "0478",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Information_and_Communication_Technology_0417",
+          "display_name": "Information and Communication Technology",
+          "syllabus_code": "0417",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "English_First_Language_0500",
+          "display_name": "English First Language",
+          "syllabus_code": "0500",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "English_Second_Language_0510",
+          "display_name": "English Second Language",
+          "syllabus_code": "0510",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Literature_in_English_0475",
+          "display_name": "Literature in English",
+          "syllabus_code": "0475",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Pakistan_Studies_0448",
+          "display_name": "Pakistan Studies",
+          "syllabus_code": "0448",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Islamiyat_0499",
+          "display_name": "Islamiyat",
+          "syllabus_code": "0499",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "History_0470",
+          "display_name": "History",
+          "syllabus_code": "0470",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Geography_0465",
+          "display_name": "Geography",
+          "syllabus_code": "0465",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Economics_0455",
+          "display_name": "Economics",
+          "syllabus_code": "0455",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Business_Studies_0450",
+          "display_name": "Business Studies",
+          "syllabus_code": "0450",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Accounting_0452",
+          "display_name": "Accounting",
+          "syllabus_code": "0452",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Global_Perspectives_0457",
+          "display_name": "Global Perspectives",
+          "syllabus_code": "0457",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Sociology_0495",
+          "display_name": "Sociology",
+          "syllabus_code": "0495",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Psychology_0990",
+          "display_name": "Psychology",
+          "syllabus_code": "0990",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Environmental_Management_0680",
+          "display_name": "Environmental Management",
+          "syllabus_code": "0680",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Art_and_Design_0400",
+          "display_name": "Art and Design",
+          "syllabus_code": "0400",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Music_0410",
+          "display_name": "Music",
+          "syllabus_code": "0410",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physical_Education_0413",
+          "display_name": "Physical Education",
+          "syllabus_code": "0413",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Design_and_Technology_0445",
+          "display_name": "Design and Technology",
+          "syllabus_code": "0445",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Food_and_Nutrition_0648",
+          "display_name": "Food and Nutrition",
+          "syllabus_code": "0648",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "6_AS_Level_Advanced_Stages_10-11": {
+      "display_name": "6 AS Level Advanced Stages 10-11",
+      "subjects": [
+        {
+          "folder": "Mathematics_9709",
+          "display_name": "Mathematics",
+          "syllabus_code": "9709",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Further_Mathematics_9231",
+          "display_name": "Further Mathematics",
+          "syllabus_code": "9231",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physics_9702",
+          "display_name": "Physics",
+          "syllabus_code": "9702",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Chemistry_9701",
+          "display_name": "Chemistry",
+          "syllabus_code": "9701",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Biology_9700",
+          "display_name": "Biology",
+          "syllabus_code": "9700",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Computer_Science_9618",
+          "display_name": "Computer Science",
+          "syllabus_code": "9618",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "English_Language_9093",
+          "display_name": "English Language",
+          "syllabus_code": "9093",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Literature_in_English_9695",
+          "display_name": "Literature in English",
+          "syllabus_code": "9695",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "History_9489",
+          "display_name": "History",
+          "syllabus_code": "9489",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Geography_9696",
+          "display_name": "Geography",
+          "syllabus_code": "9696",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Economics_9708",
+          "display_name": "Economics",
+          "syllabus_code": "9708",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Business_9609",
+          "display_name": "Business",
+          "syllabus_code": "9609",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Accounting_9706",
+          "display_name": "Accounting",
+          "syllabus_code": "9706",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Psychology_9990",
+          "display_name": "Psychology",
+          "syllabus_code": "9990",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Sociology_9699",
+          "display_name": "Sociology",
+          "syllabus_code": "9699",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Law_9084",
+          "display_name": "Law",
+          "syllabus_code": "9084",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Global_Perspectives_9239",
+          "display_name": "Global Perspectives",
+          "syllabus_code": "9239",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Thinking_Skills_9694",
+          "display_name": "Thinking Skills",
+          "syllabus_code": "9694",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "7_A_Level_Advanced_Stages_12-13": {
+      "display_name": "7 A Level Advanced Stages 12-13",
+      "subjects": [
+        {
+          "folder": "Mathematics_9709",
+          "display_name": "Mathematics",
+          "syllabus_code": "9709",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Further_Mathematics_9231",
+          "display_name": "Further Mathematics",
+          "syllabus_code": "9231",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Physics_9702",
+          "display_name": "Physics",
+          "syllabus_code": "9702",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Chemistry_9701",
+          "display_name": "Chemistry",
+          "syllabus_code": "9701",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Biology_9700",
+          "display_name": "Biology",
+          "syllabus_code": "9700",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Computer_Science_9618",
+          "display_name": "Computer Science",
+          "syllabus_code": "9618",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "English_Language_9093",
+          "display_name": "English Language",
+          "syllabus_code": "9093",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Literature_in_English_9695",
+          "display_name": "Literature in English",
+          "syllabus_code": "9695",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "History_9489",
+          "display_name": "History",
+          "syllabus_code": "9489",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Geography_9696",
+          "display_name": "Geography",
+          "syllabus_code": "9696",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Economics_9708",
+          "display_name": "Economics",
+          "syllabus_code": "9708",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Business_9609",
+          "display_name": "Business",
+          "syllabus_code": "9609",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Accounting_9706",
+          "display_name": "Accounting",
+          "syllabus_code": "9706",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Psychology_9990",
+          "display_name": "Psychology",
+          "syllabus_code": "9990",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Sociology_9699",
+          "display_name": "Sociology",
+          "syllabus_code": "9699",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Law_9084",
+          "display_name": "Law",
+          "syllabus_code": "9084",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Global_Perspectives_9239",
+          "display_name": "Global Perspectives",
+          "syllabus_code": "9239",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "Thinking_Skills_9694",
+          "display_name": "Thinking Skills",
+          "syllabus_code": "9694",
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "8_AP_College_Board": {
+      "display_name": "8 AP College Board",
+      "subjects": [
+        {
+          "folder": "AP_Calculus_AB",
+          "display_name": "AP_Calculus_AB",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Calculus_BC",
+          "display_name": "AP_Calculus_BC",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Statistics",
+          "display_name": "AP_Statistics",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Physics_1",
+          "display_name": "AP_Physics_1",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Physics_2",
+          "display_name": "AP_Physics_2",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Physics_C_Mechanics",
+          "display_name": "AP_Physics_C_Mechanics",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Physics_C_Electricity_and_Magnetism",
+          "display_name": "AP_Physics_C_Electricity_and_Magnetism",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Chemistry",
+          "display_name": "AP_Chemistry",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Biology",
+          "display_name": "AP_Biology",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Computer_Science_A",
+          "display_name": "AP_Computer_Science_A",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Computer_Science_Principles",
+          "display_name": "AP_Computer_Science_Principles",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_English_Language",
+          "display_name": "AP_English_Language",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_English_Literature",
+          "display_name": "AP_English_Literature",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_World_History",
+          "display_name": "AP_World_History",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_US_History",
+          "display_name": "AP_US_History",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_European_History",
+          "display_name": "AP_European_History",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Human_Geography",
+          "display_name": "AP_Human_Geography",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Macroeconomics",
+          "display_name": "AP_Macroeconomics",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Microeconomics",
+          "display_name": "AP_Microeconomics",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Psychology",
+          "display_name": "AP_Psychology",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Government_and_Politics_US",
+          "display_name": "AP_Government_and_Politics_US",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Government_and_Politics_Comparative",
+          "display_name": "AP_Government_and_Politics_Comparative",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Art_History",
+          "display_name": "AP_Art_History",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Studio_Art_2D_Design",
+          "display_name": "AP_Studio_Art_2D_Design",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "AP_Music_Theory",
+          "display_name": "AP_Music_Theory",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    },
+    "9_IB_Diploma_Programme": {
+      "display_name": "9 IB Diploma Programme",
+      "subjects": [
+        {
+          "folder": "IB_Mathematics_Analysis_and_Approaches_SL",
+          "display_name": "IB_Mathematics_Analysis_and_Approaches_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Mathematics_Analysis_and_Approaches_HL",
+          "display_name": "IB_Mathematics_Analysis_and_Approaches_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Mathematics_Applications_and_Interpretation_SL",
+          "display_name": "IB_Mathematics_Applications_and_Interpretation_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Mathematics_Applications_and_Interpretation_HL",
+          "display_name": "IB_Mathematics_Applications_and_Interpretation_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Physics_SL",
+          "display_name": "IB_Physics_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Physics_HL",
+          "display_name": "IB_Physics_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Chemistry_SL",
+          "display_name": "IB_Chemistry_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Chemistry_HL",
+          "display_name": "IB_Chemistry_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Biology_SL",
+          "display_name": "IB_Biology_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Biology_HL",
+          "display_name": "IB_Biology_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Computer_Science_SL",
+          "display_name": "IB_Computer_Science_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Computer_Science_HL",
+          "display_name": "IB_Computer_Science_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_English_A_Language_and_Literature_SL",
+          "display_name": "IB_English_A_Language_and_Literature_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_English_A_Language_and_Literature_HL",
+          "display_name": "IB_English_A_Language_and_Literature_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_English_A_Literature_SL",
+          "display_name": "IB_English_A_Literature_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_English_A_Literature_HL",
+          "display_name": "IB_English_A_Literature_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_History_SL",
+          "display_name": "IB_History_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_History_HL",
+          "display_name": "IB_History_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Geography_SL",
+          "display_name": "IB_Geography_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Geography_HL",
+          "display_name": "IB_Geography_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Economics_SL",
+          "display_name": "IB_Economics_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Economics_HL",
+          "display_name": "IB_Economics_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Psychology_SL",
+          "display_name": "IB_Psychology_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Psychology_HL",
+          "display_name": "IB_Psychology_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Business_Management_SL",
+          "display_name": "IB_Business_Management_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Business_Management_HL",
+          "display_name": "IB_Business_Management_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Visual_Arts_SL",
+          "display_name": "IB_Visual_Arts_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Visual_Arts_HL",
+          "display_name": "IB_Visual_Arts_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Music_SL",
+          "display_name": "IB_Music_SL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Music_HL",
+          "display_name": "IB_Music_HL",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Theory_of_Knowledge",
+          "display_name": "IB_Theory_of_Knowledge",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_Extended_Essay",
+          "display_name": "IB_Extended_Essay",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        },
+        {
+          "folder": "IB_CAS_Creativity_Activity_Service",
+          "display_name": "IB_CAS_Creativity_Activity_Service",
+          "syllabus_code": null,
+          "templates": [
+            "Syllabus",
+            "Past_Papers",
+            "Mark_Schemes",
+            "Notes",
+            "Resources"
+          ]
+        }
+      ]
+    }
+  },
+  "subject_templates": [
+    "Syllabus",
+    "Past_Papers",
+    "Mark_Schemes",
+    "Notes",
+    "Resources"
+  ],
+  "fetch_stats": {
+    "downloaded": 0,
+    "skipped": 105,
+    "offline": 0,
+    "error": 0,
+    "no_source": 60
+  }
+}

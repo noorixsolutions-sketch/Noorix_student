@@ -1,0 +1,26 @@
+# Mathematics
+
+- **Stage:** `1_Early_Years_Pre-K`
+- **Syllabus code:** `—`
+- **Generated:** 2026-06-06T08:22:15
+# Syllabus Detail — Mathematics
+## Learning Outcomes
+By the end of this course, students will be able to demonstrate knowledge and understanding in the following areas:
+### 1. Number, set notation, and language
+- Define and explain key terminology related to **Number, set notation, and language**- Describe the fundamental principles and concepts of **Number, set notation, and language**- Apply understanding of **Number, set notation, and language** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Number, set notation, and language**- Make connections between **Number, set notation, and language** and other areas of the subject### 2. Algebra — manipulation, equations, graphs
+- Define and explain key terminology related to **Algebra — manipulation, equations, graphs**- Describe the fundamental principles and concepts of **Algebra — manipulation, equations, graphs**- Apply understanding of **Algebra — manipulation, equations, graphs** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Algebra — manipulation, equations, graphs**- Make connections between **Algebra — manipulation, equations, graphs** and other areas of the subject### 3. Coordinate geometry
+- Define and explain key terminology related to **Coordinate geometry**- Describe the fundamental principles and concepts of **Coordinate geometry**- Apply understanding of **Coordinate geometry** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Coordinate geometry**- Make connections between **Coordinate geometry** and other areas of the subject### 4. Geometry — angles, triangles, circles, similarity
+- Define and explain key terminology related to **Geometry — angles, triangles, circles, similarity**- Describe the fundamental principles and concepts of **Geometry — angles, triangles, circles, similarity**- Apply understanding of **Geometry — angles, triangles, circles, similarity** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Geometry — angles, triangles, circles, similarity**- Make connections between **Geometry — angles, triangles, circles, similarity** and other areas of the subject### 5. Mensuration — area, volume, surface area
+- Define and explain key terminology related to **Mensuration — area, volume, surface area**- Describe the fundamental principles and concepts of **Mensuration — area, volume, surface area**- Apply understanding of **Mensuration — area, volume, surface area** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Mensuration — area, volume, surface area**- Make connections between **Mensuration — area, volume, surface area** and other areas of the subject### 6. Trigonometry
+- Define and explain key terminology related to **Trigonometry**- Describe the fundamental principles and concepts of **Trigonometry**- Apply understanding of **Trigonometry** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Trigonometry**- Make connections between **Trigonometry** and other areas of the subject### 7. Vectors and transformations
+- Define and explain key terminology related to **Vectors and transformations**- Describe the fundamental principles and concepts of **Vectors and transformations**- Apply understanding of **Vectors and transformations** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Vectors and transformations**- Make connections between **Vectors and transformations** and other areas of the subject### 8. Probability
+- Define and explain key terminology related to **Probability**- Describe the fundamental principles and concepts of **Probability**- Apply understanding of **Probability** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Probability**- Make connections between **Probability** and other areas of the subject### 9. Statistics — mean, median, mode, cumulative frequency
+- Define and explain key terminology related to **Statistics — mean, median, mode, cumulative frequency**- Describe the fundamental principles and concepts of **Statistics — mean, median, mode, cumulative frequency**- Apply understanding of **Statistics — mean, median, mode, cumulative frequency** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Statistics — mean, median, mode, cumulative frequency**- Make connections between **Statistics — mean, median, mode, cumulative frequency** and other areas of the subject## Assessment Objectives
+- **AO1:** Recall, select, and communicate knowledge (30–40%)
+- **AO2:** Apply knowledge to given contexts (30–40%)
+- **AO3:** Analyse, evaluate, and make judgements (20–30%)
+
+## Recommended Resources
+- Official syllabus document (Cambridge / College Board / IB)
+- Approved textbook series for the syllabus code
+- Past examination papers and mark schemes

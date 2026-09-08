@@ -1,0 +1,26 @@
+# Accounting
+
+- **Stage:** `7_A_Level_Advanced_Stages_12-13`
+- **Syllabus code:** `9706`
+- **Generated:** 2026-06-06T08:22:16
+# Syllabus Detail — Accounting
+## Learning Outcomes
+By the end of this course, students will be able to demonstrate knowledge and understanding in the following areas:
+### 1. The accounting equation and double-entry bookkeeping
+- Define and explain key terminology related to **The accounting equation and double-entry bookkeeping**- Describe the fundamental principles and concepts of **The accounting equation and double-entry bookkeeping**- Apply understanding of **The accounting equation and double-entry bookkeeping** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **The accounting equation and double-entry bookkeeping**- Make connections between **The accounting equation and double-entry bookkeeping** and other areas of the subject### 2. Source documents and ledgers
+- Define and explain key terminology related to **Source documents and ledgers**- Describe the fundamental principles and concepts of **Source documents and ledgers**- Apply understanding of **Source documents and ledgers** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Source documents and ledgers**- Make connections between **Source documents and ledgers** and other areas of the subject### 3. Trial balance and correction of errors
+- Define and explain key terminology related to **Trial balance and correction of errors**- Describe the fundamental principles and concepts of **Trial balance and correction of errors**- Apply understanding of **Trial balance and correction of errors** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Trial balance and correction of errors**- Make connections between **Trial balance and correction of errors** and other areas of the subject### 4. Financial statements of sole traders
+- Define and explain key terminology related to **Financial statements of sole traders**- Describe the fundamental principles and concepts of **Financial statements of sole traders**- Apply understanding of **Financial statements of sole traders** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Financial statements of sole traders**- Make connections between **Financial statements of sole traders** and other areas of the subject### 5. Trading and profit and loss accounts
+- Define and explain key terminology related to **Trading and profit and loss accounts**- Describe the fundamental principles and concepts of **Trading and profit and loss accounts**- Apply understanding of **Trading and profit and loss accounts** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Trading and profit and loss accounts**- Make connections between **Trading and profit and loss accounts** and other areas of the subject### 6. Balance sheets
+- Define and explain key terminology related to **Balance sheets**- Describe the fundamental principles and concepts of **Balance sheets**- Apply understanding of **Balance sheets** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Balance sheets**- Make connections between **Balance sheets** and other areas of the subject### 7. Depreciation and bad debts
+- Define and explain key terminology related to **Depreciation and bad debts**- Describe the fundamental principles and concepts of **Depreciation and bad debts**- Apply understanding of **Depreciation and bad debts** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Depreciation and bad debts**- Make connections between **Depreciation and bad debts** and other areas of the subject### 8. Partnership accounts
+- Define and explain key terminology related to **Partnership accounts**- Describe the fundamental principles and concepts of **Partnership accounts**- Apply understanding of **Partnership accounts** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Partnership accounts**- Make connections between **Partnership accounts** and other areas of the subject### 9. Limited company accounts (intro)
+- Define and explain key terminology related to **Limited company accounts (intro)**- Describe the fundamental principles and concepts of **Limited company accounts (intro)**- Apply understanding of **Limited company accounts (intro)** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Limited company accounts (intro)**- Make connections between **Limited company accounts (intro)** and other areas of the subject## Assessment Objectives
+- **AO1:** Recall, select, and communicate knowledge (30–40%)
+- **AO2:** Apply knowledge to given contexts (30–40%)
+- **AO3:** Analyse, evaluate, and make judgements (20–30%)
+
+## Recommended Resources
+- Official syllabus document (Cambridge / College Board / IB)
+- Approved textbook series for the syllabus code
+- Past examination papers and mark schemes

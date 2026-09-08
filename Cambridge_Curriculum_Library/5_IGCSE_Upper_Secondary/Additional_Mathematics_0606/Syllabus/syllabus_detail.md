@@ -1,0 +1,26 @@
+# Additional Mathematics
+
+- **Stage:** `5_IGCSE_Upper_Secondary`
+- **Syllabus code:** `0606`
+- **Generated:** 2026-06-06T08:22:16
+# Syllabus Detail — Additional Mathematics
+## Learning Outcomes
+By the end of this course, students will be able to demonstrate knowledge and understanding in the following areas:
+### 1. Functions — domain, range, compositions, inverses
+- Define and explain key terminology related to **Functions — domain, range, compositions, inverses**- Describe the fundamental principles and concepts of **Functions — domain, range, compositions, inverses**- Apply understanding of **Functions — domain, range, compositions, inverses** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Functions — domain, range, compositions, inverses**- Make connections between **Functions — domain, range, compositions, inverses** and other areas of the subject### 2. Quadratic functions and discriminant
+- Define and explain key terminology related to **Quadratic functions and discriminant**- Describe the fundamental principles and concepts of **Quadratic functions and discriminant**- Apply understanding of **Quadratic functions and discriminant** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Quadratic functions and discriminant**- Make connections between **Quadratic functions and discriminant** and other areas of the subject### 3. Indices, surds, and logarithms
+- Define and explain key terminology related to **Indices, surds, and logarithms**- Describe the fundamental principles and concepts of **Indices, surds, and logarithms**- Apply understanding of **Indices, surds, and logarithms** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Indices, surds, and logarithms**- Make connections between **Indices, surds, and logarithms** and other areas of the subject### 4. Simultaneous equations
+- Define and explain key terminology related to **Simultaneous equations**- Describe the fundamental principles and concepts of **Simultaneous equations**- Apply understanding of **Simultaneous equations** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Simultaneous equations**- Make connections between **Simultaneous equations** and other areas of the subject### 5. Polynomials — factor theorem, remainder theorem
+- Define and explain key terminology related to **Polynomials — factor theorem, remainder theorem**- Describe the fundamental principles and concepts of **Polynomials — factor theorem, remainder theorem**- Apply understanding of **Polynomials — factor theorem, remainder theorem** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Polynomials — factor theorem, remainder theorem**- Make connections between **Polynomials — factor theorem, remainder theorem** and other areas of the subject### 6. Trigonometric identities and equations
+- Define and explain key terminology related to **Trigonometric identities and equations**- Describe the fundamental principles and concepts of **Trigonometric identities and equations**- Apply understanding of **Trigonometric identities and equations** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Trigonometric identities and equations**- Make connections between **Trigonometric identities and equations** and other areas of the subject### 7. Differentiation and integration
+- Define and explain key terminology related to **Differentiation and integration**- Describe the fundamental principles and concepts of **Differentiation and integration**- Apply understanding of **Differentiation and integration** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Differentiation and integration**- Make connections between **Differentiation and integration** and other areas of the subject### 8. Vectors in 2D
+- Define and explain key terminology related to **Vectors in 2D**- Describe the fundamental principles and concepts of **Vectors in 2D**- Apply understanding of **Vectors in 2D** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Vectors in 2D**- Make connections between **Vectors in 2D** and other areas of the subject### 9. Kinematics
+- Define and explain key terminology related to **Kinematics**- Describe the fundamental principles and concepts of **Kinematics**- Apply understanding of **Kinematics** to solve problems and analyse scenarios- Evaluate and critique different perspectives or approaches within **Kinematics**- Make connections between **Kinematics** and other areas of the subject## Assessment Objectives
+- **AO1:** Recall, select, and communicate knowledge (30–40%)
+- **AO2:** Apply knowledge to given contexts (30–40%)
+- **AO3:** Analyse, evaluate, and make judgements (20–30%)
+
+## Recommended Resources
+- Official syllabus document (Cambridge / College Board / IB)
+- Approved textbook series for the syllabus code
+- Past examination papers and mark schemes
