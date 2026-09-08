@@ -1,0 +1,6 @@
+{
+  "name": "Noorix Learning",
+  "description": "Noorix Learning Solutions: Next-generation Cambridge O-Level study system with AI Learning Agents, step-by-step Math Lab, adaptive diagnostics, and cybernetic HUD interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
