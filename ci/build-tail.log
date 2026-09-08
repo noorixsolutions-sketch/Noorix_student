@@ -1,0 +1,89 @@
+
+Welcome to Gradle 9.3.1!
+
+Here are the highlights of this release:
+ - Test reporting improvements
+ - Error and warning improvements
+ - Build authoring improvements
+
+For more details see https://docs.gradle.org/9.3.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: :app:assembleDebug
+> Task :app:preBuild UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+
+> Task :app:processDebugGoogleServices
+File google-services.json is missing.
+The Google Services Plugin cannot function without it.
+Searched locations: /home/runner/work/Noorix_student/Noorix_student/app/src/debug/google-services.json, /home/runner/work/Noorix_student/Noorix_student/app/src/debug/google-services.json, /home/runner/work/Noorix_student/Noorix_student/app/src/google-services.json, /home/runner/work/Noorix_student/Noorix_student/app/src/debug/google-services.json, /home/runner/work/Noorix_student/Noorix_student/app/src/Debug/google-services.json, /home/runner/work/Noorix_student/Noorix_student/app/google-services.json
+
+> Task :app:generateDebugResources
+> Task :app:generateDebugBuildConfig
+> Task :app:packageDebugResources
+> Task :app:javaPreCompileDebug
+> Task :app:processDebugNavigationResources
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:parseDebugLocalResources
+> Task :app:checkDebugDuplicateClasses
+> Task :app:generateDebugRFile
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugNavigationResources
+> Task :app:mergeExtDexDebug
+> Task :app:mergeLibDexDebug
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeDebugNativeLibs
+> Task :app:mergeDebugResources
+> Task :app:stripDebugDebugSymbols
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:processDebugResources
+Exception in thread "AWT-EventQueue-0" java.lang.NullPointerException: Cannot invoke "ksp.com.intellij.openapi.application.Application.getService(java.lang.Class)" because the return value of "ksp.com.intellij.openapi.application.ApplicationManager.getApplication()" is null
+	at ksp.com.intellij.openapi.fileEditor.FileDocumentManager.getInstance(FileDocumentManager.java:35)
+	at ksp.com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers.lambda$notifyDecompilerSetChange$1(BinaryFileTypeDecompilers.java:29)
+	at java.desktop/java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:318)
+	at java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:773)
+	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:720)
+	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:714)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:87)
+	at java.desktop/java.awt.EventQueue.dispatchEvent(EventQueue.java:742)
+	at java.desktop/java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:203)
+	at java.desktop/java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:124)
+	at java.desktop/java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:113)
+	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:109)
+	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
+	at java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:90)
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/Noorix_student/Noorix_student/app/src/main/java/com/example/presentation/MainScreen.kt:52:82 'val Icons.Filled.Chat: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Chat.
+w: file:///home/runner/work/Noorix_student/Noorix_student/app/src/main/java/com/example/presentation/MainScreen.kt:53:82 'val Icons.Filled.LibraryBooks: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.LibraryBooks.
+w: file:///home/runner/work/Noorix_student/Noorix_student/app/src/main/java/com/example/presentation/screens/AuditScreen.kt:123:21 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///home/runner/work/Noorix_student/Noorix_student/app/src/main/java/com/example/presentation/screens/AuditScreen.kt:152:49 'fun Modifier.menuAnchor(): Modifier' is deprecated. Use overload that takes MenuAnchorType and enabled parameters.
+w: file:///home/runner/work/Noorix_student/Noorix_student/app/src/main/java/com/example/presentation/screens/DiagnosticScreen.kt:275:48 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+
+> Task :app:processDebugJavaRes
+> Task :app:mergeDebugJavaResource
+> Task :app:compileDebugJavaWithJavac
+> Task :app:dexBuilderDebug
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:assembleDebug
+> Task :app:createDebugApkListingFileRedirect
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1788892833541.json
+
+BUILD SUCCESSFUL in 7m 29s
+39 actionable tasks: 39 executed
+Configuration cache entry stored.
