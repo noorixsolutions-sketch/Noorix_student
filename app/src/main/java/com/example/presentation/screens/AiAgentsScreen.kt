@@ -61,67 +61,34 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                 id = "danish",
                 name = "DANISH",
                 role = "Mathematics 4024",
-                description = "Specializes in algebraic step-by-step problem solving, concept clarity & Cambridge Math 4024 mastery.",
+                description = "Specializes in algebraic step-by-step problem solving.",
                 tag = "Algebra / 4024",
                 imageRes = R.drawable.img_danish_math,
-                accentColor = NeonCyan,
+                accentColor = TealAccent,
                 targetTab = AppNavigationTab.SYMBOLIC_TUTOR,
-                promptStarter = "Hello Danish! Please explain how to solve quadratic factorisation step-by-step without sign errors."
+                promptStarter = "Hello Danish! Please explain how to solve quadratic factorisation step-by-step."
             ),
             NoorixAgent(
                 id = "zoya",
                 name = "ZOYA",
                 role = "Sciences 5054",
-                description = "Expert in Physics (5054), Chemistry & Biology with concept visualization and high-yield intuition.",
+                description = "Expert in Physics (5054) concept visualization.",
                 tag = "Physics / 5054",
                 imageRes = R.drawable.img_zoya_science,
-                accentColor = CyberGreen,
+                accentColor = StepCorrect,
                 targetTab = AppNavigationTab.MEDIA_TRANSFER,
-                promptStarter = "Hi Zoya! Can you give me a clear breakdown of Newton's laws and acceleration graphs?"
+                promptStarter = "Hi Zoya! Can you give me a clear breakdown of Newton's laws?"
             ),
             NoorixAgent(
                 id = "exam_coach",
                 name = "EXAM COACH",
                 role = "Exam Strategy",
-                description = "Guides you with past paper strategies, Cambridge scoring mark schemes & exam timing.",
-                tag = "Past Papers / IRT",
+                description = "Guides you with past paper strategies & exam timing.",
+                tag = "Past Papers",
                 imageRes = R.drawable.img_exam_coach,
                 accentColor = CyberGold,
                 targetTab = AppNavigationTab.DIAGNOSTIC,
-                promptStarter = "Coach, what are the top common pitfalls in Cambridge O-Level Paper 1 exams?"
-            ),
-            NoorixAgent(
-                id = "ayesha",
-                name = "AYESHA",
-                role = "Language 1123",
-                description = "Enhances reading comprehension, formal writing & Cambridge English communication skills.",
-                tag = "English / 1123",
-                imageRes = R.drawable.img_student_avatar,
-                accentColor = Color(0xFF64B5F6),
-                targetTab = AppNavigationTab.MEDIA_TRANSFER,
-                promptStarter = "Hello Ayesha! How can I structure an effective persuasive speech in English 1123?"
-            ),
-            NoorixAgent(
-                id = "bilal",
-                name = "BILAL",
-                role = "Aptitude & Logic",
-                description = "Builds quantitative reasoning, pattern sequences and structural problem solving.",
-                tag = "Reasoning",
-                imageRes = R.drawable.img_danish_math,
-                accentColor = Color(0xFFBA68C8),
-                targetTab = AppNavigationTab.SYMBOLIC_TUTOR,
-                promptStarter = "Bilal, help me solve arithmetic and geometric sequence proof patterns."
-            ),
-            NoorixAgent(
-                id = "career_guide",
-                name = "CAREER GUIDE",
-                role = "Academic Advisor",
-                description = "Discovers subject combinations and university paths based on your academic strengths.",
-                tag = "Career Paths",
-                imageRes = R.drawable.img_student_avatar,
-                accentColor = Color(0xFFFF8A65),
-                targetTab = AppNavigationTab.DASHBOARD,
-                promptStarter = "Which O-Level subjects should I focus on for Software Engineering and Artificial Intelligence?"
+                promptStarter = "Coach, what are the top common pitfalls in Paper 1 exams?"
             )
         )
     }
@@ -151,19 +118,19 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(CyberDarkBg)
+            .background(NearBlackBg)
     ) {
         // 1. Agent Selection Horizontal Carousel
         Surface(
-            color = CyberPanel,
-            border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.2f)),
+            color = NearBlackSurface,
+            border = BorderStroke(1.dp, SubtleBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 10.dp)) {
                 Text(
-                    text = "CAMBRIDGE AI TUTORS (FIREBASE AI / GEMINI 2.5 FLASH)",
+                    text = "AI TUTORS",
                     style = MaterialTheme.typography.labelSmall,
-                    color = NeonCyan,
+                    color = TextSecondary,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     letterSpacing = 1.1.sp
@@ -178,10 +145,10 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                         val isSelected = agent.id == currentAgent.id
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) agent.accentColor.copy(alpha = 0.15f) else CyberDarkBg,
+                            color = if (isSelected) NearBlackElevated else NearBlackBg,
                             border = BorderStroke(
                                 width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) agent.accentColor else CyberBorder
+                                color = if (isSelected) agent.accentColor else SubtleBorder
                             ),
                             modifier = Modifier
                                 .clickable { viewModel.selectAgent(agent.id) }
@@ -197,7 +164,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                                     modifier = Modifier
                                         .size(24.dp)
                                         .clip(CircleShape)
-                                        .border(1.dp, agent.accentColor, CircleShape),
+                                        .border(1.dp, if(isSelected) agent.accentColor else Color.Transparent, CircleShape),
                                     contentScale = ContentScale.Crop
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -206,12 +173,12 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                                         text = agent.name,
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) agent.accentColor else CyberTextPrimary
+                                        color = if (isSelected) agent.accentColor else TextPrimary
                                     )
                                     Text(
                                         text = agent.tag,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = CyberTextSecondary,
+                                        color = TextSecondary,
                                         fontSize = 9.sp
                                     )
                                 }
@@ -224,7 +191,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
 
         // 2. Active Agent Header Bar
         Surface(
-            color = CyberPanelElevated,
+            color = NearBlackElevated,
             border = BorderStroke(1.dp, currentAgent.accentColor.copy(alpha = 0.3f)),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -251,21 +218,21 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                             Text(
                                 text = currentAgent.name,
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.Bold,
                                 color = currentAgent.accentColor
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Box(
                                 modifier = Modifier
-                                    .size(7.dp)
+                                    .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(CyberGreen)
+                                    .background(TealAccent)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "LIVE LLM",
+                                text = "Online",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = CyberGreen,
+                                color = TextSecondary,
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -273,7 +240,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                         Text(
                             text = currentAgent.role + " • " + currentAgent.tag,
                             style = MaterialTheme.typography.bodySmall,
-                            color = CyberTextSecondary,
+                            color = TextSecondary,
                             fontSize = 11.sp
                         )
                     }
@@ -286,7 +253,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                     Icon(
                         Icons.Default.DeleteSweep,
                         contentDescription = "Clear Chat",
-                        tint = CyberTextSecondary,
+                        tint = TextSecondary,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -300,37 +267,9 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(top = 12.dp, bottom = 12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
         ) {
-            // Description & Specialty Intro
-            item {
-                NoorixCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    borderColor = currentAgent.accentColor.copy(alpha = 0.3f),
-                    containerColor = CyberPanel
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = currentAgent.accentColor, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "TUTOR PROFILE & PEDAGOGY",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = currentAgent.accentColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = currentAgent.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = CyberTextSecondary
-                        )
-                    }
-                }
-            }
-
             // Persisted Room messages
             items(chatMessages) { message ->
                 ChatMessageBubble(message = message, agentAccentColor = currentAgent.accentColor)
@@ -359,7 +298,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "${currentAgent.name} is streaming response...",
+                            text = "${currentAgent.name} is typing...",
                             style = MaterialTheme.typography.bodySmall,
                             color = currentAgent.accentColor,
                             fontFamily = FontFamily.Monospace
@@ -371,8 +310,8 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
 
         // 4. Quick Starter Chips (Prompt Starter)
         Surface(
-            color = CyberPanel,
-            border = BorderStroke(1.dp, CyberBorder),
+            color = NearBlackSurface,
+            border = BorderStroke(1.dp, SubtleBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -400,7 +339,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                             Text(
                                 text = "Starter: ${currentAgent.promptStarter.take(42)}...",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = CyberTextPrimary,
+                                color = TextPrimary,
                                 maxLines = 1,
                                 fontSize = 10.sp
                             )
@@ -416,8 +355,8 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                                 Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(14.dp))
                             },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = NeonCyan.copy(alpha = 0.2f),
-                                selectedLabelColor = NeonCyan
+                                selectedContainerColor = TealAccent.copy(alpha = 0.2f),
+                                selectedLabelColor = TealAccent
                             )
                         )
                     }
@@ -444,16 +383,16 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                                     "Ask ${currentAgent.name} anything..."
                                 },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = CyberTextSecondary
+                                color = TextSecondary
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = CyberDarkBg,
-                            unfocusedContainerColor = CyberDarkBg,
+                            focusedContainerColor = NearBlackBg,
+                            unfocusedContainerColor = NearBlackBg,
                             focusedBorderColor = currentAgent.accentColor,
-                            unfocusedBorderColor = CyberBorder,
-                            focusedTextColor = CyberTextPrimary,
-                            unfocusedTextColor = CyberTextPrimary
+                            unfocusedBorderColor = SubtleBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
                         ),
                         shape = RoundedCornerShape(12.dp),
                         maxLines = 4
@@ -478,13 +417,13 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(if (inputText.isNotBlank()) currentAgent.accentColor else CyberBorder)
+                            .background(if (inputText.isNotBlank()) currentAgent.accentColor else SubtleBorder)
                             .testTag("agent_send_button")
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
-                            tint = if (inputText.isNotBlank()) CyberDarkBg else CyberTextSecondary
+                            tint = if (inputText.isNotBlank()) NearBlackBg else TextSecondary
                         )
                     }
                 }
@@ -508,10 +447,10 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                 bottomStart = if (isUser) 14.dp else 2.dp,
                 bottomEnd = if (isUser) 2.dp else 14.dp
             ),
-            color = if (isUser) NeonCyan.copy(alpha = 0.15f) else CyberPanel,
+            color = if (isUser) TealAccent.copy(alpha = 0.15f) else NearBlackSurface,
             border = BorderStroke(
                 width = 1.dp,
-                color = if (isUser) NeonCyan.copy(alpha = 0.5f) else agentAccentColor.copy(alpha = 0.4f)
+                color = if (isUser) TealAccent.copy(alpha = 0.5f) else agentAccentColor.copy(alpha = 0.4f)
             ),
             modifier = Modifier.widthIn(max = 320.dp)
         ) {
@@ -523,9 +462,9 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isUser) "YOU (STUDENT)" else "AI TUTOR",
+                        text = if (isUser) "YOU" else "TUTOR",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isUser) NeonCyan else agentAccentColor,
+                        color = if (isUser) TealAccent else agentAccentColor,
                         fontWeight = FontWeight.Bold,
                         fontSize = 10.sp
                     )
@@ -533,12 +472,12 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                     if (message.isVerifiedMath) {
                         Surface(
                             shape = RoundedCornerShape(4.dp),
-                            color = CyberGreen.copy(alpha = 0.15f),
-                            border = BorderStroke(1.dp, CyberGreen)
+                            color = StepCorrect.copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, StepCorrect)
                         ) {
                             Text(
-                                text = "DETERMINISTIC VERIFIED",
-                                color = CyberGreen,
+                                text = "VERIFIED",
+                                color = StepCorrect,
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
@@ -553,7 +492,7 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                 Text(
                     text = message.content,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = CyberTextPrimary,
+                    color = TextPrimary,
                     lineHeight = 20.sp
                 )
 
@@ -562,22 +501,22 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = CyberDarkBg,
-                        border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.3f)),
+                        color = NearBlackBg,
+                        border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.3f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
                             Text(
-                                text = "SYMBOLIC VERIFIER TRACE:",
+                                text = "VERIFIER TRACE:",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = NeonCyan,
+                                color = TealAccent,
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = message.mathVerificationTrace,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = CyberTextSecondary,
+                                color = TextSecondary,
                                 fontSize = 10.sp,
                                 fontFamily = FontFamily.Monospace
                             )
@@ -597,7 +536,7 @@ fun StreamingMessageBubble(text: String, agentAccentColor: Color) {
     ) {
         Surface(
             shape = RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp, bottomStart = 2.dp, bottomEnd = 14.dp),
-            color = CyberPanel,
+            color = NearBlackSurface,
             border = BorderStroke(1.dp, agentAccentColor),
             modifier = Modifier.widthIn(max = 320.dp)
         ) {
@@ -606,7 +545,7 @@ fun StreamingMessageBubble(text: String, agentAccentColor: Color) {
                     Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(agentAccentColor))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "GENERATING STREAM...",
+                        text = "TYPING...",
                         style = MaterialTheme.typography.labelSmall,
                         color = agentAccentColor,
                         fontWeight = FontWeight.Bold,
@@ -617,7 +556,7 @@ fun StreamingMessageBubble(text: String, agentAccentColor: Color) {
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = CyberTextPrimary,
+                    color = TextPrimary,
                     lineHeight = 20.sp
                 )
             }

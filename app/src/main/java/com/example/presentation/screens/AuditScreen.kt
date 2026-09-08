@@ -1,6 +1,10 @@
 package com.example.presentation.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,11 +24,32 @@ import com.example.presentation.OLevelViewModel
 import com.example.ui.theme.CyanAccent
 import com.example.ui.theme.GoldAccent
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuditScreen(viewModel: OLevelViewModel) {
     val auditLogs by viewModel.auditLogs.collectAsState()
     val events by viewModel.eventsList.collectAsState()
+    
+    val openRouterKey by viewModel.openRouterApiKey.collectAsState()
+    val openRouterModels by viewModel.openRouterModels.collectAsState()
+    val selectedOpenRouterModel by viewModel.selectedOpenRouterModel.collectAsState()
+    val localModelUri by viewModel.localModelUri.collectAsState()
+    val localMmprojUri by viewModel.localMmprojUri.collectAsState()
+
     var showPurgeConfirmDialog by remember { mutableStateOf(false) }
+    var expandedModelDropdown by remember { mutableStateOf(false) }
+
+    val mmprojPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.setLocalMmprojUri(it) }
+    }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.setLocalModelUri(it) }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -32,6 +57,119 @@ fun AuditScreen(viewModel: OLevelViewModel) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // AI Model Engine Settings
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "AI ENGINE CONFIGURATION",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = CyanAccent,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Local LLM via Llama.cpp (Vulkan + mmproj)",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Load a local GGUF model from your device storage. Hardware acceleration via Vulkan is enabled by default. Requires compatible mmproj file for multimodal tasks.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { filePickerLauncher.launch(arrayOf("*/*")) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(imageVector = Icons.Default.FolderOpen, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (localModelUri != null) "Change Local Model" else "Browse Local File System")
+                    }
+                    if (localModelUri != null) {
+                        Text(
+                            text = "Selected: ${localModelUri?.lastPathSegment}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = CyanAccent,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { mmprojPickerLauncher.launch(arrayOf("*/*")) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Icon(imageVector = Icons.Default.ImageSearch, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (localMmprojUri != null) "Change mmproj File" else "Select Vision mmproj File")
+                    }
+                    if (localMmprojUri != null) {
+                        Text(
+                            text = "Vision Model: ${localMmprojUri?.lastPathSegment}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = CyanAccent,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    Divider(modifier = Modifier.padding(vertical = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+
+                    Text(
+                        text = "OpenRouter Cloud Models",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = openRouterKey,
+                        onValueChange = { viewModel.updateOpenRouterApiKey(it) },
+                        label = { Text("OpenRouter API Key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    ExposedDropdownMenuBox(
+                        expanded = expandedModelDropdown,
+                        onExpandedChange = { expandedModelDropdown = !expandedModelDropdown }
+                    ) {
+                        OutlinedTextField(
+                            value = openRouterModels.find { it.id == selectedOpenRouterModel }?.name ?: "Select Model...",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Cloud Model") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModelDropdown) },
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedModelDropdown,
+                            onDismissRequest = { expandedModelDropdown = false }
+                        ) {
+                            openRouterModels.forEach { model ->
+                                DropdownMenuItem(
+                                    text = { Text(model.name) },
+                                    onClick = {
+                                        viewModel.selectOpenRouterModel(model.id)
+                                        expandedModelDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Header
         item {
             Card(
@@ -80,7 +218,6 @@ fun AuditScreen(viewModel: OLevelViewModel) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
                     Spacer(modifier = Modifier.height(14.dp))
                     Button(
                         onClick = { showPurgeConfirmDialog = true },
@@ -124,14 +261,12 @@ fun AuditScreen(viewModel: OLevelViewModel) {
                             fontWeight = FontWeight.Bold
                         )
                     }
-
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Events are appended monotonically at t=0 and replayed by the Projection Engine to derive student state.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
                     Spacer(modifier = Modifier.height(10.dp))
                     events.takeLast(6).reversed().forEach { evt ->
                         Column(

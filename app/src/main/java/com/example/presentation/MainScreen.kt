@@ -29,7 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.presentation.components.CyberHudSecurityDialog
 import com.example.presentation.components.NoorixTopBar
 import com.example.presentation.screens.*
 import com.example.ui.theme.*
@@ -43,76 +42,81 @@ data class NoorixNavDestination(
 @Composable
 fun MainScreen(viewModel: OLevelViewModel) {
     val currentTab by viewModel.currentTab.collectAsState()
+    val onboarding by viewModel.onboardingState.collectAsState()
     val statusBanner by viewModel.statusBanner.collectAsState()
     val activePkg by viewModel.activePackage.collectAsState()
 
-    var showCyberHud by remember { mutableStateOf(false) }
-
+    // Reduced nav: Home, Tutors, Courses, Practice, Media, Settings (Audit)
     val navDestinations = listOf(
-        NoorixNavDestination(AppNavigationTab.DASHBOARD, "Dashboard", Icons.Default.Dashboard),
-        NoorixNavDestination(AppNavigationTab.AI_AGENTS, "AI Agents", Icons.Default.SmartToy),
-        NoorixNavDestination(AppNavigationTab.SYMBOLIC_TUTOR, "Math Lab", Icons.Default.Calculate),
-        NoorixNavDestination(AppNavigationTab.DIAGNOSTIC, "Quiz", Icons.Default.Psychology),
-        NoorixNavDestination(AppNavigationTab.MEDIA_TRANSFER, "Podcasts", Icons.Default.Podcasts),
-        NoorixNavDestination(AppNavigationTab.DECAY_SYNC, "Memory", Icons.Default.Timeline)
+        NoorixNavDestination(AppNavigationTab.DASHBOARD, "Home", Icons.Default.Home),
+        NoorixNavDestination(AppNavigationTab.AI_AGENTS, "Tutors", Icons.Default.Chat),
+        NoorixNavDestination(AppNavigationTab.PACKAGES, "Courses", Icons.Default.LibraryBooks),
+        NoorixNavDestination(AppNavigationTab.DIAGNOSTIC, "Practice", Icons.Default.Psychology),
+        NoorixNavDestination(AppNavigationTab.SYMBOLIC_TUTOR, "Math Lab", Icons.Default.Calculate)
     )
 
     Scaffold(
-        containerColor = CyberDarkBg,
-        topBar = {
-            NoorixTopBar(
-                onSystemHudClick = { showCyberHud = true },
-                onProfileClick = { showCyberHud = true }
-            )
+        containerColor = NearBlackBg,
+                topBar = {
+            if (currentTab != AppNavigationTab.ONBOARDING) {
+                NoorixTopBar(
+                    onSystemHudClick = { viewModel.setTab(AppNavigationTab.AUDIT) }, 
+                    onProfileClick = { viewModel.setTab(AppNavigationTab.AUDIT) }
+                )
+            }
         },
-        bottomBar = {
-            NavigationBar(
-                containerColor = CyberPanel,
-                tonalElevation = 6.dp,
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .border(BorderStroke(1.dp, CyberPanelBorder))
-            ) {
-                navDestinations.forEach { dest ->
-                    val isSelected = currentTab == dest.tab
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = { viewModel.setTab(dest.tab) },
-                        icon = {
-                            Icon(
-                                imageVector = dest.icon,
-                                contentDescription = dest.title,
-                                modifier = Modifier.size(20.dp)
+                bottomBar = {
+            if (currentTab != AppNavigationTab.ONBOARDING) {
+                NavigationBar(
+                    containerColor = NearBlackSurface,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .border(BorderStroke(1.dp, SubtleBorder))
+                ) {
+                    navDestinations.forEach { dest ->
+                        val isSelected = currentTab == dest.tab
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = { viewModel.setTab(dest.tab) },
+                            icon = {
+                                Icon(
+                                    imageVector = dest.icon,
+                                    contentDescription = dest.title,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = dest.title,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    maxLines = 1
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = TealAccent,
+                                unselectedIconColor = TextSecondary,
+                                selectedTextColor = TealAccent,
+                                unselectedTextColor = TextSecondary,
+                                indicatorColor = TealAccentSubtle
                             )
-                        },
-                        label = {
-                            Text(
-                                text = dest.title,
-                                fontSize = 10.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                maxLines = 1
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = NeonCyan,
-                            unselectedIconColor = CyberTextSecondary,
-                            selectedTextColor = NeonCyan,
-                            unselectedTextColor = CyberTextSecondary,
-                            indicatorColor = NeonCyan.copy(alpha = 0.15f)
                         )
-                    )
+                    }
                 }
             }
         }
+
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(CyberDarkBg)
+                .background(NearBlackBg)
                 .padding(innerPadding)
         ) {
             // Main Screen Routing
             when (currentTab) {
+                AppNavigationTab.ONBOARDING -> OnboardingScreen(viewModel)
                 AppNavigationTab.DASHBOARD -> DashboardScreen(viewModel)
                 AppNavigationTab.AI_AGENTS -> AiAgentsScreen(viewModel)
                 AppNavigationTab.SYMBOLIC_TUTOR -> SymbolicTutorScreen(viewModel)
@@ -123,7 +127,7 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 AppNavigationTab.AUDIT -> AuditScreen(viewModel)
             }
 
-            // High-Tech Cyber Notification Banner
+            // High-Tech Cyber Notification Banner -> Calm Notification Banner
             AnimatedVisibility(
                 visible = statusBanner != null,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -134,41 +138,39 @@ fun MainScreen(viewModel: OLevelViewModel) {
             ) {
                 statusBanner?.let { msg ->
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = CyberPanelElevated,
-                        border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f)),
-                        shadowElevation = 8.dp,
+                        shape = RoundedCornerShape(8.dp),
+                        color = NearBlackElevated,
+                        border = BorderStroke(1.dp, TealAccentSubtle),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { viewModel.dismissBanner() }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 Icons.Default.Info,
                                 contentDescription = null,
-                                tint = NeonCyan,
-                                modifier = Modifier.size(18.dp)
+                                tint = TealAccent,
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = msg,
-                                color = CyberTextPrimary,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium,
+                                color = TextPrimary,
+                                style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.weight(1f)
                             )
                             IconButton(
                                 onClick = { viewModel.dismissBanner() },
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
                                     Icons.Default.Close,
                                     contentDescription = "Dismiss",
-                                    tint = CyberTextSecondary,
-                                    modifier = Modifier.size(14.dp)
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
@@ -176,13 +178,5 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 }
             }
         }
-    }
-
-    // Cyber HUD System Check & Security Modal (Matching Image 3)
-    if (showCyberHud) {
-        CyberHudSecurityDialog(
-            viewModel = viewModel,
-            onDismiss = { showCyberHud = false }
-        )
     }
 }

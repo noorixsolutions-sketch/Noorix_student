@@ -97,7 +97,7 @@ fun NoorixSegmentedProgressBar(
 }
 
 /**
- * Top App Bar with official Noorix Logo, Search, Streak and Profile
+ * Minimal Top App Bar with official Noorix Logo and Profile
  */
 @Composable
 fun NoorixTopBar(
@@ -106,7 +106,7 @@ fun NoorixTopBar(
     onSystemHudClick: () -> Unit = {}
 ) {
     Surface(
-        color = CyberDarkBg,
+        color = NearBlackBg,
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
@@ -114,117 +114,38 @@ fun NoorixTopBar(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Noorix Brand Logo + Name
+                // Noorix Brand Logo
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { onSystemHudClick() }
-                        .padding(4.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.img_noorix_logo),
                         contentDescription = "Noorix Logo",
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .border(1.5.dp, NeonCyan, CircleShape),
+                            .size(32.dp)
+                            .clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = "NOORIX",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = NeonCyan,
-                            letterSpacing = 1.2.sp
-                        )
-                        Text(
-                            text = "LEARNING SOLUTIONS",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = CyberTextSecondary,
-                            letterSpacing = 1.5.sp
-                        )
-                    }
                 }
 
-                // Action controls: Streak + System HUD + User Profile
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Profile / Settings Entry
+                IconButton(
+                    onClick = onProfileClick,
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    // Streak Badge (🔥 12 Days)
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = CyberPanelElevated,
-                        border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f))
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text("🔥", fontSize = 11.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "12d",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = CyberGold
-                            )
-                        }
-                    }
-
-                    // System HUD inspector button
-                    IconButton(
-                        onClick = onSystemHudClick,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = "System Security HUD",
-                            tint = NeonCyan,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // User Profile chip
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = CyberPanelElevated,
-                        border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.4f)),
-                        modifier = Modifier.clickable { onProfileClick() }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.img_student_avatar),
-                                contentDescription = "User Avatar",
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Ali",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = CyberTextPrimary
-                            )
-                        }
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }

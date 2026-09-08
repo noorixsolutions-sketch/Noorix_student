@@ -31,8 +31,20 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.domain.onboarding.OnboardingState
+import com.example.domain.onboarding.OnboardingPhase
+import com.example.domain.onboarding.OnboardingData
+
+
+import com.example.core.network.OpenRouterApi
+import com.example.core.network.OpenRouterModel
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
+import android.net.Uri
+
 
 enum class AppNavigationTab {
+    ONBOARDING,
     DASHBOARD,
     AI_AGENTS,
     PACKAGES,
@@ -47,13 +59,141 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     private val repository = LearningRepository(application.applicationContext)
 
-    val currentTab = MutableStateFlow(AppNavigationTab.DASHBOARD)
+    val currentTab = MutableStateFlow(AppNavigationTab.ONBOARDING)
     val simulatedWallTimeMs: StateFlow<Long> = repository.simulatedWallTimeMs
     val activePackage: StateFlow<CoursePackage?> = repository.activePackage
     val studentModel: StateFlow<StudentModel> = repository.studentModel
     val activePlan: StateFlow<LearningPlan?> = repository.activePlan
+
+    private val _openRouterApiKey = MutableStateFlow("")
+    val openRouterApiKey: StateFlow<String> = _openRouterApiKey.asStateFlow()
+
+    private val _openRouterModels = MutableStateFlow<List<OpenRouterModel>>(emptyList())
+    val openRouterModels: StateFlow<List<OpenRouterModel>> = _openRouterModels.asStateFlow()
+
+    private val _selectedOpenRouterModel = MutableStateFlow<String?>(null)
+    val selectedOpenRouterModel: StateFlow<String?> = _selectedOpenRouterModel.asStateFlow()
+
+    private val _localModelUri = MutableStateFlow<Uri?>(null)
+    val localModelUri: StateFlow<Uri?> = _localModelUri.asStateFlow()
+
+    private val _localMmprojUri = MutableStateFlow<Uri?>(null)
+    val localMmprojUri: StateFlow<Uri?> = _localMmprojUri.asStateFlow()
+
+    private val retrofit = Retrofit.Builder()
+        .baseUrl("https://openrouter.ai/")
+        .addConverterFactory(MoshiConverterFactory.create())
+        .build()
+
+    private val openRouterApi = retrofit.create(OpenRouterApi::class.java)
+
+    fun updateOpenRouterApiKey(key: String) {
+        _openRouterApiKey.value = key
+        if (key.isNotBlank()) {
+            fetchOpenRouterModels(key)
+        }
+    }
+
+    private fun fetchOpenRouterModels(key: String) {
+        viewModelScope.launch {
+            try {
+                val response = openRouterApi.getModels("Bearer $key")
+                _openRouterModels.value = response.data
+                if (response.data.isNotEmpty() && _selectedOpenRouterModel.value == null) {
+                    _selectedOpenRouterModel.value = response.data.first().id
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun selectOpenRouterModel(modelId: String) {
+        _selectedOpenRouterModel.value = modelId
+    }
+
+    fun setLocalMmprojUri(uri: Uri) {
+        _localMmprojUri.value = uri
+    }
+
+    fun setLocalModelUri(uri: Uri) {
+        _localModelUri.value = uri
+    }
+
     val diagnosticSession: StateFlow<DiagnosticSessionState> = repository.diagnosticSession
     val mediaRecord: StateFlow<MediaLearningRecord?> = repository.mediaRecord
+
+    // Onboarding State
+    private val _onboardingState = MutableStateFlow(OnboardingState())
+    val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
+
+    fun startOnboardingPhase(phase: OnboardingPhase) {
+        _onboardingState.value = _onboardingState.value.copy(phase = phase)
+        if (phase == OnboardingPhase.TEST_C_CURRICULUM) {
+            startDiagnostic()
+        }
+        if (phase == OnboardingPhase.COMPLETE) {
+            setTab(AppNavigationTab.DASHBOARD)
+        }
+    }
+
+        fun submitTestAAnswer(value: Int) {
+        val state = _onboardingState.value
+        val newResponses = state.testAResponses + value
+        if (state.testAIndex + 1 < OnboardingData.testA.size) {
+            _onboardingState.value = state.copy(testAIndex = state.testAIndex + 1, testAResponses = newResponses)
+        } else {
+            val signals = mapOf(
+                "persistence" to (newResponses[0] / 5f),
+                "confidence" to (newResponses[1] / 5f),
+                "frustration_response" to (newResponses[2] / 5f),
+                "metacognition" to (newResponses[3] / 5f)
+            )
+            viewModelScope.launch {
+                repository.recordEvent(
+                    com.example.core.model.EventType.STUDENT_ONBOARDED,
+                    "{ \"psychometricSignals\": { \"persistence\": ${signals["persistence"]}, \"confidence\": ${signals["confidence"]}, \"frustration_response\": ${signals["frustration_response"]}, \"metacognition\": ${signals["metacognition"]} } }"
+                )
+            }
+            _onboardingState.value = state.copy(
+                testAResponses = newResponses,
+                psychometricSignals = signals,
+                phase = OnboardingPhase.TEST_B_COGNITIVE
+            )
+        }
+    }
+
+    fun submitTestBAnswer(selectedIndex: Int) {
+        val state = _onboardingState.value
+        val q = OnboardingData.testB[state.testBIndex]
+        val isCorrect = selectedIndex == q.correctIndex
+        val newResponses = state.testBResponses + isCorrect
+        
+        if (state.testBIndex + 1 < OnboardingData.testB.size) {
+            _onboardingState.value = state.copy(testBIndex = state.testBIndex + 1, testBResponses = newResponses)
+        } else {
+            val signals = mapOf(
+                "pattern_reasoning" to if (newResponses[0]) 1f else 0.5f,
+                "logical_reasoning" to if (newResponses[1]) 1f else 0.5f,
+                "working_memory" to if (newResponses[2]) 1f else 0.5f,
+                "spatial_reasoning" to if (newResponses[3]) 1f else 0.5f
+            )
+            viewModelScope.launch {
+                repository.recordEvent(
+                    com.example.core.model.EventType.STUDENT_ONBOARDED,
+                    "{ \"cognitiveSignals\": { \"pattern_reasoning\": ${signals["pattern_reasoning"]}, \"logical_reasoning\": ${signals["logical_reasoning"]}, \"working_memory\": ${signals["working_memory"]}, \"spatial_reasoning\": ${signals["spatial_reasoning"]} } }"
+                )
+            }
+            _onboardingState.value = state.copy(
+                testBResponses = newResponses,
+                cognitiveSignals = signals,
+                phase = OnboardingPhase.TEST_C_CURRICULUM
+            )
+            startDiagnostic()
+        }
+    }
+
+
 
     val auditLogs: StateFlow<List<AuditLogEntity>> = repository.auditLogsFlow.stateIn(
         scope = viewModelScope,
