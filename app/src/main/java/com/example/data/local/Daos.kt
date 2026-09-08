@@ -83,3 +83,19 @@ interface AuditDao {
     @Query("SELECT * FROM audit_log ORDER BY timestampMs DESC")
     suspend fun getAllAudits(): List<AuditLogEntity>
 }
+
+@Dao
+interface ChatMessageDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMessage(message: ChatMessageEntity)
+
+    @Query("SELECT * FROM agent_chat_messages WHERE agentId = :agentId ORDER BY timestampMs ASC")
+    fun getMessagesForAgentFlow(agentId: String): Flow<List<ChatMessageEntity>>
+
+    @Query("SELECT * FROM agent_chat_messages WHERE agentId = :agentId ORDER BY timestampMs ASC")
+    suspend fun getMessagesForAgent(agentId: String): List<ChatMessageEntity>
+
+    @Query("DELETE FROM agent_chat_messages WHERE agentId = :agentId")
+    suspend fun clearAgentChat(agentId: String)
+}
+

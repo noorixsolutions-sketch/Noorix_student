@@ -50,3 +50,15 @@ data class AuditLogEntity(
     val details: String,
     val verificationHash: String
 )
+
+@Entity(tableName = "agent_chat_messages")
+data class ChatMessageEntity(
+    @PrimaryKey val messageId: String,
+    val agentId: String,
+    val sender: String, // "student" or "agent"
+    val content: String,
+    val timestampMs: Long,
+    val isVerifiedMath: Boolean = false,
+    val mathVerificationTrace: String? = null
+)
+

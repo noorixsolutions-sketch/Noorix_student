@@ -10,9 +10,10 @@ import androidx.room.RoomDatabase
         EventEntity::class,
         CoursePackageEntity::class,
         OfflineSyncQueueEntity::class,
-        AuditLogEntity::class
+        AuditLogEntity::class,
+        ChatMessageEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,6 +21,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun coursePackageDao(): CoursePackageDao
     abstract fun syncQueueDao(): SyncQueueDao
     abstract fun auditDao(): AuditDao
+    abstract fun chatMessageDao(): ChatMessageDao
 
     companion object {
         @Volatile

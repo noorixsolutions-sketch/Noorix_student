@@ -15,6 +15,8 @@ import com.example.core.model.TransferTask
 import com.example.core.model.VerificationResult
 import com.example.data.curriculum.CoursePackageProvider
 import com.example.data.local.AuditLogEntity
+import com.example.domain.ai.NoorixAiAgentManager
+import com.example.data.local.ChatMessageEntity
 import com.example.domain.diagnostic.DiagnosticSessionState
 import com.example.domain.planner.AdaptivePlannerEngine
 import com.example.domain.repository.LearningRepository
@@ -83,11 +85,56 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     val transferFeedback: StateFlow<String?> = _transferFeedback.asStateFlow()
 
     // Noorix AI Agent state
+    private val agentManager = NoorixAiAgentManager(application.applicationContext, repository.chatMessageDao)
     private val _selectedAgentId = MutableStateFlow("danish")
     val selectedAgentId: StateFlow<String> = _selectedAgentId.asStateFlow()
 
+    private val _agentStreamingText = MutableStateFlow<String?>(null)
+    val agentStreamingText: StateFlow<String?> = _agentStreamingText.asStateFlow()
+
+    private val _isAgentThinking = MutableStateFlow(false)
+    val isAgentThinking: StateFlow<Boolean> = _isAgentThinking.asStateFlow()
+
+    fun getChatMessages(agentId: String): kotlinx.coroutines.flow.Flow<List<ChatMessageEntity>> {
+        return agentManager.getChatHistory(agentId)
+    }
+
     fun selectAgent(agentId: String) {
         _selectedAgentId.value = agentId
+    }
+
+    fun onAgentOpened(agentId: String, promptStarter: String) {
+        _selectedAgentId.value = agentId
+        viewModelScope.launch {
+            val existing = repository.chatMessageDao.getMessagesForAgent(agentId)
+            if (existing.isEmpty() && promptStarter.isNotBlank()) {
+                sendAgentMessage(agentId, promptStarter)
+            }
+        }
+    }
+
+    fun sendAgentMessage(agentId: String, text: String, isStepVerification: Boolean = false) {
+        if (text.isBlank()) return
+        viewModelScope.launch {
+            _isAgentThinking.value = true
+            _agentStreamingText.value = ""
+            try {
+                agentManager.sendMessageStream(agentId, text, isStepVerification).collect { partialText ->
+                    _agentStreamingText.value = partialText
+                }
+            } catch (e: Exception) {
+                _agentStreamingText.value = "Error streaming from tutor: ${e.localizedMessage}"
+            } finally {
+                _isAgentThinking.value = false
+                _agentStreamingText.value = null
+            }
+        }
+    }
+
+    fun clearAgentChat(agentId: String) {
+        viewModelScope.launch {
+            agentManager.clearChat(agentId)
+        }
     }
 
     // Sync state
@@ -150,6 +197,27 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                 "Symbolic Math Verification: ALL STEPS VALID. Deterministic proof committed."
             } else {
                 "Symbolic Math Verification: Invalid step ${res.firstInvalidStepIndex} (${res.errorType}). Error isolated."
+            }
+        }
+    }
+
+    private val _isOcrScanning = MutableStateFlow(false)
+    val isOcrScanning: StateFlow<Boolean> = _isOcrScanning.asStateFlow()
+
+    fun processCapturedBitmap(bitmap: android.graphics.Bitmap) {
+        viewModelScope.launch {
+            _isOcrScanning.value = true
+            try {
+                val ocr = repository.parseNotebookBitmap(bitmap)
+                _ocrResult.value = ocr
+                if (ocr.extractedSteps.isNotEmpty()) {
+                    val firstStep = ocr.extractedSteps.firstOrNull()?.expression ?: "x(x+2)"
+                    verifyCustomMathSteps(firstStep, ocr.extractedSteps, "concept:4024:factorisation")
+                }
+            } catch (e: Exception) {
+                _statusBanner.value = "OCR Scan error: ${e.localizedMessage}"
+            } finally {
+                _isOcrScanning.value = false
             }
         }
     }

@@ -62,6 +62,7 @@ class LearningRepository(context: Context) {
     private val packageDao = db.coursePackageDao()
     private val syncQueueDao = db.syncQueueDao()
     private val auditDao = db.auditDao()
+    val chatMessageDao = db.chatMessageDao()
 
     private val hybridClock = HybridClock("android-node-01")
     private val syncEngine = HlcSyncEngine(eventDao, syncQueueDao, hybridClock)
@@ -297,6 +298,10 @@ class LearningRepository(context: Context) {
     // ==========================================
     // Vision & OCR Pipeline
     // ==========================================
+
+    suspend fun parseNotebookBitmap(bitmap: android.graphics.Bitmap): NotebookParseResult {
+        return VisionPipeline.parseNotebookBitmap(bitmap)
+    }
 
     fun parseNotebookPage(lines: List<Pair<String, Double>>): NotebookParseResult {
         return VisionPipeline.parseNotebookPage(lines)

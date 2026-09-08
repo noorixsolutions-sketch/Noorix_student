@@ -1,0 +1,198 @@
+{
+  "manifest": {
+    "packageId": "pkg-4024-2025-2027",
+    "courseId": "course:mathematics-4024",
+    "subjectName": "Mathematics (Cambridge 4024)",
+    "version": "2025-2027",
+    "schemaVersion": "1.0",
+    "createdAt": "2026-09-08T00:00:00Z",
+    "contentHash": "05bc022f52109f283911abb29022dcde97f00cc94fdbd72544453f188fb40d78",
+    "parentVersion": null,
+    "deltaBase": null,
+    "signature": "7Mh0E48G1w6DvH3iXvcF816bjDpLvKzyl/JC9ZUiJUJ/U6oQKJ1IOrDkxpNtszVqLAYPOW3Oy1thRo8Rh2WPAg=="
+  },
+  "nodes": [
+    {
+      "id": "qualification:cambridge-o-level",
+      "type": "QUALIFICATION",
+      "name": "Cambridge O Level",
+      "properties": {
+        "provider": "Cambridge Assessment International Education"
+      },
+      "provenance": {
+        "sourceType": "OFFICIAL_SYLLABUS",
+        "sourceReference": "Cambridge-O-Level-2026",
+        "sourceVersion": "2026-v2",
+        "retrievedAt": "2026-09-08T00:00:00Z",
+        "verified": true,
+        "contentHash": ""
+      }
+    },
+    {
+      "id": "course:mathematics-4024",
+      "type": "COURSE",
+      "name": "Mathematics",
+      "properties": {
+        "code": "4024",
+        "qualification": "qualification:cambridge-o-level"
+      }
+    },
+    {
+      "id": "topic:4024:algebra",
+      "type": "TOPIC",
+      "name": "Algebra & Algebraic Manipulation",
+      "properties": {
+        "course": "course:mathematics-4024"
+      }
+    },
+    {
+      "id": "concept:4024:algebraic-expressions",
+      "type": "CONCEPT",
+      "name": "Algebraic Expressions & Like Terms",
+      "properties": {
+        "difficulty": "0.35",
+        "topic": "topic:4024:algebra"
+      }
+    },
+    {
+      "id": "concept:4024:common-factors",
+      "type": "CONCEPT",
+      "name": "Extracting Common Factors",
+      "properties": {
+        "difficulty": "0.45",
+        "topic": "topic:4024:algebra"
+      }
+    },
+    {
+      "id": "concept:4024:factorisation",
+      "type": "CONCEPT",
+      "name": "Quadratic & Binomial Factorisation",
+      "properties": {
+        "difficulty": "0.62",
+        "topic": "topic:4024:algebra"
+      }
+    },
+    {
+      "id": "concept:4024:quadratic-equations",
+      "type": "CONCEPT",
+      "name": "Solving Quadratic Equations",
+      "properties": {
+        "difficulty": "0.75",
+        "topic": "topic:4024:algebra"
+      }
+    },
+    {
+      "id": "misconception:factorisation:sign-error",
+      "type": "MISCONCEPTION",
+      "name": "Sign Distribution Misconception",
+      "properties": {
+        "severity": "HIGH",
+        "description": "Distributing negative sign without inverting internal terms e.g. -(x-3) -> -x-3"
+      }
+    },
+    {
+      "id": "lo:4024:factorisation:01",
+      "type": "LEARNING_OBJECTIVE",
+      "name": "Factorise algebraic expressions completely",
+      "properties": {
+        "masteryThreshold": "0.80"
+      }
+    },
+    {
+      "id": "skill:algebraic-manipulation",
+      "type": "SKILL",
+      "name": "Symbolic Algebraic Manipulation",
+      "properties": {
+        "domain": "Mathematics"
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "type": "CONTAINS", "source": "course:mathematics-4024", "target": "topic:4024:algebra" },
+    { "id": "e2", "type": "CONTAINS", "source": "topic:4024:algebra", "target": "concept:4024:algebraic-expressions" },
+    { "id": "e3", "type": "CONTAINS", "source": "topic:4024:algebra", "target": "concept:4024:common-factors" },
+    { "id": "e4", "type": "CONTAINS", "source": "topic:4024:algebra", "target": "concept:4024:factorisation" },
+    { "id": "e5", "type": "CONTAINS", "source": "topic:4024:algebra", "target": "concept:4024:quadratic-equations" },
+    { "id": "e6", "type": "PREREQUISITE_OF", "source": "concept:4024:algebraic-expressions", "target": "concept:4024:common-factors" },
+    { "id": "e7", "type": "PREREQUISITE_OF", "source": "concept:4024:common-factors", "target": "concept:4024:factorisation" },
+    { "id": "e8", "type": "PREREQUISITE_OF", "source": "concept:4024:factorisation", "target": "concept:4024:quadratic-equations" },
+    { "id": "e9", "type": "HAS_MISCONCEPTION", "source": "concept:4024:factorisation", "target": "misconception:factorisation:sign-error" }
+  ],
+  "questions": [
+    {
+      "id": "question:4024:001",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:4024:factorisation",
+      "questionType": "STRUCTURED",
+      "prompt": "Factorise completely: 6x^2 + 15x",
+      "options": ["3x(2x + 5)", "3(2x^2 + 5x)", "x(6x + 15)", "3x(2x - 5)"],
+      "correctIndex": 0,
+      "difficulty": 0.48,
+      "maxMarks": 2,
+      "bloomLevel": "APPLICATION",
+      "prerequisiteConceptId": "concept:4024:common-factors"
+    },
+    {
+      "id": "question:4024:002",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:4024:factorisation",
+      "questionType": "STRUCTURED",
+      "prompt": "Factorise: x^2 - 5x + 6",
+      "options": ["(x - 2)(x - 3)", "(x - 1)(x - 6)", "(x + 2)(x + 3)", "(x + 1)(x - 6)"],
+      "correctIndex": 0,
+      "difficulty": 0.62,
+      "maxMarks": 3,
+      "bloomLevel": "APPLICATION",
+      "prerequisiteConceptId": "concept:4024:algebraic-expressions",
+      "potentialMisconceptions": ["misconception:factorisation:sign-error"]
+    },
+    {
+      "id": "question:4024:003",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:4024:common-factors",
+      "questionType": "STRUCTURED",
+      "prompt": "What is the highest common factor (HCF) of 12a^2b and 18ab^2?",
+      "options": ["6ab", "3ab", "6a^2b^2", "12ab"],
+      "correctIndex": 0,
+      "difficulty": 0.42,
+      "maxMarks": 2,
+      "bloomLevel": "APPLICATION"
+    },
+    {
+      "id": "question:4024:004",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:4024:algebraic-expressions",
+      "questionType": "STRUCTURED",
+      "prompt": "Simplify: 4(x - 2) - 3(2x - 5)",
+      "options": ["-2x + 7", "-2x - 23", "10x - 7", "-2x - 7"],
+      "correctIndex": 0,
+      "difficulty": 0.52,
+      "maxMarks": 3,
+      "bloomLevel": "APPLICATION",
+      "potentialMisconceptions": ["misconception:factorisation:sign-error"]
+    },
+    {
+      "id": "question:4024:005",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:4024:quadratic-equations",
+      "questionType": "STRUCTURED",
+      "prompt": "Solve for x: x^2 - 7x + 12 = 0",
+      "options": ["x = 3 or x = 4", "x = -3 or x = -4", "x = 2 or x = 6", "x = 1 or x = 12"],
+      "correctIndex": 0,
+      "difficulty": 0.72,
+      "maxMarks": 4,
+      "bloomLevel": "APPLICATION",
+      "prerequisiteConceptId": "concept:4024:factorisation"
+    }
+  ],
+  "resources": [
+    {
+      "id": "resource:factorisation-explanation-001",
+      "conceptId": "concept:4024:factorisation",
+      "resourceType": "TEXT",
+      "title": "Cambridge O-Level: Guide to Factorising Quadratics",
+      "content": "To factorise a quadratic trinomial ax^2 + bx + c, identify two integers whose product is ac and whose sum is b. Take care when handling negative coefficients to avoid sign inversion errors.",
+      "contentHash": "hash-math-res-001"
+    }
+  ]
+}

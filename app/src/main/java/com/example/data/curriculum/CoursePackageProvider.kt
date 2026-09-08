@@ -1,5 +1,6 @@
 package com.example.data.curriculum
 
+import com.example.core.crypto.CoursePackageSigner
 import com.example.core.crypto.PackageVerifier
 import com.example.core.model.CoursePackage
 import com.example.core.model.CoursePackageManifest
@@ -19,6 +20,7 @@ object CoursePackageProvider {
      * Builds the official Mathematics 4024 Course Package (Version 2025-2027).
      */
     fun createMath4024Package(): CoursePackage {
+        val mathHash = "05bc022f52109f283911abb29022dcde97f00cc94fdbd72544453f188fb40d78"
         val manifest = CoursePackageManifest(
             packageId = "pkg-4024-2025-2027",
             courseId = "course:mathematics-4024",
@@ -26,9 +28,9 @@ object CoursePackageProvider {
             version = "2025-2027",
             schemaVersion = "1.0",
             createdAt = "2026-09-08T00:00:00Z",
-            contentHash = "a4e1b873c528f89e1b2c45d3e0998a123bc89f0124a56d90e98124b456cd7890",
+            contentHash = mathHash,
             parentVersion = null,
-            signature = "ED25519:SIG:caie-math-4024-auth-valid-token-7789123"
+            signature = CoursePackageSigner.signHash(mathHash)
         )
 
         val nodes = listOf(
@@ -193,6 +195,7 @@ object CoursePackageProvider {
      * APK requires ZERO code changes to load or learn physics!
      */
     fun createPhysics5054Package(): CoursePackage {
+        val physHash = "aefdf60e7db7e88f97ae022422c487ad1496c4e86ff9a5c4b865768cfe8de397"
         val manifest = CoursePackageManifest(
             packageId = "pkg-5054-2025-2027",
             courseId = "course:physics-5054",
@@ -200,8 +203,8 @@ object CoursePackageProvider {
             version = "2025-2027",
             schemaVersion = "1.0",
             createdAt = "2026-09-08T00:00:00Z",
-            contentHash = "b7f9204318c4e03d7b9a52819cd61740924bf638104278c09141094038bc6719",
-            signature = "ED25519:SIG:caie-physics-5054-auth-valid-token-994123"
+            contentHash = physHash,
+            signature = CoursePackageSigner.signHash(physHash)
         )
 
         val nodes = listOf(

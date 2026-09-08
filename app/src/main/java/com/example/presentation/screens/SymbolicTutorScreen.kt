@@ -24,17 +24,28 @@ import androidx.compose.ui.unit.sp
 import com.example.core.model.MathErrorType
 import com.example.core.model.Step
 import com.example.presentation.OLevelViewModel
-import com.example.ui.theme.CyanAccent
-import com.example.ui.theme.GoldAccent
+import com.example.presentation.components.NoorixCameraCaptureDialog
+import com.example.ui.theme.*
 
 @Composable
 fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
     val verificationResult by viewModel.verificationResult.collectAsState()
     val ocrResult by viewModel.ocrResult.collectAsState()
+    val isOcrScanning by viewModel.isOcrScanning.collectAsState()
 
     var problemInput by remember { mutableStateOf("x(x+2)") }
     var step1Input by remember { mutableStateOf("x^2 + 2x") }
     var step2Input by remember { mutableStateOf("") }
+    var showCameraCapture by remember { mutableStateOf(false) }
+
+    if (showCameraCapture) {
+        NoorixCameraCaptureDialog(
+            onDismiss = { showCameraCapture = false },
+            onBitmapCaptured = { bitmap ->
+                viewModel.processCapturedBitmap(bitmap)
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -337,13 +348,44 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    Button(
+                        onClick = { showCameraCapture = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("open_camerax_scanner_button"),
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = CyberDarkBg)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Open CameraX Live Scanner", color = CyberDarkBg, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (isOcrScanning) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = NeonCyan, strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Running ML Kit v2 OCR + Gemini Vision pass...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NeonCyan
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         OutlinedButton(
                             onClick = {
-                                // Simulate clean student notebook page
                                 val lines = listOf(
                                     "x(x+2)" to 0.95,
                                     "x^2 + 2x" to 0.92
@@ -353,12 +395,11 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Text("Scan Clean Working", fontSize = 11.sp)
+                            Text("Test Valid Sample", fontSize = 11.sp)
                         }
 
                         OutlinedButton(
                             onClick = {
-                                // Simulate blurry or unreadable student handwriting
                                 val lines = listOf(
                                     "x(x+2)" to 0.90,
                                     "x?2 + ????" to 0.42 // Below 0.70 floor
@@ -368,7 +409,7 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Text("Test Blurry Handwriting", fontSize = 11.sp, color = Color(0xFFFF9999))
+                            Text("Test Blurry Sample", fontSize = 11.sp, color = Color(0xFFFF9999))
                         }
                     }
 
@@ -391,6 +432,26 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
                                     fontSize = 10.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+
+                                if (ocr.extractedSteps.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Button(
+                                        onClick = {
+                                            problemInput = ocr.extractedSteps.firstOrNull()?.expression ?: problemInput
+                                            step1Input = ocr.extractedSteps.getOrNull(1)?.expression ?: step1Input
+                                            step2Input = ocr.extractedSteps.getOrNull(2)?.expression ?: ""
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent),
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("import_ocr_steps_button")
+                                    ) {
+                                        Icon(Icons.Default.UploadFile, contentDescription = null, tint = CyberDarkBg, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Import ${ocr.extractedSteps.size} Extracted Steps to Math Lab", color = CyberDarkBg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
                             }
                         }
                     }

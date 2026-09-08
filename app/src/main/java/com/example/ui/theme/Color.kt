@@ -3,43 +3,59 @@ package com.example.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ==========================================
-// NOORIX CYBER-CYAN DESIGN SYSTEM
-// Based on official Noorix Learning Solutions UI
+// MINIMAL DARK & CALM TEAL DESIGN SYSTEM
+// Focused, distraction-free environment for O-Level study
 // ==========================================
 
 // Surfaces & Backgrounds
-val CyberDarkBg = Color(0xFF040911)
-val CyberPanel = Color(0xFF081320)
-val CyberPanelElevated = Color(0xFF0C1B2E)
-val CyberPanelBorder = Color(0xFF13324E)
-val CyberBorderGlow = Color(0xFF00E5FF)
+val NearBlackBg = Color(0xFF090D12)           // Pure dark background
+val NearBlackSurface = Color(0xFF111722)      // Subtle card surface
+val NearBlackElevated = Color(0xFF17202D)     // Active focus card
+val SubtleBorder = Color(0xFF1E2A38)          // Thin quiet card border
+val SubtleBorderActive = Color(0xFF2E4156)    // Focused card border
 
-// Luminous Accents
-val NeonCyan = Color(0xFF00E5FF)
-val NeonCyanGlow = Color(0xFF80F2FF)
-val NeonCyanDim = Color(0xFF007E8A)
-val CyanAccent = NeonCyan // backwards compatibility
-val CyanGlow = NeonCyanGlow
+// Single Teal Accent (Used sparingly for active focus points)
+val TealAccent = Color(0xFF00D4C5)            // Luminous clear teal
+val TealAccentMuted = Color(0xFF004D47)       // Low-contrast teal
+val TealAccentSubtle = Color(0x1F00D4C5)      // 12% opacity teal highlight
 
-// Functional Highlights
-val CyberGreen = Color(0xFF00F5A0)
-val CyberGold = Color(0xFFFFB800)
-val GoldAccent = CyberGold // backwards compatibility
-val GoldSubtle = Color(0xFFFF9100)
-val CyberRed = Color(0xFFFF3366)
-val CyberBlue = Color(0xFF0091EA)
+// Feedback Accents
+val StepCorrect = Color(0xFF2DD4BF)           // Calm mint/teal check
+val StepIssue = Color(0xFFFF6B6B)             // Gentle coral for needs-attention
 
-// Typography Colors
-val CyberTextPrimary = Color(0xFFF2FBFD)
-val CyberTextSecondary = Color(0xFF8EAEC5)
-val CyberTextMuted = Color(0xFF567086)
-val OffWhite = CyberTextPrimary
-val SlateBorder = CyberPanelBorder
-val Navy900 = CyberDarkBg
-val Navy800 = CyberPanel
-val Navy700 = CyberPanelElevated
-val SurfaceDark = CyberPanel
-val CardDark = CyberPanelElevated
-val SageGreen = CyberGreen
-val CrimsonRed = CyberRed
-val SlateGray = CyberTextSecondary
+// Typography Hierarchy
+val TextPrimary = Color(0xFFF1F5F9)          // Clean readable white
+val TextSecondary = Color(0xFF94A3B8)        // Soft muted slate
+val TextMuted = Color(0xFF64748B)            // Subdued captions and helpers
+
+// Compatibility aliases to prevent breakage in any legacy references
+val CyberDarkBg = NearBlackBg
+val CyberPanel = NearBlackSurface
+val CyberPanelElevated = NearBlackElevated
+val CyberPanelBorder = SubtleBorder
+val CyberBorder = SubtleBorder
+val CyberBorderGlow = TealAccent
+val NeonCyan = TealAccent
+val NeonCyanGlow = TealAccent
+val NeonCyanDim = TealAccentMuted
+val CyanAccent = TealAccent
+val CyanGlow = TealAccent
+val CyberGreen = StepCorrect
+val CyberGold = Color(0xFFFFB020)
+val GoldAccent = CyberGold
+val GoldSubtle = Color(0xFFFFB020)
+val CyberRed = StepIssue
+val CyberBlue = Color(0xFF38BDF8)
+val CyberTextPrimary = TextPrimary
+val CyberTextSecondary = TextSecondary
+val CyberTextMuted = TextMuted
+val OffWhite = TextPrimary
+val SlateBorder = SubtleBorder
+val Navy900 = NearBlackBg
+val Navy800 = NearBlackSurface
+val Navy700 = NearBlackElevated
+val SurfaceDark = NearBlackSurface
+val CardDark = NearBlackElevated
+val SageGreen = StepCorrect
+val CrimsonRed = StepIssue
+val SlateGray = TextSecondary
