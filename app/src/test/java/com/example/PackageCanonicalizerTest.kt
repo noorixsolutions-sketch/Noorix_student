@@ -52,7 +52,7 @@ class PackageCanonicalizerTest {
     }
 
     @Test
-    fun `shipped packages fully verify (hash + ed25519 + graph integrity)` {
+    fun `shipped packages fully verify hash ed25519 and graph integrity`() {
         for (pkg in listOf(provider().createMath4024Package(), provider().createPhysics5054Package())) {
             val status = PackageVerifier.verifyPackage(pkg)
             assertTrue(
