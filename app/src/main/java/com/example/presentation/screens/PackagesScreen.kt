@@ -22,7 +22,10 @@ import com.example.presentation.OLevelViewModel
 import com.example.ui.theme.CyanAccent
 import com.example.ui.theme.GoldAccent
 
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@OptIn(
+    androidx.compose.foundation.ExperimentalFoundationApi::class,
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class
+)
 @Composable
 fun PackagesScreen(viewModel: OLevelViewModel) {
     val activePkg by viewModel.activePackage.collectAsState()
