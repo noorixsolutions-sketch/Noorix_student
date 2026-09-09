@@ -33,6 +33,7 @@ import com.example.data.local.AuditLogEntity
 import com.example.data.local.CoursePackageEntity
 import com.example.data.local.EventEntity
 import com.example.data.local.UserAccountEntity
+import androidx.room.withTransaction
 import com.example.core.model.CurriculumGraph
 import com.example.core.model.CurriculumGraphParser
 import com.example.core.model.UserProfile
@@ -50,6 +51,7 @@ import com.example.domain.vision.VisionPipeline
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +60,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -75,8 +79,14 @@ class LearningRepository(context: Context) {
 
     private val packageProvider = CoursePackageProvider(appContext)
 
-    private val hybridClock = HybridClock("android-node-01")
-    private val syncEngine = HlcSyncEngine(eventDao, syncQueueDao, hybridClock)
+    private val nodeId = appContext.getSharedPreferences("runtime_identity", Context.MODE_PRIVATE)
+        .getString("node_id", null)
+        ?: UUID.randomUUID().toString().also { generated ->
+            appContext.getSharedPreferences("runtime_identity", Context.MODE_PRIVATE)
+                .edit().putString("node_id", generated).apply()
+        }
+    private val hybridClock = HybridClock(nodeId)
+    private val syncEngine = HlcSyncEngine(eventDao, syncQueueDao, hybridClock, db)
     private val mathVerifier = SymbolicMathVerifier()
     private val mediaProvider = StandardMediaProvider()
 
@@ -107,7 +117,8 @@ class LearningRepository(context: Context) {
     private val _userAccount = MutableStateFlow<UserProfile?>(null)
     val userAccount: StateFlow<UserProfile?> = _userAccount.asStateFlow()
 
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val auditMutex = Mutex()
     private var initJob: Job? = null
 
     init {
@@ -261,8 +272,10 @@ class LearningRepository(context: Context) {
             resourcesJson = packageProvider.serializeResources(pkg.resources)
         )
 
-        packageDao.deprecateOtherVersions(pkg.manifest.packageId, pkg.manifest.courseId)
-        packageDao.insertPackage(entity)
+        db.withTransaction {
+            packageDao.deprecateOtherVersions(pkg.manifest.packageId, pkg.manifest.courseId)
+            packageDao.insertPackage(entity)
+        }
 
         // 3. Emit immutable event
         val payload = JSONObject().apply {
@@ -608,7 +621,7 @@ class LearningRepository(context: Context) {
 
         val remoteEvents = listOf(
             LearningEvent(
-                eventId = "remote-evt-" + UUID.randomUUID().toString().take(6),
+                eventId = "remote-evt-" + UUID.randomUUID().toString(),
                 eventType = EventType.CONCEPT_ASSESSED,
                 studentId = _studentModel.value.studentId,
                 courseVersionId = _studentModel.value.courseVersionId,
@@ -654,19 +667,21 @@ class LearningRepository(context: Context) {
     }
 
     suspend fun logAudit(action: String, details: String) {
-        val prevHash = lastAuditHash()
-        val timestampMs = System.currentTimeMillis()
-        val hash = auditChainHash(action, details, timestampMs, prevHash)
-        auditDao.insertAudit(
-            AuditLogEntity(
-                auditId = "audit-" + UUID.randomUUID().toString().take(6),
-                action = action,
-                timestampMs = timestampMs,
-                details = details,
-                verificationHash = hash,
-                prevHash = prevHash
+        auditMutex.withLock {
+            val prevHash = lastAuditHash()
+            val timestampMs = System.currentTimeMillis()
+            val hash = auditChainHash(action, details, timestampMs, prevHash)
+            auditDao.insertAudit(
+                AuditLogEntity(
+                    auditId = "audit-" + UUID.randomUUID().toString(),
+                    action = action,
+                    timestampMs = timestampMs,
+                    details = details,
+                    verificationHash = hash,
+                    prevHash = prevHash
+                )
             )
-        )
+        }
     }
 
     val auditLogsFlow: Flow<List<AuditLogEntity>> = auditDao.getAllAuditsFlow()

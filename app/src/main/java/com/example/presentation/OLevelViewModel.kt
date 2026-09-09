@@ -23,6 +23,7 @@ import com.example.core.model.UserProfile
 import com.example.core.model.VerificationResult
 import com.example.BuildConfig
 import com.example.data.curriculum.CoursePackageProvider
+import com.example.data.curriculum.LearningContentProvider
 import com.example.data.local.AuditLogEntity
 import com.example.domain.ai.LlamaCppEngine
 import com.example.domain.ai.NoorixAiAgentManager
@@ -61,6 +62,7 @@ enum class AppNavigationTab {
     DASHBOARD,
     AI_AGENTS,
     PACKAGES,
+    LEARNING_HUB,
     DIAGNOSTIC,
     SYMBOLIC_TUTOR,
     MEDIA_TRANSFER,
@@ -77,6 +79,9 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     val activePackage: StateFlow<CoursePackage?> = repository.activePackage
     val studentModel: StateFlow<StudentModel> = repository.studentModel
     val activePlan: StateFlow<LearningPlan?> = repository.activePlan
+    val learningContent = runCatching {
+        LearningContentProvider(application.applicationContext).load()
+    }.getOrDefault(com.example.core.model.KnowledgeLearningContent())
 
     private val _openRouterApiKey = MutableStateFlow("")
     val openRouterApiKey: StateFlow<String> = _openRouterApiKey.asStateFlow()

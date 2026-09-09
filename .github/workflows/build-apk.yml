@@ -60,7 +60,7 @@ jobs:
           chmod +x gradlew
           mkdir -p ci
           set -o pipefail
-          ./gradlew :app:assembleDebug $GRADLE_ARGS 2>&1 | tee ci/build.log
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug $GRADLE_ARGS 2>&1 | tee ci/build.log
 
       - name: Verify APK signature
         run: |

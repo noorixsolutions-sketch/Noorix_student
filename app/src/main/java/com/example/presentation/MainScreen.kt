@@ -51,6 +51,7 @@ fun MainScreen(viewModel: OLevelViewModel) {
         NoorixNavDestination(AppNavigationTab.DASHBOARD, "Home", Icons.Default.Home),
         NoorixNavDestination(AppNavigationTab.AI_AGENTS, "Tutors", Icons.Default.Chat),
         NoorixNavDestination(AppNavigationTab.PACKAGES, "Courses", Icons.Default.LibraryBooks),
+        NoorixNavDestination(AppNavigationTab.LEARNING_HUB, "Learn", Icons.Default.School),
         NoorixNavDestination(AppNavigationTab.DIAGNOSTIC, "Practice", Icons.Default.Psychology),
         NoorixNavDestination(AppNavigationTab.SYMBOLIC_TUTOR, "Math Lab", Icons.Default.Calculate)
     )
@@ -125,6 +126,7 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 AppNavigationTab.MEDIA_TRANSFER -> MediaTransferScreen(viewModel)
                 AppNavigationTab.DECAY_SYNC -> DecaySyncScreen(viewModel)
                 AppNavigationTab.PACKAGES -> PackagesScreen(viewModel)
+                AppNavigationTab.LEARNING_HUB -> LearningHubScreen(viewModel)
                 AppNavigationTab.AUDIT -> AuditScreen(viewModel, activity)
             }
 

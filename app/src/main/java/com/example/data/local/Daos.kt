@@ -68,6 +68,9 @@ interface SyncQueueDao {
     @Query("UPDATE offline_sync_queue SET status = :status WHERE eventId = :eventId")
     suspend fun updateStatus(eventId: String, status: String)
 
+    @Query("UPDATE offline_sync_queue SET status = 'SYNCED' WHERE eventId IN (:eventIds)")
+    suspend fun markSynced(eventIds: List<String>)
+
     @Query("DELETE FROM offline_sync_queue WHERE status = 'SYNCED'")
     suspend fun clearSynced()
 }
@@ -110,4 +113,3 @@ interface ChatMessageDao {
     @Query("DELETE FROM agent_chat_messages WHERE agentId = :agentId")
     suspend fun clearAgentChat(agentId: String)
 }
-

@@ -6,8 +6,10 @@ import com.example.core.model.EventType
 import com.example.core.model.LearningEvent
 import com.example.data.local.EventDao
 import com.example.data.local.EventEntity
+import com.example.data.local.AppDatabase
 import com.example.data.local.OfflineSyncQueueEntity
 import com.example.data.local.SyncQueueDao
+import androidx.room.withTransaction
 import org.json.JSONObject
 import java.util.UUID
 
@@ -22,8 +24,14 @@ data class SyncBatchResult(
 class HlcSyncEngine(
     private val eventDao: EventDao,
     private val syncQueueDao: SyncQueueDao,
-    private val hybridClock: HybridClock
+    private val hybridClock: HybridClock,
+    private val database: AppDatabase
 ) {
+
+    /** Mark items complete only after a remote transport has acknowledged them. */
+    suspend fun acknowledgeUploadedEvents(eventIds: List<String>) {
+        if (eventIds.isNotEmpty()) syncQueueDao.markSynced(eventIds)
+    }
 
     /**
      * Enqueue a newly generated local learning event with an HLC timestamp.
@@ -36,7 +44,7 @@ class HlcSyncEngine(
         simulatedWallTimeMs: Long = System.currentTimeMillis()
     ): LearningEvent {
         val hlc = hybridClock.now(simulatedWallTimeMs)
-        val eventId = "evt-" + UUID.randomUUID().toString().take(8)
+        val eventId = "evt-" + UUID.randomUUID().toString()
 
         val event = LearningEvent(
             eventId = eventId,
@@ -49,31 +57,30 @@ class HlcSyncEngine(
             provenanceHash = "prov-" + hlc.nodeId
         )
 
-        // 1. Commit to local immutable event store
-        eventDao.insertEvent(
-            EventEntity(
-                eventId = event.eventId,
-                eventType = event.eventType.name,
-                studentId = event.studentId,
-                courseVersionId = event.courseVersionId,
-                hlcTimestamp = event.hlcTimestamp,
-                physicalMs = event.physicalMs,
-                payloadJson = event.payloadJson,
-                provenanceHash = event.provenanceHash
+        database.withTransaction {
+            eventDao.insertEvent(
+                EventEntity(
+                    eventId = event.eventId,
+                    eventType = event.eventType.name,
+                    studentId = event.studentId,
+                    courseVersionId = event.courseVersionId,
+                    hlcTimestamp = event.hlcTimestamp,
+                    physicalMs = event.physicalMs,
+                    payloadJson = event.payloadJson,
+                    provenanceHash = event.provenanceHash
+                )
             )
-        )
-
-        // 2. Queue for background sync
-        syncQueueDao.enqueue(
-            OfflineSyncQueueEntity(
-                eventId = event.eventId,
-                eventType = event.eventType.name,
-                hlcTimestamp = event.hlcTimestamp,
-                physicalMs = event.physicalMs,
-                payloadJson = event.payloadJson,
-                status = "PENDING"
+            syncQueueDao.enqueue(
+                OfflineSyncQueueEntity(
+                    eventId = event.eventId,
+                    eventType = event.eventType.name,
+                    hlcTimestamp = event.hlcTimestamp,
+                    physicalMs = event.physicalMs,
+                    payloadJson = event.payloadJson,
+                    status = "PENDING"
+                )
             )
-        )
+        }
 
         return event
     }
@@ -148,9 +155,6 @@ class HlcSyncEngine(
                 accepted.add(remote.eventId)
             }
         }
-
-        // Mark local queue items as synced
-        syncQueueDao.clearSynced()
 
         val updatedHlc = hybridClock.now(currentSimulatedTimeMs).toString()
         val summary = "HLC Sync Complete. Accepted: ${accepted.size}, Duplicates: ${duplicates.size}, Confidence-Weighted Merges: ${mergedConflicts.size}. Current HLC: $updatedHlc"

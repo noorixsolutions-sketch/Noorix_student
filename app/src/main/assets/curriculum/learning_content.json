@@ -1,0 +1,17 @@
+{
+  "videos": [
+    {"id":"video:4024:factorisation","conceptId":"concept:4024:factorisation","title":"Quadratic factorisation explained","youtubeVideoId":"1kfq0aR3ASs","description":"Khan Academy visual introduction to factoring quadratics, followed by the cards and quiz below.","durationLabel":"8 min"},
+    {"id":"video:4024:quadratics","conceptId":"concept:4024:quadratic-equations","title":"Solving quadratic equations","youtubeVideoId":"TNYYPFndr8M","description":"Khan Academy guided review of solving quadratic equations by factoring.","durationLabel":"10 min"},
+    {"id":"video:5054:forces","conceptId":"concept:5054:forces","title":"Newton's second law","youtubeVideoId":"EwGGh1dC3kQ","description":"Khan Academy explanation of force, mass, and acceleration.","durationLabel":"9 min"}
+  ],
+  "flashcards": [
+    {"id":"card:4024:factorisation:1","conceptId":"concept:4024:factorisation","front":"What does factorising an expression mean?","back":"Writing it as a product of simpler factors. For example, x² + 3x + 2 = (x + 1)(x + 2).","hint":"Look for two numbers whose product is the constant term."},
+    {"id":"card:4024:factorisation:2","conceptId":"concept:4024:factorisation","front":"What is the first check after factorising?","back":"Expand the brackets again and compare the result with the original expression.","hint":"Reverse the operation."},
+    {"id":"card:5054:forces:1","conceptId":"concept:5054:forces","front":"State Newton's second law.","back":"Resultant force equals mass multiplied by acceleration: F = ma.","hint":"Force, mass, acceleration."},
+    {"id":"card:5054:forces:2","conceptId":"concept:5054:forces","front":"What is the unit of force?","back":"The newton (N), equivalent to kg·m/s².","hint":"Use SI base units."}
+  ],
+  "quizzes": [
+    {"id":"quiz:4024:factorisation:1","conceptId":"concept:4024:factorisation","question":"Which is the correct factorisation of x² + 5x + 6?","options":["(x + 1)(x + 6)","(x + 2)(x + 3)","(x - 2)(x - 3)"],"correctIndex":1,"explanation":"2 × 3 = 6 and 2 + 3 = 5, so (x + 2)(x + 3) is correct."},
+    {"id":"quiz:5054:forces:1","conceptId":"concept:5054:forces","question":"A 2 kg object accelerates at 3 m/s². What is the resultant force?","options":["1.5 N","5 N","6 N"],"correctIndex":2,"explanation":"Using F = ma, the force is 2 × 3 = 6 N."}
+  ]
+}
