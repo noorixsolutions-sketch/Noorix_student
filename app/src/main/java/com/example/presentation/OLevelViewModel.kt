@@ -253,8 +253,9 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
             }
             _localLlamaStatus.value = "Connecting to $host:$port …"
             val engine = LlamaCppEngine()
-            when (val result = engine.connect(host, port)) {
-                is Result.Success -> {
+            val connectionResult = engine.connect(host, port)
+            when {
+                connectionResult.isSuccess -> {
                     localLlamaEngine = engine
                     agentManager.setLocalEngine(engine)
                     _localLlamaConnected.value = true
@@ -263,9 +264,10 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                     _localLlamaStatus.value =
                         "Connected to llama.cpp @ $host:$port — ${engine.models.size} model(s)"
                 }
-                is Result.Failure -> {
+                else -> {
+                    val error = connectionResult.exceptionOrNull()
                     _localLlamaStatus.value =
-                        "Connection failed: ${result.exceptionOrNull()?.localizedMessage ?: "unknown error"}"
+                        "Connection failed: ${error?.localizedMessage ?: "unknown error"}"
                 }
             }
         }
@@ -464,7 +466,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun installMathCourse() {
         viewModelScope.launch {
-            val mathPkg = CoursePackageProvider(application.applicationContext).createMath4024Package()
+            val mathPkg = CoursePackageProvider(getApplication<Application>().applicationContext).createMath4024Package()
             val (success, msg) = repository.installAndActivatePackage(mathPkg)
             _statusBanner.value = msg
         }
@@ -472,7 +474,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun installPhysicsCourse() {
         viewModelScope.launch {
-            val physicsPkg = CoursePackageProvider(application.applicationContext).createPhysics5054Package()
+            val physicsPkg = CoursePackageProvider(getApplication<Application>().applicationContext).createPhysics5054Package()
             val (success, msg) = repository.installAndActivatePackage(physicsPkg)
             _statusBanner.value = msg
         }
@@ -480,7 +482,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun installTamperedPackageTest() {
         viewModelScope.launch {
-            val mathPkg = CoursePackageProvider(application.applicationContext).createMath4024Package()
+            val mathPkg = CoursePackageProvider(getApplication<Application>().applicationContext).createMath4024Package()
             val tamperedManifest = mathPkg.manifest.copy(
                 contentHash = "tampered_hash_00000000000000000000000000000000",
                 signature = "TAMPERED_FORGED_SIGNATURE"

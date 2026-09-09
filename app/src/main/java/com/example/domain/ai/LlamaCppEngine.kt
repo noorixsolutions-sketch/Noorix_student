@@ -170,7 +170,7 @@ class LlamaCppEngine {
                 val errBody = runCatching { response.body?.string() ?: "" }.getOrDefault("")
                 throw RuntimeException("llama-server error HTTP ${response.code}: ${errBody.take(200)}")
             }
-            val body: ResponseBody? = response.body ?: throw RuntimeException("Empty response body")
+            val body = response.body ?: throw RuntimeException("Empty response body")
             val reader = body.byteStream().bufferedReader(Charsets.UTF_8)
             val builder = StringBuilder()
             var line: String? = reader.readLine()
@@ -220,4 +220,3 @@ class LlamaCppEngine {
         }
     }
 }
-

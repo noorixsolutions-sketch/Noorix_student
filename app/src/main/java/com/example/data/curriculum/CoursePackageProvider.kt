@@ -16,7 +16,7 @@ import org.json.JSONObject
 /**
  * Loads official, publisher-SIGNED course packages from APK assets.
  *
- * The package JSON files (app/src/main/assets/curriculum/*.json) are generated
+ * The package JSON files under app/src/main/assets/curriculum are generated
  * offline by tools/generate_package_signatures.py, which computes the canonical
  * content hash and the Ed25519 signature with the publisher key. The app only
  * ever verifies (see PackageVerifier) — it cannot sign.
