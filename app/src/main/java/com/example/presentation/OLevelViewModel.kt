@@ -186,7 +186,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                 val account = UserProfile(
                     userId = googleCredential.id,
                     displayName = googleCredential.displayName ?: "Google user",
-                    email = googleCredential.email,
+                    email = "",
                     photoUrl = googleCredential.profilePictureUri?.toString()
                 )
                 repository.saveUserAccount(account)
