@@ -21,6 +21,7 @@ import com.example.core.model.StudentModel
 import com.example.core.model.TransferTask
 import com.example.core.model.UserProfile
 import com.example.core.model.VerificationResult
+import com.example.BuildConfig
 import com.example.data.curriculum.CoursePackageProvider
 import com.example.data.local.AuditLogEntity
 import com.example.domain.ai.LlamaCppEngine
@@ -185,7 +186,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                 val account = UserProfile(
                     userId = googleCredential.id,
                     displayName = googleCredential.displayName ?: "Google user",
-                    email = googleCredential.email.orEmpty(),
+                    email = googleCredential.email,
                     photoUrl = googleCredential.profilePictureUri?.toString()
                 )
                 repository.saveUserAccount(account)

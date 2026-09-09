@@ -64,6 +64,7 @@ import java.util.UUID
 
 class LearningRepository(context: Context) {
 
+    private val appContext = context.applicationContext
     private val db = AppDatabase.getInstance(context)
     private val eventDao = db.eventDao()
     private val packageDao = db.coursePackageDao()
@@ -72,7 +73,7 @@ class LearningRepository(context: Context) {
     private val accountDao = db.userAccountDao()
     val chatMessageDao = db.chatMessageDao()
 
-    private val packageProvider = CoursePackageProvider(context)
+    private val packageProvider = CoursePackageProvider(appContext)
 
     private val hybridClock = HybridClock("android-node-01")
     private val syncEngine = HlcSyncEngine(eventDao, syncQueueDao, hybridClock)
@@ -154,7 +155,7 @@ class LearningRepository(context: Context) {
 
     private suspend fun loadCurriculumGraph() {
         try {
-            val json = context.assets.open("curriculum/knowledge_graph.json")
+            val json = appContext.assets.open("curriculum/knowledge_graph.json")
                 .bufferedReader(Charsets.UTF_8).use { it.readText() }
             _curriculumGraph.value = CurriculumGraphParser.parse(json)
         } catch (_: Exception) {

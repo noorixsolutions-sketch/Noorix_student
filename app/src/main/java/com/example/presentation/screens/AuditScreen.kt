@@ -48,7 +48,7 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
     var showPurgeConfirmDialog by remember { mutableStateOf(false) }
     var expandedModelDropdown by remember { mutableStateOf(false) }
     var expandedLocalModelDropdown by remember { mutableStateOf(false) }
-    val auditChainVerified by remember(auditLogs) { viewModel.verifyAuditChainNow() }
+    val auditChainVerified = remember(auditLogs) { viewModel.verifyAuditChainNow() }
 
     LazyColumn(
         modifier = Modifier

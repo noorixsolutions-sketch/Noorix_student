@@ -131,7 +131,7 @@ class NoorixAiAgentManager(
                 models[agentId] = Firebase.ai.generativeModel(
                     modelName = "gemini-2.5-flash",
                     systemInstruction = content {
-                        text(systemPrompts[agentId])
+                        text(systemPrompts.getValue(agentId))
                     }
                 )
             }
