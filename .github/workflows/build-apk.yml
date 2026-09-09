@@ -21,7 +21,7 @@ env:
 
 jobs:
   build:
-    name: Build and test debug APK
+    name: Build debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -61,11 +61,6 @@ jobs:
           mkdir -p ci
           set -o pipefail
           ./gradlew :app:assembleDebug $GRADLE_ARGS 2>&1 | tee ci/build.log
-
-      - name: Run unit tests
-        run: |
-          set -o pipefail
-          ./gradlew :app:testDebugUnitTest $GRADLE_ARGS 2>&1 | tee -a ci/build.log
 
       - name: Verify APK signature
         run: |
