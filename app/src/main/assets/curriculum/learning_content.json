@@ -1,17 +1,131 @@
 {
   "videos": [
-    {"id":"video:4024:factorisation","conceptId":"concept:4024:factorisation","title":"Quadratic factorisation explained","youtubeVideoId":"1kfq0aR3ASs","description":"Khan Academy visual introduction to factoring quadratics, followed by the cards and quiz below.","durationLabel":"8 min"},
-    {"id":"video:4024:quadratics","conceptId":"concept:4024:quadratic-equations","title":"Solving quadratic equations","youtubeVideoId":"TNYYPFndr8M","description":"Khan Academy guided review of solving quadratic equations by factoring.","durationLabel":"10 min"},
-    {"id":"video:5054:forces","conceptId":"concept:5054:forces","title":"Newton's second law","youtubeVideoId":"EwGGh1dC3kQ","description":"Khan Academy explanation of force, mass, and acceleration.","durationLabel":"9 min"}
+    {
+      "id": "video:4024:factorisation",
+      "conceptId": "concept:4024:factorisation",
+      "title": "O-Level: Quadratic Trinomial Factorisation (ax² + bx + c)",
+      "youtubeVideoId": "1kfq0aR3ASs",
+      "description": "Complete breakdown of product-sum method and splitting the middle term for Cambridge 4024.",
+      "durationLabel": "11 min"
+    },
+    {
+      "id": "video:4024:fractions-decimals",
+      "conceptId": "concept:4024:fractions-decimals",
+      "title": "Grade 6: Adding & Subtracting Fractions with Unlike Denominators",
+      "youtubeVideoId": "N-Y0KvxJvg4",
+      "description": "Visual intuition for finding common denominators and equivalent fractions.",
+      "durationLabel": "7 min"
+    },
+    {
+      "id": "video:4024:quadratics",
+      "conceptId": "concept:4024:quadratic-equations",
+      "title": "O-Level: Solving Quadratic Equations by Factoring & Formula",
+      "youtubeVideoId": "TNYYPFndr8M",
+      "description": "Finding roots using zero product property and the quadratic formula.",
+      "durationLabel": "12 min"
+    },
+    {
+      "id": "video:4024:simultaneous-equations",
+      "conceptId": "concept:4024:simultaneous-equations",
+      "title": "O-Level: Simultaneous Equations (Elimination & Substitution)",
+      "youtubeVideoId": "nok99JOhcjo",
+      "description": "Step-by-step methods to solve paired linear equations in two variables.",
+      "durationLabel": "10 min"
+    },
+    {
+      "id": "video:4024:trigonometry",
+      "conceptId": "concept:4024:trigonometry",
+      "title": "O-Level: SOH CAH TOA Trigonometry in Right Triangles",
+      "youtubeVideoId": "5tp74g4N8EY",
+      "description": "Calculating unknown sides and angles using sine, cosine, and tangent ratios.",
+      "durationLabel": "11 min"
+    },
+    {
+      "id": "video:5054:measurement-units",
+      "conceptId": "concept:5054:measurement-units",
+      "title": "Grade 6-7: Measuring Mass, Volume, and Density",
+      "youtubeVideoId": "74j7dFqX4xQ",
+      "description": "Using measuring cylinders and the density formula ρ = m/V.",
+      "durationLabel": "6 min"
+    },
+    {
+      "id": "video:5054:speed-motion",
+      "conceptId": "concept:5054:speed-motion",
+      "title": "Grade 7-8: Distance-Time Graphs & Average Speed",
+      "youtubeVideoId": "r_1m4B1h4yA",
+      "description": "Interpreting slopes on distance-time graphs and calculating speed.",
+      "durationLabel": "8 min"
+    },
+    {
+      "id": "video:5054:kinematics",
+      "conceptId": "concept:5054:kinematics",
+      "title": "O-Level: Velocity-Time Graphs & Acceleration",
+      "youtubeVideoId": "DRb5PSxTab4",
+      "description": "Calculating acceleration from gradients and distance from area under v-t graphs.",
+      "durationLabel": "10 min"
+    },
+    {
+      "id": "video:5054:forces",
+      "conceptId": "concept:5054:forces",
+      "title": "O-Level: Newton's Three Laws of Motion & Resultant Force",
+      "youtubeVideoId": "EwGGh1dC3kQ",
+      "description": "Applying F = ma, balanced forces, friction, and action-reaction pairs.",
+      "durationLabel": "9 min"
+    },
+    {
+      "id": "video:5054:energy",
+      "conceptId": "concept:5054:energy",
+      "title": "O-Level: Work Done, Kinetic Energy & Conservation of Energy",
+      "youtubeVideoId": "w4UFnb3V1E8",
+      "description": "Energy transformations, KE = 1/2 mv², GPE = mgh, and power calculations.",
+      "durationLabel": "10 min"
+    },
+    {
+      "id": "video:5054:electricity",
+      "conceptId": "concept:5054:electricity",
+      "title": "O-Level: Current, Potential Difference & Ohm's Law (V = IR)",
+      "youtubeVideoId": "HsLLq6Pwr3c",
+      "description": "Series and parallel circuits, ammeters, voltmeters, and resistance.",
+      "durationLabel": "11 min"
+    }
   ],
   "flashcards": [
-    {"id":"card:4024:factorisation:1","conceptId":"concept:4024:factorisation","front":"What does factorising an expression mean?","back":"Writing it as a product of simpler factors. For example, x² + 3x + 2 = (x + 1)(x + 2).","hint":"Look for two numbers whose product is the constant term."},
-    {"id":"card:4024:factorisation:2","conceptId":"concept:4024:factorisation","front":"What is the first check after factorising?","back":"Expand the brackets again and compare the result with the original expression.","hint":"Reverse the operation."},
-    {"id":"card:5054:forces:1","conceptId":"concept:5054:forces","front":"State Newton's second law.","back":"Resultant force equals mass multiplied by acceleration: F = ma.","hint":"Force, mass, acceleration."},
-    {"id":"card:5054:forces:2","conceptId":"concept:5054:forces","front":"What is the unit of force?","back":"The newton (N), equivalent to kg·m/s².","hint":"Use SI base units."}
+    {"id": "card:4024:fractions:1", "conceptId": "concept:4024:fractions-decimals", "front": "How do you add 1/3 and 2/5?", "back": "Find the common denominator (15): 5/15 + 6/15 = 11/15.", "hint": "Multiply denominators to find LCM."},
+    {"id": "card:4024:fractions:2", "conceptId": "concept:4024:fractions-decimals", "front": "What is 0.35 converted to a simplified fraction?", "back": "35/100 simplifies to 7/20 by dividing numerator and denominator by 5.", "hint": "Divide by 5."},
+    {"id": "card:4024:negative:1", "conceptId": "concept:4024:negative-numbers", "front": "What is (-7) × (-6)?", "back": "+42. Multiplying two negative numbers always yields a positive number.", "hint": "Negative times negative is positive."},
+    {"id": "card:4024:negative:2", "conceptId": "concept:4024:negative-numbers", "front": "Simplify: 5 - (-8)", "back": "5 + 8 = 13. Subtracting a negative is equivalent to adding.", "hint": "Double negative turns to plus."},
+    {"id": "card:4024:expressions:1", "conceptId": "concept:4024:algebraic-expressions", "front": "Can 4x and 4x² be added together as like terms?", "back": "No! They have different powers of x, so they are unlike terms.", "hint": "Check the exponents."},
+    {"id": "card:4024:expressions:2", "conceptId": "concept:4024:algebraic-expressions", "front": "Expand: -3(2x - 4)", "back": "-6x + 12. Remember to multiply -3 by -4 to get +12.", "hint": "Watch the sign of the constant."},
+    {"id": "card:4024:linear:1", "conceptId": "concept:4024:linear-equations", "front": "What is the first step to solve 3x + 5 = 26?", "back": "Subtract 5 from both sides: 3x = 21, then divide by 3 to get x = 7.", "hint": "Inverse of addition is subtraction."},
+    {"id": "card:4024:common:1", "conceptId": "concept:4024:common-factors", "front": "What is the HCF of 15x²y and 25xy²?", "back": "5xy. Common numerical factor is 5, common variables are x and y.", "hint": "Take the lowest power of common variables."},
+    {"id": "card:4024:factorisation:1", "conceptId": "concept:4024:factorisation", "front": "What is the rule for difference of two squares a² - b²?", "back": "(a - b)(a + b).", "hint": "One minus, one plus."},
+    {"id": "card:4024:factorisation:2", "conceptId": "concept:4024:factorisation", "front": "How do you factorise x² - 5x + 6?", "back": "(x - 2)(x - 3) because (-2) × (-3) = +6 and (-2) + (-3) = -5.", "hint": "Product is +6, sum is -5."},
+    {"id": "card:4024:quadratics:1", "conceptId": "concept:4024:quadratic-equations", "front": "If (x - 4)(x + 2) = 0, what are the roots?", "back": "x = 4 or x = -2 (by the zero product property).", "hint": "Set each bracket equal to zero."},
+    {"id": "card:4024:simultaneous:1", "conceptId": "concept:4024:simultaneous-equations", "front": "When using elimination on 2x + y = 7 and x - y = 2, what should you do?", "back": "Add the equations to eliminate y: 3x = 9, so x = 3 and y = 1.", "hint": "Signs of y are opposite, so add."},
+    {"id": "card:4024:trig:1", "conceptId": "concept:4024:trigonometry", "front": "State the SOH CAH TOA definitions.", "back": "sin(θ) = Opp/Hyp, cos(θ) = Adj/Hyp, tan(θ) = Opp/Adj.", "hint": "Opposite, Adjacent, Hypotenuse."},
+    {"id": "card:5054:units:1", "conceptId": "concept:5054:measurement-units", "front": "What is the formula and SI unit for density?", "back": "Density = Mass / Volume (ρ = m/V). SI unit is kg/m³ or g/cm³.", "hint": "Mass divided by volume."},
+    {"id": "card:5054:speed:1", "conceptId": "concept:5054:speed-motion", "front": "What does the gradient of a distance-time graph represent?", "back": "The speed of the object.", "hint": "Rise over run = distance / time."},
+    {"id": "card:5054:kinematics:1", "conceptId": "concept:5054:kinematics", "front": "What does the area under a velocity-time graph represent?", "back": "Total distance (or displacement) travelled.", "hint": "Integrate or find geometric area."},
+    {"id": "card:5054:forces:1", "conceptId": "concept:5054:forces", "front": "State Newton's Second Law of Motion.", "back": "Resultant Force = mass × acceleration (F = ma).", "hint": "F = ma in newtons."},
+    {"id": "card:5054:forces:2", "conceptId": "concept:5054:forces", "front": "What happens when resultant force on a moving object is ZERO?", "back": "The object continues moving with constant velocity (constant speed in a straight line).", "hint": "Newton's First Law."},
+    {"id": "card:5054:energy:1", "conceptId": "concept:5054:energy", "front": "What is the formula for kinetic energy and gravitational potential energy?", "back": "KE = 1/2 m v² and GPE = m g h.", "hint": "Mass, velocity, gravity, height."},
+    {"id": "card:5054:electricity:1", "conceptId": "concept:5054:electricity", "front": "State Ohm's Law and the unit of electrical resistance.", "back": "V = I × R (Potential difference = Current × Resistance). Resistance unit is Ohms (Ω).", "hint": "V = IR."}
   ],
   "quizzes": [
-    {"id":"quiz:4024:factorisation:1","conceptId":"concept:4024:factorisation","question":"Which is the correct factorisation of x² + 5x + 6?","options":["(x + 1)(x + 6)","(x + 2)(x + 3)","(x - 2)(x - 3)"],"correctIndex":1,"explanation":"2 × 3 = 6 and 2 + 3 = 5, so (x + 2)(x + 3) is correct."},
-    {"id":"quiz:5054:forces:1","conceptId":"concept:5054:forces","question":"A 2 kg object accelerates at 3 m/s². What is the resultant force?","options":["1.5 N","5 N","6 N"],"correctIndex":2,"explanation":"Using F = ma, the force is 2 × 3 = 6 N."}
+    {"id": "quiz:4024:fractions:1", "conceptId": "concept:4024:fractions-decimals", "question": "What is 3/4 - 1/6 in simplest form?", "options": ["7/12", "2/2", "2/12", "5/12"], "correctIndex": 0, "explanation": "LCM of 4 and 6 is 12: 9/12 - 2/12 = 7/12."},
+    {"id": "quiz:4024:negative:1", "conceptId": "concept:4024:negative-numbers", "question": "Evaluate: -12 ÷ (-3) + 4 × (-2)", "options": ["-4", "12", "-12", "4"], "correctIndex": 0, "explanation": "-12 ÷ -3 = 4; 4 × -2 = -8; 4 + (-8) = -4."},
+    {"id": "quiz:4024:expressions:1", "conceptId": "concept:4024:algebraic-expressions", "question": "Simplify: 5x + 3(2x - 4) - 7", "options": ["11x - 19", "11x - 11", "7x - 19", "10x - 19"], "correctIndex": 0, "explanation": "5x + 6x - 12 - 7 = 11x - 19."},
+    {"id": "quiz:4024:linear:1", "conceptId": "concept:4024:linear-equations", "question": "Solve for x: 4(x - 3) = 2x + 10", "options": ["x = 11", "x = 7", "x = 1", "x = 14"], "correctIndex": 0, "explanation": "4x - 12 = 2x + 10 -> 2x = 22 -> x = 11."},
+    {"id": "quiz:4024:common:1", "conceptId": "concept:4024:common-factors", "question": "Factorise completely: 14x²y - 21xy²", "options": ["7xy(2x - 3y)", "7x(2xy - 3y²)", "xy(14x - 21y)", "7xy(2x + 3y)"], "correctIndex": 0, "explanation": "HCF is 7xy, leaving (2x - 3y)."},
+    {"id": "quiz:4024:factorisation:1", "conceptId": "concept:4024:factorisation", "question": "Which is the correct factorisation of x² - 9x + 20?", "options": ["(x - 4)(x - 5)", "(x - 2)(x - 10)", "(x + 4)(x + 5)", "(x - 1)(x - 20)"], "correctIndex": 0, "explanation": "(-4) × (-5) = 20 and (-4) + (-5) = -9, giving (x - 4)(x - 5)."},
+    {"id": "quiz:4024:quadratics:1", "conceptId": "concept:4024:quadratic-equations", "question": "Solve x² - 6x + 8 = 0.", "options": ["x = 2 or x = 4", "x = -2 or x = -4", "x = 1 or x = 8", "x = -1 or x = -8"], "correctIndex": 0, "explanation": "(x - 2)(x - 4) = 0, so x = 2 or x = 4."},
+    {"id": "quiz:4024:simultaneous:1", "conceptId": "concept:4024:simultaneous-equations", "question": "If x + y = 10 and x - y = 4, what is the value of x?", "options": ["7", "6", "3", "5"], "correctIndex": 0, "explanation": "Adding both equations: 2x = 14 -> x = 7 (and y = 3)."},
+    {"id": "quiz:4024:trig:1", "conceptId": "concept:4024:trigonometry", "question": "In a right triangle with adjacent side = 8 cm and hypotenuse = 10 cm, what is cos(θ)?", "options": ["0.80", "0.60", "0.75", "1.25"], "correctIndex": 0, "explanation": "cos(θ) = Adjacent / Hypotenuse = 8 / 10 = 0.80."},
+    {"id": "quiz:5054:units:1", "conceptId": "concept:5054:measurement-units", "question": "A liquid of mass 400 g has volume 500 cm³. What is its density?", "options": ["0.80 g/cm³", "1.25 g/cm³", "900 g/cm³", "200 g/cm³"], "correctIndex": 0, "explanation": "ρ = m / V = 400 / 500 = 0.80 g/cm³."},
+    {"id": "quiz:5054:speed:1", "conceptId": "concept:5054:speed-motion", "question": "A sprinter runs 200 m in 25 s. What is their average speed?", "options": ["8.0 m/s", "5.0 m/s", "50 m/s", "175 m/s"], "correctIndex": 0, "explanation": "Speed = Distance / Time = 200 / 25 = 8.0 m/s."},
+    {"id": "quiz:5054:kinematics:1", "conceptId": "concept:5054:kinematics", "question": "A train accelerates from 10 m/s to 30 m/s in 5 s. What is its acceleration?", "options": ["4.0 m/s²", "6.0 m/s²", "2.0 m/s²", "8.0 m/s²"], "correctIndex": 0, "explanation": "a = (v - u) / t = (30 - 10) / 5 = 20 / 5 = 4.0 m/s²."},
+    {"id": "quiz:5054:forces:1", "conceptId": "concept:5054:forces", "question": "A 5.0 kg box experiences a forward push of 25 N and friction of 5 N. What is its acceleration?", "options": ["4.0 m/s²", "5.0 m/s²", "6.0 m/s²", "2.0 m/s²"], "correctIndex": 0, "explanation": "Resultant force = 25 - 5 = 20 N. a = F / m = 20 / 5 = 4.0 m/s²."},
+    {"id": "quiz:5054:energy:1", "conceptId": "concept:5054:energy", "question": "A 2.0 kg object is raised to a height of 5.0 m (g = 10 N/kg). What is its gravitational potential energy?", "options": ["100 J", "50 J", "20 J", "10 J"], "correctIndex": 0, "explanation": "GPE = m g h = 2.0 × 10 × 5.0 = 100 J."},
+    {"id": "quiz:5054:electricity:1", "conceptId": "concept:5054:electricity", "question": "If a current of 2.0 A flows through a 6.0 Ω resistor, what is the voltage across it?", "options": ["12 V", "3.0 V", "8.0 V", "0.33 V"], "correctIndex": 0, "explanation": "V = I × R = 2.0 × 6.0 = 12 V."}
   ]
 }
