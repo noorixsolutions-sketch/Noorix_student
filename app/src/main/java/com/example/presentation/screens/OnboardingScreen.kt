@@ -5,17 +5,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,16 +45,20 @@ fun OnboardingScreen(viewModel: OLevelViewModel) {
         AnimatedContent(
             targetState = state.phase,
             transitionSpec = {
-                fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
+                fadeIn(animationSpec = tween(400)) togetherWith fadeOut(animationSpec = tween(400))
             },
-            label = "OnboardingPhase"
+            label = "OnboardingPhaseTransition"
         ) { targetPhase ->
             when (targetPhase) {
-                OnboardingPhase.WELCOME -> WelcomePhase { viewModel.startOnboardingPhase(OnboardingPhase.TEST_A_PSYCHOMETRIC) }
+                OnboardingPhase.WELCOME -> WelcomePhase {
+                    viewModel.startOnboardingPhase(OnboardingPhase.TEST_A_PSYCHOMETRIC)
+                }
                 OnboardingPhase.TEST_A_PSYCHOMETRIC -> TestAPhase(viewModel)
                 OnboardingPhase.TEST_B_COGNITIVE -> TestBPhase(viewModel)
                 OnboardingPhase.TEST_C_CURRICULUM -> TestCPhase(viewModel)
-                OnboardingPhase.COMPLETE -> CompletePhase { viewModel.startOnboardingPhase(OnboardingPhase.COMPLETE) }
+                OnboardingPhase.COMPLETE -> CompletePhase {
+                    viewModel.startOnboardingPhase(OnboardingPhase.COMPLETE)
+                }
             }
         }
     }
@@ -63,103 +67,210 @@ fun OnboardingScreen(viewModel: OLevelViewModel) {
 @Composable
 fun WelcomePhase(onStart: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth(0.9f),
+        modifier = Modifier
+            .fillMaxWidth(0.92f)
+            .padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Default.Science, contentDescription = null, tint = TealAccent, modifier = Modifier.size(64.dp))
+        Surface(
+            shape = CircleShape,
+            color = TealAccentSubtle,
+            modifier = Modifier.size(72.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.School, contentDescription = null, tint = TealAccent, modifier = Modifier.size(40.dp))
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
-        Text("Noorix Learning Runtime", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.ExtraBold)
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Welcome to the personalized O-Level academic platform. Before we begin, we need to establish your baseline profile across three dimensions:\n\n1. Psychometric Signals\n2. Cognitive Reasoning\n3. Curriculum Mastery",
+            text = "Noorix Learning Runtime",
+            style = MaterialTheme.typography.headlineMedium,
+            color = TextPrimary,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Next-generation Cambridge O-Level study system with AI Mentors, deterministic Math Lab, and adaptive diagnostics.",
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
         )
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = NearBlackSurface,
+            border = BorderStroke(1.dp, SubtleBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OnboardingBenefitItem("1. Psychometric Signals", "Calibrate persistence, metacognition & help-seeking", TealAccent)
+                OnboardingBenefitItem("2. Cognitive Reasoning", "Map working memory & spatial logic priors", StepCorrect)
+                OnboardingBenefitItem("3. Adaptive Diagnostic", "Detect prerequisite gaps without whole-bank tests", CyberGold)
+            }
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
+
         Button(
             onClick = onStart,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = TealAccent)
+            colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
+            shape = RoundedCornerShape(10.dp)
         ) {
-            Text("Begin Initialization", color = NearBlackBg, fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp))
+            Text("Begin Calibration Initialization", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(vertical = 6.dp))
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OnboardingBenefitItem(title: String, desc: String, accentColor: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(accentColor))
+        Spacer(modifier = Modifier.width(10.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+            Text(desc, style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 11.sp)
+        }
+    }
+}
+
 @Composable
 fun TestAPhase(viewModel: OLevelViewModel) {
     val state by viewModel.onboardingState.collectAsState()
     val question = OnboardingData.testA[state.testAIndex]
 
     Column(
-        modifier = Modifier.fillMaxWidth(0.9f)
+        modifier = Modifier.fillMaxWidth(0.92f)
     ) {
-        Text("Test A: Psychometric Baseline", color = GoldAccent, style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("STEP 1 OF 3: PSYCHOMETRIC BASELINE", color = TealAccent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text("${state.testAIndex + 1} / ${OnboardingData.testA.size}", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
         LinearProgressIndicator(
             progress = { (state.testAIndex.toFloat() / OnboardingData.testA.size) },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
             color = TealAccent,
             trackColor = NearBlackSurface
         )
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(question.text, style = MaterialTheme.typography.headlineSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(48.dp))
 
-        listOf(
-            1 to "Strongly Disagree",
-            2 to "Disagree",
-            3 to "Neutral",
-            4 to "Agree",
-            5 to "Strongly Agree"
-        ).forEach { (score, label) ->
-            Card(
+        Spacer(modifier = Modifier.height(28.dp))
+        Text(
+            text = question.text,
+            style = MaterialTheme.typography.headlineSmall,
+            color = TextPrimary,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 30.sp
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        val likertOptions = listOf(
+            1 to "1 • Strongly Disagree",
+            2 to "2 • Disagree",
+            3 to "3 • Neutral",
+            4 to "4 • Agree",
+            5 to "5 • Strongly Agree"
+        )
+
+        likertOptions.forEach { (score, label) ->
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = NearBlackSurface,
+                border = BorderStroke(1.dp, SubtleBorder),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clickable { viewModel.submitTestAAnswer(score) },
-                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                border = borderStroke()
+                    .clickable { viewModel.submitTestAAnswer(score) }
             ) {
-                Text(label, color = TextPrimary, modifier = Modifier.padding(16.dp))
+                Text(
+                    text = label,
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(14.dp)
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TestBPhase(viewModel: OLevelViewModel) {
     val state by viewModel.onboardingState.collectAsState()
     val question = OnboardingData.testB[state.testBIndex]
 
     Column(
-        modifier = Modifier.fillMaxWidth(0.9f)
+        modifier = Modifier.fillMaxWidth(0.92f)
     ) {
-        Text("Test B: Cognitive Reasoning Baseline", color = CyanAccent, style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("STEP 2 OF 3: COGNITIVE REASONING", color = StepCorrect, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text("${state.testBIndex + 1} / ${OnboardingData.testB.size}", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
         LinearProgressIndicator(
             progress = { (state.testBIndex.toFloat() / OnboardingData.testB.size) },
-            modifier = Modifier.fillMaxWidth(),
-            color = CyanAccent,
+            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+            color = StepCorrect,
             trackColor = NearBlackSurface
         )
+
+        Spacer(modifier = Modifier.height(28.dp))
+        Text(
+            text = question.text,
+            style = MaterialTheme.typography.headlineSmall,
+            color = TextPrimary,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 30.sp
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
-        Text(question.text, style = MaterialTheme.typography.headlineSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(48.dp))
 
         question.options.forEachIndexed { index, option ->
-            Card(
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = NearBlackSurface,
+                border = BorderStroke(1.dp, SubtleBorder),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clickable { viewModel.submitTestBAnswer(index) },
-                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                border = borderStroke()
+                    .clickable { viewModel.submitTestBAnswer(index) }
             ) {
-                Text(option, color = TextPrimary, modifier = Modifier.padding(16.dp))
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = NearBlackElevated,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(('A' + index).toString(), color = StepCorrect, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = option,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
@@ -169,16 +280,9 @@ fun TestBPhase(viewModel: OLevelViewModel) {
 fun TestCPhase(viewModel: OLevelViewModel) {
     val session by viewModel.diagnosticSession.collectAsState()
     val activePackage by viewModel.activePackage.collectAsState()
-    // FIX (onboarding stuck): wait for the signed course package (question
-    // bank) instead of running the diagnostic against an empty bank.
     val bankReady = activePackage != null
 
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text("Test C: Curriculum Diagnostic", color = TealAccent, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 16.dp))
-        Spacer(modifier = Modifier.height(8.dp))
-
+    Column(modifier = Modifier.fillMaxWidth()) {
         when {
             session.isCompleted ->
                 CompletePhase { viewModel.startOnboardingPhase(OnboardingPhase.COMPLETE) }
@@ -201,7 +305,6 @@ fun TestCPhase(viewModel: OLevelViewModel) {
                 }
 
             else -> {
-                // Re-use the existing diagnostic screen layout logic
                 Box(modifier = Modifier.weight(1f)) {
                     DiagnosticScreen(viewModel = viewModel)
                 }
@@ -213,29 +316,45 @@ fun TestCPhase(viewModel: OLevelViewModel) {
 @Composable
 fun CompletePhase(onFinish: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth(0.9f).padding(32.dp),
+        modifier = Modifier
+            .fillMaxWidth(0.92f)
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF48BB78), modifier = Modifier.size(64.dp))
+        Surface(
+            shape = CircleShape,
+            color = StepCorrect.copy(alpha = 0.15f),
+            modifier = Modifier.size(72.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StepCorrect, modifier = Modifier.size(40.dp))
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
-        Text("Calibration Complete", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.ExtraBold)
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Your baseline signals have been recorded. The gap engine will now use these priors to sequence your academic interventions.",
+            text = "Calibration Complete! 🚀",
+            style = MaterialTheme.typography.headlineMedium,
+            color = TextPrimary,
+            fontWeight = FontWeight.ExtraBold
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Your baseline signals and readiness priors are successfully recorded in the immutable sovereign store. Your AI tutors and personalized plan are active.",
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
         )
+
         Spacer(modifier = Modifier.height(32.dp))
+
         Button(
             onClick = onFinish,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF48BB78))
+            colors = ButtonDefaults.buttonColors(containerColor = StepCorrect, contentColor = NearBlackBg),
+            shape = RoundedCornerShape(10.dp)
         ) {
-            Text("Enter Dashboard", color = NearBlackBg, fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp))
+            Text("Enter Candidate Dashboard", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(vertical = 6.dp))
         }
     }
 }
-
-@Composable
-private fun borderStroke() = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder)

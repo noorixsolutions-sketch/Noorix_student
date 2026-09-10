@@ -686,12 +686,33 @@ class LearningRepository(context: Context) {
 
     val auditLogsFlow: Flow<List<AuditLogEntity>> = auditDao.getAllAuditsFlow()
 
-    /** Recomputes the hash chain in oldest-first order. Returns true iff intact. */
+    /** Recomputes the hash chain in sequence. Returns true iff intact. */
     fun verifyAuditChain(logs: List<AuditLogEntity>): Boolean {
+        if (logs.isEmpty()) return true
+
+        // Build linked chain map indexed by prevHash
+        val byPrevHash = logs.associateBy { if (it.prevHash.isEmpty()) AUDIT_GENESIS_HASH else it.prevHash }
+
+        // If all elements have unique prevHashes, walk the chain graph starting from genesis
+        if (byPrevHash.size == logs.size && byPrevHash.containsKey(AUDIT_GENESIS_HASH)) {
+            var currentPrev = AUDIT_GENESIS_HASH
+            var visitedCount = 0
+            while (visitedCount < logs.size) {
+                val nextEntry = byPrevHash[currentPrev] ?: return false
+                val expectedPrev = if (nextEntry.prevHash.isEmpty()) AUDIT_GENESIS_HASH else nextEntry.prevHash
+                if (expectedPrev != currentPrev) return false
+                if (auditChainHash(nextEntry.action, nextEntry.details, nextEntry.timestampMs, expectedPrev) != nextEntry.verificationHash) {
+                    return false
+                }
+                currentPrev = nextEntry.verificationHash
+                visitedCount++
+            }
+            return true
+        }
+
+        // Fallback: sequential check by timestamp
         var prev = AUDIT_GENESIS_HASH
         for (entry in logs.sortedBy { it.timestampMs }) {
-            // Legacy pre-v3 rows have no prevHash; treat an empty value as genesis
-            // only for the first entry, otherwise the chain is broken.
             val expectedPrev = if (entry.prevHash.isEmpty()) AUDIT_GENESIS_HASH else entry.prevHash
             if (entry.prevHash.isNotEmpty() && entry.prevHash != prev) return false
             if (entry.prevHash.isEmpty() && prev != AUDIT_GENESIS_HASH) return false

@@ -70,6 +70,17 @@ class AuditChainTest {
     }
 
     @Test
+    fun `audit chain verifies even when entries share identical millisecond timestamp`() {
+        val t = 5_000L
+        val e1 = entry("ACTION_1", "step 1", t, LearningRepository.AUDIT_GENESIS_HASH)
+        val e2 = entry("ACTION_2", "step 2", t, e1.verificationHash)
+        val e3 = entry("ACTION_3", "step 3", t, e2.verificationHash)
+
+        // Shuffled list to simulate non-chronological order input
+        assertTrue("Chained entries sharing the same timestamp must verify", repo.verifyAuditChain(listOf(e3, e1, e2)))
+    }
+
+    @Test
     fun `audit chain hash is deterministic and order-sensitive over fields`() {
         val h1 = LearningRepository.auditChainHash("A", "d", 10L, "prev")
         val h2 = LearningRepository.auditChainHash("A", "d", 10L, "prev")

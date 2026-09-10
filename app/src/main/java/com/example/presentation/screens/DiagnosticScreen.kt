@@ -1,11 +1,14 @@
 package com.example.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,73 +20,80 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
+import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
-import com.example.ui.theme.CyanAccent
-import com.example.ui.theme.GoldAccent
+import com.example.presentation.components.NoorixSegmentedProgressBar
+import com.example.ui.theme.*
 
 @Composable
 fun DiagnosticScreen(viewModel: OLevelViewModel) {
     val session by viewModel.diagnosticSession.collectAsState()
     val activePackage by viewModel.activePackage.collectAsState()
-    // FIX (onboarding stuck): the question bank comes from the signed course
-    // package; on first launch it loads asynchronously. Show a preparing
-    // state instead of dead-ending on the completion card.
+
     val bankReady = activePackage != null
-    val nextQuestion = remember(session, bankReady) { if (bankReady) viewModel.getNextDiagnosticQuestion() else null }
+    val nextQuestion = remember(session, bankReady) {
+        if (bankReady) viewModel.getNextDiagnosticQuestion() else null
+    }
     var selectedOption by remember { mutableIntStateOf(-1) }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .background(NearBlackBg)
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
+        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Header Card
+        // 1. Header Card with Exam Coach
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                border = BorderStroke(1.dp, SubtleBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_exam_coach),
-                            contentDescription = "Exam Coach AI Robot",
+                        Image(
+                            painter = painterResource(id = R.drawable.img_exam_coach),
+                            contentDescription = "Exam Coach",
                             modifier = Modifier
-                                .size(42.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
-                                .border(1.5.dp, GoldAccent, CircleShape),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                .border(1.5.dp, CyberGold, CircleShape),
+                            contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
                                 text = "ADAPTIVE CAMBRIDGE QUIZ • EXAM COACH",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = GoldAccent,
+                                color = CyberGold,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
                             Text(
                                 text = "Smart Diagnostic Check",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Questions dynamically calibrate to your skill level. In just 4–6 questions, our smart engine pinpoints your strengths and uncovers exact prerequisites to review.",
+                        text = "Questions dynamically adjust to your response accuracy. In 4–6 questions, our engine accurately identifies your readiness and isolates prerequisite gaps.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextSecondary
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -95,59 +105,69 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Current Confidence", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Calibration Confidence", style = MaterialTheme.typography.labelSmall, color = TextMuted)
                             Text(
                                 text = "${(session.confidence * 100).toInt()}% Calibrated",
                                 fontWeight = FontWeight.Bold,
-                                color = if (session.confidence >= 0.85) Color(0xFF68D391) else CyanAccent,
+                                color = if (session.confidence >= 0.85) StepCorrect else TealAccent,
                                 fontSize = 13.sp
                             )
                         }
 
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
+                            color = NearBlackSurface,
+                            border = BorderStroke(1.dp, SubtleBorder)
                         ) {
                             Text(
                                 text = "Question ${session.itemsAnswered.size} / 6",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                color = TealAccent,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    NoorixSegmentedProgressBar(
+                        progress = (session.itemsAnswered.size / 6f).coerceIn(0f, 1f),
+                        totalSegments = 6,
+                        activeColor = TealAccent,
+                        inactiveColor = SubtleBorder
+                    )
                 }
             }
         }
 
-        // 2. Active Question Card, Preparing state, or Completion State
+        // 2. Active Question, Loading or Completed State
         if (!bankReady) {
             item {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, SubtleBorder)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(24.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                        Spacer(modifier = Modifier.width(14.dp))
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = TealAccent)
+                        Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "Preparing question bank…",
+                                text = "Preparing Question Bank…",
                                 style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Loading the signed course package from local storage.",
+                                text = "Loading verified Cambridge package from secure local store.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextSecondary
                             )
                         }
                     }
@@ -160,8 +180,8 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         .fillMaxWidth()
                         .testTag("diagnostic_completed_card"),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF48BB78))
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.5.dp, StepCorrect)
                 ) {
                     Column(
                         modifier = Modifier
@@ -171,42 +191,97 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = Color(0x3348BB78),
-                            modifier = Modifier.size(56.dp)
+                            color = StepCorrect.copy(alpha = 0.15f),
+                            modifier = Modifier.size(60.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Celebration, contentDescription = null, tint = Color(0xFF48BB78), modifier = Modifier.size(32.dp))
+                                Icon(Icons.Default.Celebration, contentDescription = null, tint = StepCorrect, modifier = Modifier.size(32.dp))
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
                         Text(
                             text = "Diagnostic Complete! 🎉",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF48BB78)
+                            color = StepCorrect
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Your Cambridge readiness profile is calibrated. High-confidence mastery has been recorded for your active learning path.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            text = "Your Cambridge candidate profile is now calibrated. The adaptive planner has updated your mastery state.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Button(
-                            onClick = {
-                                viewModel.startDiagnostic()
-                                selectedOption = -1
-                            },
+                        // Results breakdown
+                        Surface(
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyanAccent, contentColor = Color.Black)
+                            color = NearBlackBg,
+                            border = BorderStroke(1.dp, SubtleBorder),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Start Fresh Quiz Session", fontWeight = FontWeight.Bold)
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Estimated Ability:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text("${(session.estimatedAbility * 100).toInt()}% IRT θ", fontWeight = FontWeight.Bold, color = TealAccent)
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Questions Answered:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text("${session.itemsAnswered.size}", fontWeight = FontWeight.Bold, color = TextPrimary)
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Identified Gaps:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text(
+                                        if (session.identifiedGaps.isEmpty()) "None (All Cleared)" else "${session.identifiedGaps.size} concept(s)",
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (session.identifiedGaps.isEmpty()) StepCorrect else CyberGold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    viewModel.startDiagnostic()
+                                    selectedOption = -1
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Retake Quiz", fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = { viewModel.setTab(AppNavigationTab.LEARNING_HUB) },
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, SubtleBorderActive),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Study Concepts", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                            }
                         }
                     }
                 }
@@ -218,8 +293,8 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         .fillMaxWidth()
                         .testTag("diagnostic_question_card"),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, SubtleBorder)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(
@@ -229,69 +304,79 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
-                                color = CyanAccent.copy(alpha = 0.15f)
+                                color = TealAccentSubtle
                             ) {
                                 Text(
                                     text = nextQuestion.targetConceptId.substringAfterLast(":").uppercase(),
-                                    color = CyanAccent,
+                                    color = TealAccent,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 10.sp,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
                             }
 
                             Text(
                                 text = "Difficulty: ${(nextQuestion.difficulty * 100).toInt()}%",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextMuted
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
                             text = nextQuestion.prompt,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            lineHeight = 24.sp
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         nextQuestion.options.forEachIndexed { optIndex, optionText ->
                             val isSelected = selectedOption == optIndex
-                            Card(
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) TealAccentSubtle else NearBlackBg,
+                                border = BorderStroke(1.dp, if (isSelected) TealAccent else SubtleBorder),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
-                                    .clickable { selectedOption = optIndex },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) CyanAccent.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                                border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, CyanAccent) else null
+                                    .clickable { selectedOption = optIndex }
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(12.dp),
+                                        .padding(14.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    RadioButton(
-                                        selected = isSelected,
-                                        onClick = { selectedOption = optIndex },
-                                        colors = RadioButtonDefaults.colors(selectedColor = CyanAccent)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (isSelected) TealAccent else NearBlackElevated,
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = ('A' + optIndex).toString(),
+                                                color = if (isSelected) NearBlackBg else TextSecondary,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
                                     Text(
                                         text = optionText,
                                         style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         Button(
                             onClick = {
@@ -304,8 +389,8 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("submit_diagnostic_answer_button"),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyanAccent, contentColor = Color.Black)
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg)
                         ) {
                             Text("Submit Answer", fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.width(6.dp))

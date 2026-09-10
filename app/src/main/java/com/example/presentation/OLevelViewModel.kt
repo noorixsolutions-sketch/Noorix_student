@@ -83,6 +83,17 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         LearningContentProvider(application.applicationContext).load()
     }.getOrDefault(com.example.core.model.KnowledgeLearningContent())
 
+    // Noorix AI Agent state (initialized early so OpenRouter & Local config bind properly)
+    private val agentManager = NoorixAiAgentManager(application.applicationContext, repository.chatMessageDao)
+    private val _selectedAgentId = MutableStateFlow("danish")
+    val selectedAgentId: StateFlow<String> = _selectedAgentId.asStateFlow()
+
+    private val _agentStreamingText = MutableStateFlow<String?>(null)
+    val agentStreamingText: StateFlow<String?> = _agentStreamingText.asStateFlow()
+
+    private val _isAgentThinking = MutableStateFlow(false)
+    val isAgentThinking: StateFlow<Boolean> = _isAgentThinking.asStateFlow()
+
     private val _openRouterApiKey = MutableStateFlow("")
     val openRouterApiKey: StateFlow<String> = _openRouterApiKey.asStateFlow()
 
@@ -91,12 +102,6 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _selectedOpenRouterModel = MutableStateFlow<String?>(null)
     val selectedOpenRouterModel: StateFlow<String?> = _selectedOpenRouterModel.asStateFlow()
-
-    private val _localModelUri = MutableStateFlow<Uri?>(null)
-    val localModelUri: StateFlow<Uri?> = _localModelUri.asStateFlow()
-
-    private val _localMmprojUri = MutableStateFlow<Uri?>(null)
-    val localMmprojUri: StateFlow<Uri?> = _localMmprojUri.asStateFlow()
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://openrouter.ai/")
@@ -107,6 +112,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun updateOpenRouterApiKey(key: String) {
         _openRouterApiKey.value = key
+        agentManager.setOpenRouterConfig(key, _selectedOpenRouterModel.value)
         if (key.isNotBlank()) {
             fetchOpenRouterModels(key)
         }
@@ -118,7 +124,9 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                 val response = openRouterApi.getModels("Bearer $key")
                 _openRouterModels.value = response.data
                 if (response.data.isNotEmpty() && _selectedOpenRouterModel.value == null) {
-                    _selectedOpenRouterModel.value = response.data.first().id
+                    val defaultModel = response.data.first().id
+                    _selectedOpenRouterModel.value = defaultModel
+                    agentManager.setOpenRouterConfig(_openRouterApiKey.value, defaultModel)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -128,14 +136,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun selectOpenRouterModel(modelId: String) {
         _selectedOpenRouterModel.value = modelId
-    }
-
-    fun setLocalMmprojUri(uri: Uri) {
-        _localMmprojUri.value = uri
-    }
-
-    fun setLocalModelUri(uri: Uri) {
-        _localModelUri.value = uri
+        agentManager.setOpenRouterConfig(_openRouterApiKey.value, modelId)
     }
 
     val diagnosticSession: StateFlow<DiagnosticSessionState> = repository.diagnosticSession
@@ -188,10 +189,11 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                         _statusBanner.value = "Failed to parse the Google ID token."
                         return@launch
                     }
+                val rawEmail = if (googleCredential.id.contains("@")) googleCredential.id else ""
                 val account = UserProfile(
                     userId = googleCredential.id,
-                    displayName = googleCredential.displayName ?: "Google user",
-                    email = "",
+                    displayName = googleCredential.displayName ?: (if (rawEmail.isNotEmpty()) rawEmail.substringBefore("@") else "Cambridge Candidate"),
+                    email = rawEmail,
                     photoUrl = googleCredential.profilePictureUri?.toString()
                 )
                 repository.saveUserAccount(account)
@@ -397,17 +399,6 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _transferFeedback = MutableStateFlow<String?>(null)
     val transferFeedback: StateFlow<String?> = _transferFeedback.asStateFlow()
-
-    // Noorix AI Agent state
-    private val agentManager = NoorixAiAgentManager(application.applicationContext, repository.chatMessageDao)
-    private val _selectedAgentId = MutableStateFlow("danish")
-    val selectedAgentId: StateFlow<String> = _selectedAgentId.asStateFlow()
-
-    private val _agentStreamingText = MutableStateFlow<String?>(null)
-    val agentStreamingText: StateFlow<String?> = _agentStreamingText.asStateFlow()
-
-    private val _isAgentThinking = MutableStateFlow(false)
-    val isAgentThinking: StateFlow<Boolean> = _isAgentThinking.asStateFlow()
 
     fun getChatMessages(agentId: String): kotlinx.coroutines.flow.Flow<List<ChatMessageEntity>> {
         return agentManager.getChatHistory(agentId)

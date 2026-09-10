@@ -33,7 +33,6 @@ import com.example.R
 import com.example.data.local.ChatMessageEntity
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
-import com.example.presentation.components.NoorixCard
 import com.example.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -61,34 +60,34 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                 id = "danish",
                 name = "DANISH",
                 role = "Mathematics 4024",
-                description = "Specializes in algebraic step-by-step problem solving.",
+                description = "Specializes in algebraic step-by-step problem solving & verifier rules.",
                 tag = "Algebra / 4024",
                 imageRes = R.drawable.img_danish_math,
                 accentColor = TealAccent,
                 targetTab = AppNavigationTab.SYMBOLIC_TUTOR,
-                promptStarter = "Hello Danish! Please explain how to solve quadratic factorisation step-by-step."
+                promptStarter = "Hello Danish! Please explain how to factorise quadratic expressions step-by-step."
             ),
             NoorixAgent(
                 id = "zoya",
                 name = "ZOYA",
                 role = "Sciences 5054",
-                description = "Expert in Physics (5054) concept visualization.",
+                description = "Expert in Physics (5054) kinematic graphs & conceptual visualization.",
                 tag = "Physics / 5054",
                 imageRes = R.drawable.img_zoya_science,
                 accentColor = StepCorrect,
                 targetTab = AppNavigationTab.MEDIA_TRANSFER,
-                promptStarter = "Hi Zoya! Can you give me a clear breakdown of Newton's laws?"
+                promptStarter = "Hi Zoya! Can you give me a clear visual breakdown of Newton's laws of motion?"
             ),
             NoorixAgent(
                 id = "exam_coach",
                 name = "EXAM COACH",
                 role = "Exam Strategy",
-                description = "Guides you with past paper strategies & exam timing.",
+                description = "Guides you with past paper tactics, mark schemes & exam timing.",
                 tag = "Past Papers",
                 imageRes = R.drawable.img_exam_coach,
                 accentColor = CyberGold,
                 targetTab = AppNavigationTab.DIAGNOSTIC,
-                promptStarter = "Coach, what are the top common pitfalls in Paper 1 exams?"
+                promptStarter = "Coach, what are the top common pitfalls in Cambridge Paper 1 exams?"
             )
         )
     }
@@ -106,9 +105,8 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
     var inputText by remember { mutableStateOf("") }
     var isMathVerificationMode by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
-    // Scroll to bottom when new message or stream arrives
+    // Scroll to bottom when new message arrives or stream updates
     LaunchedEffect(chatMessages.size, streamingText) {
         if (chatMessages.isNotEmpty()) {
             listState.animateScrollToItem(chatMessages.size)
@@ -120,7 +118,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
             .fillMaxSize()
             .background(NearBlackBg)
     ) {
-        // 1. Agent Selection Horizontal Carousel
+        // 1. Agent Selection Header Carousel
         Surface(
             color = NearBlackSurface,
             border = BorderStroke(1.dp, SubtleBorder),
@@ -128,11 +126,11 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
         ) {
             Column(modifier = Modifier.padding(vertical = 10.dp)) {
                 Text(
-                    text = "AI TUTORS",
+                    text = "AI TUTORING SUITE",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
                     letterSpacing = 1.1.sp
                 )
 
@@ -155,19 +153,19 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                                 .testTag("agent_tab_${agent.id}")
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Image(
                                     painter = painterResource(id = agent.imageRes),
                                     contentDescription = agent.name,
                                     modifier = Modifier
-                                        .size(24.dp)
+                                        .size(26.dp)
                                         .clip(CircleShape)
-                                        .border(1.dp, if(isSelected) agent.accentColor else Color.Transparent, CircleShape),
+                                        .border(1.dp, if (isSelected) agent.accentColor else Color.Transparent, CircleShape),
                                     contentScale = ContentScale.Crop
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
                                         text = agent.name,
@@ -189,10 +187,10 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 2. Active Agent Header Bar
+        // 2. Active Agent Banner
         Surface(
             color = NearBlackElevated,
-            border = BorderStroke(1.dp, currentAgent.accentColor.copy(alpha = 0.3f)),
+            border = BorderStroke(1.dp, currentAgent.accentColor.copy(alpha = 0.25f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -222,26 +220,25 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                                 color = currentAgent.accentColor
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(TealAccent)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Online",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = currentAgent.accentColor.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = currentAgent.role,
+                                    color = currentAgent.accentColor,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
                         }
                         Text(
-                            text = currentAgent.role + " • " + currentAgent.tag,
+                            text = currentAgent.description,
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            maxLines = 1
                         )
                     }
                 }
@@ -251,106 +248,76 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        Icons.Default.DeleteSweep,
+                        Icons.Default.DeleteOutline,
                         contentDescription = "Clear Chat",
-                        tint = TextSecondary,
+                        tint = TextMuted,
                         modifier = Modifier.size(18.dp)
                     )
                 }
             }
         }
 
-        // 3. Chat Messages List (Room-persisted)
+        // 3. Chat Messages Stream
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
         ) {
-            // Persisted Room messages
-            items(chatMessages) { message ->
+            items(chatMessages, key = { it.messageId }) { message ->
                 ChatMessageBubble(message = message, agentAccentColor = currentAgent.accentColor)
             }
 
-            // Real-time live streaming bubble
-            if (isThinking && !streamingText.isNullOrEmpty()) {
+            if (!streamingText.isNullOrEmpty()) {
                 item {
-                    StreamingMessageBubble(
-                        text = streamingText ?: "",
-                        agentAccentColor = currentAgent.accentColor
-                    )
+                    StreamingMessageBubble(text = streamingText!!, agentAccentColor = currentAgent.accentColor)
                 }
-            } else if (isThinking && streamingText.isNullOrEmpty()) {
+            } else if (isThinking) {
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = NearBlackSurface,
+                        border = BorderStroke(1.dp, SubtleBorder),
+                        modifier = Modifier.padding(vertical = 4.dp)
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = currentAgent.accentColor,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "${currentAgent.name} is typing...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = currentAgent.accentColor,
-                            fontFamily = FontFamily.Monospace
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(14.dp), color = currentAgent.accentColor, strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "${currentAgent.name} is formulating response...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // 4. Quick Starter Chips (Prompt Starter)
+        // 4. Chat Input Section
         Surface(
             color = NearBlackSurface,
             border = BorderStroke(1.dp, SubtleBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = currentAgent.accentColor.copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, currentAgent.accentColor.copy(alpha = 0.4f)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                viewModel.sendAgentMessage(currentAgent.id, currentAgent.promptStarter)
-                            }
+            Column(modifier = Modifier.padding(12.dp)) {
+                if (currentAgent.id == "danish") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Bolt, contentDescription = null, tint = currentAgent.accentColor, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Starter: ${currentAgent.promptStarter.take(42)}...",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextPrimary,
-                                maxLines = 1,
-                                fontSize = 10.sp
-                            )
-                        }
-                    }
-
-                    if (currentAgent.id == "danish") {
                         FilterChip(
                             selected = isMathVerificationMode,
                             onClick = { isMathVerificationMode = !isMathVerificationMode },
-                            label = { Text("Math Steps Verifier", fontSize = 10.sp) },
+                            label = { Text("Deterministic Math Verifier Mode", fontSize = 10.sp) },
                             leadingIcon = {
                                 Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(14.dp))
                             },
@@ -360,11 +327,9 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                             )
                         )
                     }
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // 5. Input Text Field + Send Action
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -378,12 +343,12 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                         placeholder = {
                             Text(
                                 text = if (isMathVerificationMode && currentAgent.id == "danish") {
-                                    "Enter problem & lines e.g.:\nx(x+2)=0\nx^2+2x=0"
+                                    "Enter problem & steps e.g.:\nx(x+2)\nx^2+2x"
                                 } else {
                                     "Ask ${currentAgent.name} anything..."
                                 },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
+                                color = TextMuted
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
@@ -423,7 +388,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
-                            tint = if (inputText.isNotBlank()) NearBlackBg else TextSecondary
+                            tint = if (inputText.isNotBlank()) NearBlackBg else TextMuted
                         )
                     }
                 }
@@ -455,14 +420,14 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
             modifier = Modifier.widthIn(max = 320.dp)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                // Sender label
+                // Sender label & Verification Badge
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isUser) "YOU" else "TUTOR",
+                        text = if (isUser) "YOU" else "AI TUTOR",
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isUser) TealAccent else agentAccentColor,
                         fontWeight = FontWeight.Bold,
@@ -476,7 +441,7 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                             border = BorderStroke(1.dp, StepCorrect)
                         ) {
                             Text(
-                                text = "VERIFIED",
+                                text = "MATH VERIFIED",
                                 color = StepCorrect,
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
@@ -496,7 +461,7 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                     lineHeight = 20.sp
                 )
 
-                // Optional Symbolic trace attachment
+                // Verifier trace attachment
                 if (!message.mathVerificationTrace.isNullOrEmpty() && !isUser) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
@@ -507,7 +472,7 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
                             Text(
-                                text = "VERIFIER TRACE:",
+                                text = "DETERMINISTIC VERIFIER TRACE:",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TealAccent,
                                 fontSize = 9.sp,
@@ -545,7 +510,7 @@ fun StreamingMessageBubble(text: String, agentAccentColor: Color) {
                     Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(agentAccentColor))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "TYPING...",
+                        text = "STREAMING...",
                         style = MaterialTheme.typography.labelSmall,
                         color = agentAccentColor,
                         fontWeight = FontWeight.Bold,
