@@ -239,7 +239,12 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
                     }
                 } else {
                     items(filtered.quizzes, key = { it.id }) { quiz ->
-                        HubQuizCard(quiz)
+                        HubQuizCard(
+                            quiz = quiz,
+                            onAnswerSubmitted = { isCorrect ->
+                                viewModel.submitLearningHubQuiz(selectedConceptId, quiz.id, isCorrect)
+                            }
+                        )
                     }
                 }
             }
@@ -474,7 +479,10 @@ private fun HubFlashcardCard(card: Flashcard) {
 }
 
 @Composable
-private fun HubQuizCard(quiz: LearningQuiz) {
+private fun HubQuizCard(
+    quiz: LearningQuiz,
+    onAnswerSubmitted: ((Boolean) -> Unit)? = null
+) {
     var selectedIndex by remember(quiz.id) { mutableIntStateOf(-1) }
     val isAnswered = selectedIndex >= 0
 
@@ -525,7 +533,10 @@ private fun HubQuizCard(quiz: LearningQuiz) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
-                        .clickable(enabled = !isAnswered) { selectedIndex = index }
+                        .clickable(enabled = !isAnswered) {
+                            selectedIndex = index
+                            onAnswerSubmitted?.invoke(index == quiz.correctIndex)
+                        }
                 ) {
                     Row(
                         modifier = Modifier

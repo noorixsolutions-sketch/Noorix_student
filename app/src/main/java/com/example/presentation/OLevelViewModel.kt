@@ -300,6 +300,24 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     private val _onboardingState = MutableStateFlow(OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
 
+    fun updateOnboardingProfile(
+        name: String,
+        grade: String,
+        age: Int,
+        targetGrade: String,
+        targetExamSession: String,
+        dailyMinutes: Int
+    ) {
+        _onboardingState.value = _onboardingState.value.copy(
+            candidateName = name,
+            candidateGrade = grade,
+            candidateAge = age,
+            targetGrade = targetGrade,
+            targetExamSession = targetExamSession,
+            dailyTargetMinutes = dailyMinutes
+        )
+    }
+
     fun startOnboardingPhase(phase: OnboardingPhase) {
         _onboardingState.value = _onboardingState.value.copy(phase = phase)
         if (phase == OnboardingPhase.TEST_C_CURRICULUM) {
@@ -310,7 +328,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-        fun submitTestAAnswer(value: Int) {
+    fun submitTestAAnswer(value: Int) {
         val state = _onboardingState.value
         val newResponses = state.testAResponses + value
         if (state.testAIndex + 1 < OnboardingData.testA.size) {
@@ -322,12 +340,6 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                 "frustration_response" to (newResponses[2] / 5f),
                 "metacognition" to (newResponses[3] / 5f)
             )
-            viewModelScope.launch {
-                repository.recordEvent(
-                    com.example.core.model.EventType.STUDENT_ONBOARDED,
-                    "{ \"psychometricSignals\": { \"persistence\": ${signals["persistence"]}, \"confidence\": ${signals["confidence"]}, \"frustration_response\": ${signals["frustration_response"]}, \"metacognition\": ${signals["metacognition"]} } }"
-                )
-            }
             _onboardingState.value = state.copy(
                 testAResponses = newResponses,
                 psychometricSignals = signals,
@@ -345,24 +357,62 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         if (state.testBIndex + 1 < OnboardingData.testB.size) {
             _onboardingState.value = state.copy(testBIndex = state.testBIndex + 1, testBResponses = newResponses)
         } else {
-            val signals = mapOf(
+            val cogSignals = mapOf(
                 "pattern_reasoning" to if (newResponses[0]) 1f else 0.5f,
                 "logical_reasoning" to if (newResponses[1]) 1f else 0.5f,
                 "working_memory" to if (newResponses[2]) 1f else 0.5f,
                 "spatial_reasoning" to if (newResponses[3]) 1f else 0.5f
             )
+            val psySignals = state.psychometricSignals ?: mapOf(
+                "persistence" to 0.7f,
+                "confidence" to 0.65f,
+                "frustration_response" to 0.6f,
+                "metacognition" to 0.75f
+            )
+
             viewModelScope.launch {
+                val payload = org.json.JSONObject().apply {
+                    put("studentName", state.candidateName)
+                    put("candidateGrade", state.candidateGrade)
+                    put("candidateAge", state.candidateAge)
+                    put("targetGrade", state.targetGrade)
+                    put("targetExamSession", state.targetExamSession)
+                    put("dailyTargetMinutes", state.dailyTargetMinutes)
+                    put("psychometricSignals", org.json.JSONObject().apply {
+                        psySignals.forEach { (k, v) -> put(k, v) }
+                    })
+                    put("cognitiveSignals", org.json.JSONObject().apply {
+                        cogSignals.forEach { (k, v) -> put(k, v) }
+                    })
+                }.toString()
+
                 repository.recordEvent(
                     com.example.core.model.EventType.STUDENT_ONBOARDED,
-                    "{ \"cognitiveSignals\": { \"pattern_reasoning\": ${signals["pattern_reasoning"]}, \"logical_reasoning\": ${signals["logical_reasoning"]}, \"working_memory\": ${signals["working_memory"]}, \"spatial_reasoning\": ${signals["spatial_reasoning"]} } }"
+                    payload
                 )
             }
+
             _onboardingState.value = state.copy(
                 testBResponses = newResponses,
-                cognitiveSignals = signals,
+                cognitiveSignals = cogSignals,
                 phase = OnboardingPhase.TEST_C_CURRICULUM
             )
             startDiagnostic()
+        }
+    }
+
+    fun submitLearningHubQuiz(conceptId: String, quizId: String, isCorrect: Boolean) {
+        viewModelScope.launch {
+            val recal = repository.evaluateContinuousCalibration(
+                conceptId = conceptId,
+                activityType = "POST_STUDY_QUIZ",
+                score = if (isCorrect) 1.0 else 0.25,
+                durationMinutes = 3,
+                errorType = if (isCorrect) null else "CONCEPTUAL_QUIZ_ERROR"
+            )
+            if (recal != null && recal.attribution != com.example.core.model.RecalibrationAttribution.ON_TRACK) {
+                _statusBanner.value = "Continuous Calibration [${recal.attribution.name}]: ${recal.diagnosisNote}"
+            }
         }
     }
 

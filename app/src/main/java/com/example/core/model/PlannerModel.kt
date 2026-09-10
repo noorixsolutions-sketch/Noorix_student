@@ -37,6 +37,15 @@ data class PlanDeviation(
     val deltaDurationMinutes: Int = 0
 )
 
+data class PlanStage(
+    val stageIndex: Int,
+    val stageTitle: String,
+    val conceptId: String,
+    val recommendedActivity: String, // "VIDEO_EXPLAINER", "WORKED_STEPS", "FLASHCARD_PRACTICE", "STEP_VERIFIER", "TRANSFER_TASK", "PREREQUISITE_REPAIR"
+    val targetMastery: Double,
+    val isCompleted: Boolean = false
+)
+
 data class LearningPlan(
     val planId: String,
     val studentId: String,
@@ -44,7 +53,7 @@ data class LearningPlan(
     val targetConceptId: String,
     val targetConceptName: String,
     val objectiveIds: List<String>,
-    val interventionType: String, // WORKED_EXAMPLES, RETRIEVAL_PRACTICE, VISUAL_EXPLANATION, TRANSFER_PRACTICE
+    val interventionType: String, // WORKED_EXAMPLES, RETRIEVAL_PRACTICE, VISUAL_EXPLANATION, PREREQUISITE_REPAIR, TRANSFER_PRACTICE
     val predictions: PlanPrediction,
     val observation: PlanObservation? = null,
     val deviation: PlanDeviation? = null,
@@ -52,7 +61,10 @@ data class LearningPlan(
     val diagnosisNote: String = "",
     val confidence: Double = 0.75,
     val status: PlanStatus = PlanStatus.ACTIVE,
-    val createdAtHlc: String = ""
+    val createdAtHlc: String = "",
+    val planStages: List<PlanStage> = emptyList(),
+    val recalibrationCount: Int = 0,
+    val lastRecalibrationReason: String = ""
 )
 
 data class InterventionEfficacy(

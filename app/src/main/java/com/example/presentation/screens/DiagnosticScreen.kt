@@ -37,6 +37,8 @@ import com.example.ui.theme.*
 fun DiagnosticScreen(viewModel: OLevelViewModel) {
     val session by viewModel.diagnosticSession.collectAsState()
     val activePackage by viewModel.activePackage.collectAsState()
+    val studentModel by viewModel.studentModel.collectAsState()
+    val activePlan by viewModel.activePlan.collectAsState()
 
     val bankReady = activePackage != null
     val nextQuestion = remember(session, bankReady) {
@@ -52,7 +54,7 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Header Card with Exam Coach
+        // 1. Header Card with Multi-Factor Calibration & Exam Coach
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -89,9 +91,37 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Multi-Factor Profile Calibration Badge
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = NearBlackSurface,
+                        border = BorderStroke(1.dp, SubtleBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Profile: ${studentModel.profileCalibration.studentGrade} (Age ${studentModel.profileCalibration.studentAge})",
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                text = "Prior θ: ${(session.priorTheta * 100).toInt()}% • Target ${studentModel.profileCalibration.targetGrade}",
+                                color = TealAccent,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Questions dynamically adjust to your response accuracy. In 4–6 questions, our engine accurately identifies your readiness and isolates prerequisite gaps.",
+                        text = "Questions dynamically adjust based on your multi-factor profile. In 4–6 questions, our engine isolates syllabus gaps and synthesizes your personalized adaptive plan.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
@@ -107,7 +137,7 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         Column {
                             Text("Calibration Confidence", style = MaterialTheme.typography.labelSmall, color = TextMuted)
                             Text(
-                                text = "${(session.confidence * 100).toInt()}% Calibrated",
+                                text = "${(session.confidence * 100).toInt()}% Calibrated (Ability: ${(session.estimatedAbility * 100).toInt()}%)",
                                 fontWeight = FontWeight.Bold,
                                 color = if (session.confidence >= 0.85) StepCorrect else TealAccent,
                                 fontSize = 13.sp
@@ -186,35 +216,35 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
+                            .padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Surface(
                             shape = CircleShape,
                             color = StepCorrect.copy(alpha = 0.15f),
-                            modifier = Modifier.size(60.dp)
+                            modifier = Modifier.size(56.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Celebration, contentDescription = null, tint = StepCorrect, modifier = Modifier.size(32.dp))
+                                Icon(Icons.Default.Celebration, contentDescription = null, tint = StepCorrect, modifier = Modifier.size(30.dp))
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Diagnostic Complete! 🎉",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = StepCorrect
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Your Cambridge candidate profile is now calibrated. The adaptive planner has updated your mastery state.",
+                            text = "Your profile is calibrated and your continuous closed-loop study plan has been synthesized.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary,
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         // Results breakdown
                         Surface(
@@ -223,38 +253,75 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                             border = BorderStroke(1.dp, SubtleBorder),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Estimated Ability:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                    Text("${(session.estimatedAbility * 100).toInt()}% IRT θ", fontWeight = FontWeight.Bold, color = TealAccent)
+                                    Text("Calibrated Ability (θ):", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text("${(session.estimatedAbility * 100).toInt()}% IRT (Prior: ${(session.priorTheta * 100).toInt()}%)", fontWeight = FontWeight.Bold, color = TealAccent)
                                 }
-                                Spacer(modifier = Modifier.height(6.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text("Questions Answered:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                    Text("${session.itemsAnswered.size}", fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    Text("${session.itemsAnswered.size} items", fontWeight = FontWeight.Bold, color = TextPrimary)
                                 }
-                                Spacer(modifier = Modifier.height(6.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text("Identified Gaps:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                     Text(
-                                        if (session.identifiedGaps.isEmpty()) "None (All Cleared)" else "${session.identifiedGaps.size} concept(s)",
+                                        if (session.identifiedGaps.isEmpty()) "None (Direct Track)" else "${session.identifiedGaps.size} concept(s)",
                                         fontWeight = FontWeight.Bold,
                                         color = if (session.identifiedGaps.isEmpty()) StepCorrect else CyberGold
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Recommended Strategy:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text(
+                                        activePlan?.interventionType ?: "WORKED_EXAMPLES",
+                                        fontWeight = FontWeight.Bold,
+                                        color = StepCorrect
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        // Synthesized Plan Stage Overview
+                        if (activePlan?.planStages?.isNotEmpty() == true) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = NearBlackElevated,
+                                border = BorderStroke(1.dp, SubtleBorder),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(
+                                        text = "SYNTHESIZED STUDY STAGES",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = StepCorrect,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    )
+                                    activePlan?.planStages?.take(3)?.forEach { stage ->
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.CheckCircleOutline, contentDescription = null, tint = TealAccent, modifier = Modifier.size(14.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(stage.stageTitle, style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontSize = 11.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -280,7 +347,7 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                                 border = BorderStroke(1.dp, SubtleBorderActive),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Study Concepts", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                                Text("Study Plan", color = TextPrimary, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }

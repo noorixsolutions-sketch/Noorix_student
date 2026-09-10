@@ -34,7 +34,6 @@ import com.example.data.local.ChatMessageEntity
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
 import com.example.ui.theme.*
-import kotlinx.coroutines.launch
 
 data class NoorixAgent(
     val id: String,
@@ -59,8 +58,8 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
             NoorixAgent(
                 id = "danish",
                 name = "DANISH",
-                role = "Mathematics 4024",
-                description = "Specializes in algebraic step-by-step problem solving & verifier rules.",
+                role = "Mathematics (4024)",
+                description = "Specializes in algebraic step verification, quadratic factorisation & proofs.",
                 tag = "Algebra / 4024",
                 imageRes = R.drawable.img_danish_math,
                 accentColor = TealAccent,
@@ -70,8 +69,8 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
             NoorixAgent(
                 id = "zoya",
                 name = "ZOYA",
-                role = "Sciences 5054",
-                description = "Expert in Physics (5054) kinematic graphs & conceptual visualization.",
+                role = "Sciences (5054)",
+                description = "Expert in Physics kinematic graphs, Newton's laws & conceptual visualization.",
                 tag = "Physics / 5054",
                 imageRes = R.drawable.img_zoya_science,
                 accentColor = StepCorrect,
@@ -79,15 +78,48 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                 promptStarter = "Hi Zoya! Can you give me a clear visual breakdown of Newton's laws of motion?"
             ),
             NoorixAgent(
+                id = "ayesha",
+                name = "AYESHA",
+                role = "Language (1123)",
+                description = "Enhances reading comprehension, summary writing & formal English essays.",
+                tag = "English / 1123",
+                imageRes = R.drawable.img_ayesha_language,
+                accentColor = Color(0xFF38BDF8),
+                targetTab = AppNavigationTab.LEARNING_HUB,
+                promptStarter = "Hello Ayesha! How can I structure an effective 10-mark summary in Cambridge English?"
+            ),
+            NoorixAgent(
+                id = "bilal",
+                name = "BILAL",
+                role = "Aptitude & Logic",
+                description = "Builds logical reasoning, number patterns & competitive problem solving.",
+                tag = "Logical Reasoning",
+                imageRes = R.drawable.img_bilal_aptitude,
+                accentColor = Color(0xFFA78BFA),
+                targetTab = AppNavigationTab.LEARNING_HUB,
+                promptStarter = "Hi Bilal! Can you give me a pattern reasoning challenge to sharpen my thinking?"
+            ),
+            NoorixAgent(
                 id = "exam_coach",
                 name = "EXAM COACH",
-                role = "Exam Strategy",
-                description = "Guides you with past paper tactics, mark schemes & exam timing.",
+                role = "Exam Preparation",
+                description = "Guides you with past paper tactics, mark schemes, method marks & exam timing.",
                 tag = "Past Papers",
                 imageRes = R.drawable.img_exam_coach,
                 accentColor = CyberGold,
                 targetTab = AppNavigationTab.DIAGNOSTIC,
                 promptStarter = "Coach, what are the top common pitfalls in Cambridge Paper 1 exams?"
+            ),
+            NoorixAgent(
+                id = "career_guide",
+                name = "CAREER GUIDE",
+                role = "Academic Advisor",
+                description = "Helps you discover the right career paths and A-Level clusters based on strengths.",
+                tag = "Career Pathways",
+                imageRes = R.drawable.img_career_guide,
+                accentColor = Color(0xFFF472B6),
+                targetTab = AppNavigationTab.DASHBOARD,
+                promptStarter = "Hello Advisor! What subject combination works best for engineering and computer science?"
             )
         )
     }
@@ -126,9 +158,9 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
         ) {
             Column(modifier = Modifier.padding(vertical = 10.dp)) {
                 Text(
-                    text = "AI TUTORING SUITE",
+                    text = "AI LEARNING AGENTS",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
+                    color = TealAccent,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
                     letterSpacing = 1.1.sp
@@ -160,9 +192,9 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                                     painter = painterResource(id = agent.imageRes),
                                     contentDescription = agent.name,
                                     modifier = Modifier
-                                        .size(26.dp)
+                                        .size(28.dp)
                                         .clip(CircleShape)
-                                        .border(1.dp, if (isSelected) agent.accentColor else Color.Transparent, CircleShape),
+                                        .border(1.2.dp, if (isSelected) agent.accentColor else Color.Transparent, CircleShape),
                                     contentScale = ContentScale.Crop
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -200,7 +232,7 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     Image(
                         painter = painterResource(id = currentAgent.imageRes),
                         contentDescription = currentAgent.name,
@@ -420,7 +452,6 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
             modifier = Modifier.widthIn(max = 320.dp)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                // Sender label & Verification Badge
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -453,7 +484,6 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Content
                 Text(
                     text = message.content,
                     style = MaterialTheme.typography.bodyMedium,
@@ -461,7 +491,6 @@ fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
                     lineHeight = 20.sp
                 )
 
-                // Verifier trace attachment
                 if (!message.mathVerificationTrace.isNullOrEmpty() && !isUser) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
