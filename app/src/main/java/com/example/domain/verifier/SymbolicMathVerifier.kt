@@ -63,7 +63,9 @@ class SymbolicMathVerifier : MathVerifier {
     }
 
     private fun cleanExpression(expr: String): String {
-        return expr.replace("\\cdot", "*")
+        return expr
+            .replace(Regex("\\\\frac\\{([^}]+)\\}\\{([^}]+)\\}"), "(($1)/($2))")
+            .replace("\\cdot", "*")
             .replace("\\times", "*")
             .replace("\\left(", "(")
             .replace("\\right)", ")")
@@ -119,8 +121,12 @@ class SymbolicMathVerifier : MathVerifier {
             val diff = abs(valPrev - valCurr)
             if (diff > 0.0001) {
                 allMatch = false
-                // Check if it looks like a sign error (e.g. x(x+2) = x^2 + 2x, but student wrote x^2 + 3x or x^2 - 2x)
-                val valInverted = evaluateExpressionAt(curr.replace("-", "+_TEMP_").replace("+", "-").replace("_TEMP_", "-"), x)
+                // Check if it looks like a sign error using non-colliding placeholder replacement
+                val invertedExpr = curr
+                    .replace("-", "___MINUS___")
+                    .replace("+", "-")
+                    .replace("___MINUS___", "+")
+                val valInverted = evaluateExpressionAt(invertedExpr, x)
                 if (valInverted != null && abs(valPrev - valInverted) < 0.0001) {
                     signMismatchDetected = true
                 }

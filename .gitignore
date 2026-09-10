@@ -24,3 +24,5 @@ ci/*.log
 dist/
 *.apk
 *.aab
+__pycache__/
+*.pyc

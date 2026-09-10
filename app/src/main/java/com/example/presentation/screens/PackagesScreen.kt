@@ -1,13 +1,14 @@
 package com.example.presentation.screens
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,428 +16,338 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.core.model.GraphStage
 import com.example.presentation.OLevelViewModel
-import com.example.ui.theme.CyanAccent
-import com.example.ui.theme.GoldAccent
+import com.example.ui.theme.*
 
-@OptIn(
-    androidx.compose.foundation.ExperimentalFoundationApi::class,
-    androidx.compose.foundation.layout.ExperimentalLayoutApi::class
-)
 @Composable
 fun PackagesScreen(viewModel: OLevelViewModel) {
     val activePkg by viewModel.activePackage.collectAsState()
     val curriculumGraph by viewModel.curriculumGraph.collectAsState()
-    val context = LocalContext.current
-    var importStatus by remember { mutableStateOf<String?>(null) }
-    
-    val zipPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { 
-            importStatus = "Loading ZIP package..."
-            val pkg = com.example.domain.repository.ZipPackageReader.parseFromZip(context, it)
-            if (pkg != null) {
-                // Now pass it to ViewModel to install
-                viewModel.installCustomPackage(pkg) { success, msg ->
-                    importStatus = if (success) "Success! $msg" else "Error: $msg"
-                }
-            } else {
-                importStatus = "Error: Invalid or corrupted ZIP file"
-            }
-        }
-    }
+    var expandedStageId by remember { mutableStateOf<String?>("stage-9") }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .background(NearBlackBg)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // Header
+        // 1. Header Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                border = BorderStroke(1.dp, SubtleBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = TealAccentSubtle,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.LibraryBooks, contentDescription = null, tint = TealAccent, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "CURRICULUM SUPPLY CHAIN",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TealAccent,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Text(
+                                text = "Signed Course Packages",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "CURRICULUM SUPPLY CHAIN & PACKAGES",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = CyanAccent,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Runtime Agnosticism (Invariant P1)",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "The Android APK contains zero hardcoded curriculum logic. All subjects, syllabi, and prerequisite structures are external signed Course Packages.",
+                        text = "Official Cambridge curriculum packages are cryptographically signed offline using Ed25519. The runtime verifies content hashes and integrity before activating subjects.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextSecondary
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Button(
-                        onClick = { zipPickerLauncher.launch("application/zip") },
-                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent, contentColor = Color.Black),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.UploadFile, contentDescription = "Upload ZIP")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Load Custom Study Pack (ZIP)", fontWeight = FontWeight.Bold)
-                    }
-                    
-                    if (importStatus != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = importStatus!!,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (importStatus!!.startsWith("Success")) StepCorrect else Color.Red
-                        )
-                    }
                 }
             }
         }
 
-        // Curriculum Library — knowledge graph generated from the master branch
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("curriculum_library_card"),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "CURRICULUM LIBRARY (KNOWLEDGE GRAPH)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (curriculumGraph != null) {
+        // 2. Active Package & Cryptographic Proof Card
+        activePkg?.let { pkg ->
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, SubtleBorder)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "ACTIVE COURSE PACKAGE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TealAccent,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
-                                color = GoldAccent.copy(alpha = 0.2f)
+                                color = StepCorrect.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, StepCorrect)
                             ) {
                                 Text(
-                                    text = "master @ ${curriculumGraph?.source?.commit?.take(7) ?: "?"}",
-                                    color = GoldAccent,
-                                    style = MaterialTheme.typography.labelSmall,
+                                    text = "ED25519 VERIFIED",
+                                    color = StepCorrect,
+                                    fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
                         }
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
 
-                    val graph = curriculumGraph
-                    if (graph == null) {
-                        Text(
-                            text = "Loading curriculum knowledge graph…",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        Text(
-                            text = "${graph.stageCount} stages · ${graph.subjectCount} subjects · ${graph.nodes.size} graph nodes · ${graph.edges.size} edges — scanned from Cambridge_Curriculum_Library (${graph.source.library}).",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                         Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = pkg.manifest.subjectName,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Course ID: ${pkg.manifest.courseId} • Version: ${pkg.manifest.version}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
 
-                        var expandedStageId by remember { mutableStateOf<String?>(null) }
-                        graph.stages.forEach { stage ->
-                            val expanded = expandedStageId == stage.id
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        expandedStageId = if (expanded) null else stage.id
-                                    }
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = NearBlackBg,
+                                border = BorderStroke(1.dp, SubtleBorder),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stage.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "${stage.subjectCount} subjects",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text("Concepts", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                    Text("${pkg.nodes.count { it.type.name == "CONCEPT" }}", color = TealAccent, fontWeight = FontWeight.Bold)
                                 }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = NearBlackBg,
+                                border = BorderStroke(1.dp, SubtleBorder),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text("Questions", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                    Text("${pkg.questions.size}", color = TextPrimary, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = NearBlackBg,
+                                border = BorderStroke(1.dp, SubtleBorder),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text("Resources", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp)
+                                    Text("${pkg.resources.size}", color = TextPrimary, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Content Hash: ${pkg.manifest.contentHash.take(24)}...",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 10.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+            }
+        }
+
+        // 3. Course Package Switcher
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "AVAILABLE OFFICIAL PACKAGES",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = { viewModel.installMathCourse() },
+                            colors = ButtonDefaults.buttonColors(containerColor = NearBlackElevated, contentColor = TealAccent),
+                            border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.5f)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Math 4024", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = { viewModel.installPhysicsCourse() },
+                            colors = ButtonDefaults.buttonColors(containerColor = NearBlackElevated, contentColor = StepCorrect),
+                            border = BorderStroke(1.dp, StepCorrect.copy(alpha = 0.5f)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Science, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Physics 5054", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Cambridge Knowledge Graph Explorer
+        curriculumGraph?.let { graph ->
+            item {
+                Text(
+                    text = "CAMBRIDGE CURRICULUM GRAPH (${graph.stages.size} STAGES)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+            }
+
+            items(graph.stages, key = { it.id }) { stage ->
+                val isExpanded = expandedStageId == stage.id
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { expandedStageId = if (isExpanded) null else stage.id },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, if (isExpanded) TealAccent.copy(alpha = 0.4f) else SubtleBorder)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = if (isExpanded) TealAccent else NearBlackElevated,
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = "${stage.order}",
+                                            color = if (isExpanded) NearBlackBg else TextSecondary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = if (expanded) "▲" else "▼",
-                                    color = CyanAccent,
-                                    fontSize = 10.sp
+                                    text = stage.name,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
-                            if (expanded) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${stage.subjects.size} subjects",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(visible = isExpanded) {
+                            Column(
+                                modifier = Modifier.padding(top = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 stage.subjects.forEach { subject ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 12.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = NearBlackBg,
+                                        border = BorderStroke(1.dp, SubtleBorder),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = subject.name,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                            // Content-area badges present for this subject
-                                            FlowRow(
-                                                modifier = Modifier.padding(top = 2.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
-                                                subject.areas.forEach { area ->
-                                                    Surface(
-                                                        shape = RoundedCornerShape(3.dp),
-                                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
-                                                    ) {
-                                                        Text(
-                                                            text = area,
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            fontSize = 9.sp,
-                                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                                                        )
-                                                    }
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(10.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(subject.name, style = MaterialTheme.typography.bodyMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                                                if (subject.syllabusCode != null) {
+                                                    Text("Code: ${subject.syllabusCode}", style = MaterialTheme.typography.labelSmall, color = TealAccent, fontSize = 10.sp)
                                                 }
                                             }
-                                        }
-                                        subject.syllabusCode?.let { code ->
                                             Surface(
-                                                shape = RoundedCornerShape(3.dp),
-                                                color = CyanAccent.copy(alpha = 0.15f)
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = NearBlackElevated
                                             ) {
                                                 Text(
-                                                    text = code,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    fontSize = 9.sp,
-                                                    color = CyanAccent,
-                                                    fontWeight = FontWeight.Bold,
-                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                                    text = "${subject.areas.size} areas",
+                                                    color = TextSecondary,
+                                                    fontSize = 10.sp,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                                 )
                                             }
                                         }
                                     }
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Active Course Package details
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("active_package_card"),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "ACTIVE COURSE PACKAGE",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = CyanAccent.copy(alpha = 0.2f)
-                        ) {
-                            Text(
-                                text = "STAGED & ACTIVE",
-                                color = CyanAccent,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = activePkg?.manifest?.subjectName ?: "None",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "ID: ${activePkg?.manifest?.packageId ?: ""}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Version: ${activePkg?.manifest?.version ?: ""} | Schema v${activePkg?.manifest?.schemaVersion ?: "1.0"}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-                            .padding(10.dp)
-                    ) {
-                        Text(
-                            text = "CRYPTOGRAPHIC INTEGRITY:",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "SHA-256 Hash: ${activePkg?.manifest?.contentHash?.take(24) ?: ""}...",
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Ed25519 Signature: ${activePkg?.manifest?.signature?.take(28) ?: ""}...",
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
-                            color = CyanAccent
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Curriculum Graph: ${activePkg?.nodes?.size ?: 0} Nodes, ${activePkg?.edges?.size ?: 0} Edges, ${activePkg?.questions?.size ?: 0} Questions, ${activePkg?.resources?.size ?: 0} Resources.",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-
-        // Package Supply Chain Actions
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "SUPPLY CHAIN TESTS & INSTALLATIONS",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Verify acceptance criteria: Install a brand-new subject without modifying the APK, or test rejection of tampered bytes.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Button(
-                        onClick = { viewModel.installPhysicsCourse() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("install_physics_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Icon(imageVector = Icons.Default.Science, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Install Physics 5054 Package (New Subject)")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { viewModel.installMathCourse() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("install_math_button")
-                    ) {
-                        Icon(imageVector = Icons.Default.Calculate, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Switch to Mathematics 4024 Package")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { viewModel.installTamperedPackageTest() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("install_tampered_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Icon(imageVector = Icons.Default.SecurityUpdateWarning, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Test Tampered Byte Package (Must Reject)")
-                    }
-                }
-            }
-        }
-
-        // Section: Graph Traversal Proof (Separation of KG truth from student)
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "AUTHORITATIVE CURRICULUM KG",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Zero student data inside KG. Contains typed nodes and provenance.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-                    activePkg?.nodes?.take(6)?.forEach { node ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(text = node.name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                                Text(text = node.id, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                            ) {
-                                Text(
-                                    text = node.type.name,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
                             }
                         }
                     }

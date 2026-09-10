@@ -31,21 +31,19 @@ import com.example.R
 import com.example.ui.theme.*
 
 /**
- * High-tech cybernetic card with glowing cyan border and subtle dark gradient.
+ * Modern Noorix Card with subtle border and dark elevated container.
  */
 @Composable
 fun NoorixCard(
     modifier: Modifier = Modifier,
-    borderColor: Color = NeonCyan.copy(alpha = 0.35f),
+    borderColor: Color = SubtleBorder,
     borderWidth: Dp = 1.dp,
-    containerColor: Color = CyberPanel,
-    shape: RoundedCornerShape = RoundedCornerShape(16.dp),
+    containerColor: Color = NearBlackSurface,
+    shape: RoundedCornerShape = RoundedCornerShape(14.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier = modifier
-            .border(borderWidth, borderColor, shape)
-            .shadow(4.dp, shape = shape, spotColor = NeonCyan.copy(alpha = 0.2f)),
+        modifier = modifier.border(borderWidth, borderColor, shape),
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
@@ -54,34 +52,35 @@ fun NoorixCard(
 }
 
 /**
- * Segmented Glowing Cyber Progress Bar, matching Image 2 "Your Learning Path 68%".
+ * Segmented Progress Bar for mastery and study milestones.
  */
 @Composable
 fun NoorixSegmentedProgressBar(
     progress: Float, // 0.0 to 1.0
     modifier: Modifier = Modifier,
-    totalSegments: Int = 18,
-    activeColor: Color = NeonCyan,
-    inactiveColor: Color = CyberPanelBorder
+    totalSegments: Int = 16,
+    activeColor: Color = TealAccent,
+    inactiveColor: Color = SubtleBorder
 ) {
     val filledCount = (progress.coerceIn(0f, 1f) * totalSegments).toInt()
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(18.dp)
-            .border(1.dp, NeonCyan.copy(alpha = 0.4f), RoundedCornerShape(9.dp))
-            .padding(horizontal = 4.dp, vertical = 3.dp),
+            .height(14.dp)
+            .clip(RoundedCornerShape(7.dp))
+            .background(NearBlackBg)
+            .border(1.dp, SubtleBorder, RoundedCornerShape(7.dp))
+            .padding(horizontal = 3.dp, vertical = 2.5.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             for (i in 0 until totalSegments) {
                 val isFilled = i < filledCount
-                val segmentAlpha = if (isFilled) 1.0f else 0.25f
                 val color = if (isFilled) activeColor else inactiveColor
 
                 Box(
@@ -89,7 +88,7 @@ fun NoorixSegmentedProgressBar(
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(2.dp))
-                        .background(color.copy(alpha = segmentAlpha))
+                        .background(color)
                 )
             }
         }
@@ -97,7 +96,7 @@ fun NoorixSegmentedProgressBar(
 }
 
 /**
- * Minimal Top App Bar with official Noorix Logo and Profile
+ * Clean Top App Bar with official Noorix Logo and quick navigation actions.
  */
 @Composable
 fun NoorixTopBar(
@@ -114,17 +113,15 @@ fun NoorixTopBar(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Noorix Brand Logo
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                // Noorix Brand Logo & Title
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
                         painter = painterResource(id = R.drawable.img_noorix_logo),
                         contentDescription = "Noorix Logo",
@@ -133,18 +130,35 @@ fun NoorixTopBar(
                             .clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "NOORIX LEARNING",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TealAccent,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.2.sp,
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = "Cambridge O-Level Runtime",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 10.sp
+                        )
+                    }
                 }
 
-                // Profile / Settings Entry
+                // Profile / Settings Action
                 IconButton(
                     onClick = onProfileClick,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(34.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = "Settings & AI Engine",
                         tint = TextSecondary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }

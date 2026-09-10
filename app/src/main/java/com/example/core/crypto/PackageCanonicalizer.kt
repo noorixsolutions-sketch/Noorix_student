@@ -69,7 +69,7 @@ object PackageCanonicalizer {
             esc(q.targetLaTeX.ifEmpty { "-" }) + "|" +
             esc(q.rubrics.ifEmpty { "-" }) + "|" +
             esc(q.prerequisiteConceptId ?: "-") + "|" +
-            esc(if (q.potentialMisconceptions.isEmpty()) "-" else q.potentialMisconceptions.joinToString(","))
+            esc(q.potentialMisconceptions.joinToString(",").ifEmpty { "-" })
 
     private fun resourceLine(r: ResourceItem): String =
         "RESOURCE|" +

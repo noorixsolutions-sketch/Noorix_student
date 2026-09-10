@@ -16,7 +16,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 /**
  * Manages specialized Cambridge O-Level AI Tutoring Agents.
@@ -24,13 +30,12 @@ import java.util.UUID
  * Model routing (per message):
  *   1. If a local llama-server is connected (Audit → Local LLM), chat is
  *      served by the local model — fully offline-capable.
- *   2. Otherwise, Firebase AI Logic (Gemini) is used when a real
+ *   2. If an OpenRouter API key and model are selected (Audit → OpenRouter),
+ *      chat streams via OpenRouter.
+ *   3. Otherwise, Firebase AI Logic (Gemini) is used when a real
  *      GEMINI_API_KEY is configured (BuildConfig, injected from .env).
- *   3. Otherwise the student gets an honest offline notice (plus the
+ *   4. Otherwise the student gets an honest offline notice (plus the
  *      deterministic verifier trace when one was computed).
- *
- * SECURITY FIX: no placeholder API key is fabricated anymore; the app
- * degrades gracefully instead of sending requests with a fake key.
  *
  * Agents:
  * - DANISH: Cambridge Mathematics (4024) specialist. Deterministic
@@ -49,6 +54,14 @@ class NoorixAiAgentManager(
     private var geminiAvailable = false
 
     private var localEngine: LlamaCppEngine? = null
+    private var openRouterApiKey: String? = null
+    private var openRouterModelId: String? = null
+
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     init {
         ensureFirebase()
@@ -59,9 +72,14 @@ class NoorixAiAgentManager(
     // Engine configuration
     // ------------------------------------------------------------------
 
-    /** Routes agent chat through the given local llama-server engine (or null for Gemini). */
+    /** Routes agent chat through the given local llama-server engine (or null for cloud). */
     fun setLocalEngine(engine: LlamaCppEngine?) {
         this.localEngine = engine
+    }
+
+    fun setOpenRouterConfig(apiKey: String?, modelId: String?) {
+        this.openRouterApiKey = apiKey?.takeIf { it.isNotBlank() }
+        this.openRouterModelId = modelId?.takeIf { it.isNotBlank() }
     }
 
     fun localEngine(): LlamaCppEngine? = localEngine
@@ -95,41 +113,48 @@ class NoorixAiAgentManager(
         if (!geminiAvailable) return
         try {
             systemPrompts["danish"] =
-                "You are Danish, the dedicated Cambridge O-Level Mathematics (Syllabus 4024) " +
-                "AI tutor for Noorix Learning Solutions. Your specialty is algebra, quadratic factorisation, " +
-                "geometric proofs, and step-by-step problem solving. " +
-                "PEDAGOGICAL INVARIANT: When a student submits steps, explain the mathematical reasoning, " +
-                "why algebraic rules apply, and address misconceptions gently. " +
+                "You are Danish, the dedicated Cambridge O-Level & Lower Secondary Mathematics (Syllabus 4024 / Grades 6-11) " +
+                "AI mentor for Noorix Learning Solutions. Your pedagogical mission spans foundational arithmetic (fractions, negative numbers, order of operations) " +
+                "through algebraic expressions, linear equations, quadratic factorisation, simultaneous systems, trigonometry, and coordinate geometry.\n" +
+                "PEDAGOGICAL INVARIANT: When tutoring younger students (Grades 6-8), use intuitive visual analogies (e.g. balance scales for equations, number lines for signed numbers). " +
+                "When tutoring O-Level candidates (Grades 9-11), enforce strict Cambridge mathematical rigor, show method marks, and address sign distribution traps.\n" +
+                "When a student submits steps, explain the deterministic verifier trace clearly, identify the exact breakdown point, and guide the student to self-correct.\n" +
                 "Tone: supportive, mathematically rigorous, cyber-tech tutor."
 
             systemPrompts["zoya"] =
-                "You are Zoya, the dedicated Cambridge O-Level Sciences AI tutor for Noorix Learning Solutions, " +
-                "specializing in Physics (5054), Chemistry, and Biology. You explain kinematic graphs, " +
-                "Newton's laws, energy conservation, circuit electricity, and molecular dynamics. " +
-                "Use vivid conceptual analogies, clear unit conversions, and intuitive mental models. " +
-                "Tone: energetic, highly visual, encouraging STEM mentor."
+                "You are Zoya, the dedicated Cambridge O-Level & Lower Secondary Sciences AI mentor for Noorix Learning Solutions, " +
+                "specializing in Physics (5054), Chemistry (5070), and Biology (5090) across Grades 6 to 11.\n" +
+                "For Grades 6-8: Explain states of matter, basic forces, simple circuits, and cell structures using vivid real-world models.\n" +
+                "For O-Level (Grades 9-11): Teach velocity-time graphs, Newton's laws (F=ma), work-energy conservation, thermal gas laws, Ohm's law (V=IR), chemical stoichiometry, and genetics with exact SI units and Cambridge examiner precision.\n" +
+                "Tone: energetic, visual, encouraging STEM mentor."
 
-            systemPrompts["exam_coach"] =
-                "You are Exam Coach, the Cambridge O-Level Examination Strategy mentor for Noorix Learning Solutions. " +
-                "You provide tactical advice on past papers, mark schemes, method marks vs accuracy marks, " +
-                "time management per question, examiner report pitfalls, and exam room psychology. " +
-                "Tone: strategic, focused, confidence-building exam trainer."
-
-            systemPrompts["sarah"] =
-                "You are Ms. Sarah, the Cambridge O-Level English (1123) and Humanities tutor for Noorix Learning Solutions. " +
-                "You guide students in reading comprehension analysis, summary writing, and formal persuasive essays."
+            systemPrompts["ayesha"] =
+                "You are Ayesha, the Cambridge O-Level English (Syllabus 1123 / Grades 6-11) language specialist for Noorix Learning Solutions.\n" +
+                "For Grades 6-8: Focus on vocabulary expansion, parts of speech, active/passive voice, punctuation, and clear paragraphing.\n" +
+                "For O-Level (Grades 9-11): Coach students on Cambridge Paper 1 Directed Writing (formal letters, speeches, persuasive articles) and Paper 2 Reading Comprehension & Summary Writing (extracting 10 discrete content points, writing within 150-180 words, using own words).\n" +
+                "Tone: articulate, encouraging, linguistically precise."
 
             systemPrompts["bilal"] =
-                "You are Bilal, the Logic and Aptitude mentor for Noorix Learning Solutions, training students " +
-                "in pattern sequences, mathematical puzzles, and deductive proofs."
+                "You are Bilal, the Logic, Aptitude, and Mathematical Reasoning mentor for Noorix Learning Solutions, training students across Grades 6 to O-Levels.\n" +
+                "You specialize in number sequence puzzles, spatial rotations, Venn diagram logic, deductive problem solving, and quantitative speed drills.\n" +
+                "Encourage students to articulate their thinking process (metacognition) and break complex problems into atomic logical steps.\n" +
+                "Tone: sharp, engaging, enthusiastic logic coach."
+
+            systemPrompts["exam_coach"] =
+                "You are Exam Coach, the Cambridge O-Level Examination Strategy mentor for Noorix Learning Solutions.\n" +
+                "You provide tactical guidance on Cambridge past papers, marking schemes (M marks for method, A marks for accuracy, B marks for independent accuracy), " +
+                "command word breakdowns ('State' vs 'Explain' vs 'Calculate' vs 'Deduce'), time management (1 mark ≈ 1 minute), and avoiding examiner report pitfalls.\n" +
+                "Tone: strategic, focused, confidence-building exam master."
 
             systemPrompts["career_guide"] =
-                "You are Career Guide, the Cambridge O-Level Academic Advisor for Noorix Learning Solutions. " +
-                "You map O-Level subject clusters to A-Level prerequisites and future university engineering/medical/CS degrees."
+                "You are Career Guide, the Cambridge Academic & Career Pathway Advisor for Noorix Learning Solutions.\n" +
+                "You help students (Grades 6-11) explore subject combinations, understand O-Level subject selection, map prerequisites for A-Levels, " +
+                "and align academic strengths with future career pathways in Engineering, Medicine, Computer Science & AI, Law, and Finance.\n" +
+                "Tone: insightful, structured, inspirational academic advisor."
 
             for (agentId in systemPrompts.keys) {
                 models[agentId] = Firebase.ai.generativeModel(
-                    modelName = BuildConfig.GEMINI_MODEL_NAME,
+                    modelName = "gemini-2.5-flash",
                     systemInstruction = content {
                         text(systemPrompts.getValue(agentId))
                     }
@@ -233,6 +258,30 @@ class NoorixAiAgentManager(
                 }
             }
 
+            openRouterApiKey != null && openRouterModelId != null -> {
+                try {
+                    streamOpenRouter(
+                        systemPrompt = systemPrompts[agentId] ?: DEFAULT_PROMPT,
+                        userMessage = enrichedPrompt,
+                        apiKey = openRouterApiKey!!,
+                        model = openRouterModelId!!
+                    ).collect { partial ->
+                        responseBuilder.setLength(0)
+                        responseBuilder.append(partial)
+                        emit(partial)
+                    }
+                } catch (e: Exception) {
+                    val notice = if (responseBuilder.isEmpty()) {
+                        "OpenRouter stream failed (${e.localizedMessage ?: "connection error"}). " +
+                            "Check your API key and model selection in Settings."
+                    } else {
+                        "\n[OpenRouter stream interrupted: ${e.localizedMessage}]"
+                    }
+                    responseBuilder.append(if (responseBuilder.isEmpty()) notice else "\n$notice")
+                    emit(responseBuilder.toString())
+                }
+            }
+
             geminiModel != null -> {
                 try {
                     geminiModel.generateContentStream(enrichedPrompt).collect { chunk ->
@@ -256,8 +305,8 @@ class NoorixAiAgentManager(
 
             else -> {
                 val notice = buildString {
-                    append("No tutor model is reachable right now. Connect a local llama-server (Audit → Local LLM) ")
-                    append("or configure GEMINI_API_KEY to enable ${agentId}.")
+                    append("No tutor model is reachable right now. Connect a local llama-server (Settings → Local LLM), ")
+                    append("set an OpenRouter API key, or configure GEMINI_API_KEY to enable ${agentId}.")
                     if (isMathVerified && mathVerificationTrace != null) {
                         append("\n\nDeterministic Verifier Result:\n$mathVerificationTrace")
                     }
@@ -283,6 +332,88 @@ class NoorixAiAgentManager(
     private companion object {
         const val DEFAULT_PROMPT =
             "You are a Cambridge O-Level AI tutor for Noorix Learning Solutions. Be supportive and rigorous."
+    }
+
+    // ------------------------------------------------------------------
+    // OpenRouter SSE Streaming
+    // ------------------------------------------------------------------
+
+    private fun streamOpenRouter(
+        systemPrompt: String,
+        userMessage: String,
+        apiKey: String,
+        model: String
+    ): Flow<String> = flow {
+        val payload = JSONObject().apply {
+            put("model", model)
+            put("stream", true)
+            put("temperature", 0.7)
+            put("max_tokens", 1024)
+            put(
+                "messages",
+                org.json.JSONArray().apply {
+                    put(JSONObject().put("role", "system").put("content", systemPrompt))
+                    put(JSONObject().put("role", "user").put("content", userMessage))
+                }
+            )
+        }.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+
+        val request = Request.Builder()
+            .url("https://openrouter.ai/api/v1/chat/completions")
+            .post(payload)
+            .header("Authorization", "Bearer $apiKey")
+            .header("HTTP-Referer", "https://noorix.solutions")
+            .header("X-Title", "Noorix Learning Student")
+            .header("Accept", "text/event-stream")
+            .build()
+
+        val response = httpClient.newCall(request).execute()
+        try {
+            if (!response.isSuccessful) {
+                val errBody = runCatching { response.body?.string() ?: "" }.getOrDefault("")
+                throw RuntimeException("OpenRouter HTTP ${response.code}: ${errBody.take(160)}")
+            }
+            val body = response.body ?: throw RuntimeException("Empty response body")
+            val reader = body.byteStream().bufferedReader(Charsets.UTF_8)
+            val builder = StringBuilder()
+            var line: String? = reader.readLine()
+            while (line != null) {
+                val data = parseSseData(line)
+                if (data == "[DONE]") break
+                if (data != null) {
+                    val delta = parseSseDelta(data)
+                    if (delta != null && delta.isNotEmpty()) {
+                        builder.append(delta)
+                        emit(builder.toString())
+                    }
+                }
+                line = reader.readLine()
+            }
+            if (builder.isEmpty()) {
+                emit("(OpenRouter returned empty stream)")
+            }
+        } finally {
+            response.close()
+        }
+    }.flowOn(Dispatchers.IO)
+
+    private fun parseSseData(line: String): String? {
+        val trimmed = line.trim()
+        if (trimmed.isEmpty() || trimmed.startsWith(":")) return null
+        if (!trimmed.startsWith("data:")) return null
+        return trimmed.removePrefix("data:").trim()
+    }
+
+    private fun parseSseDelta(jsonLine: String): String? {
+        return try {
+            val obj = JSONObject(jsonLine)
+            obj.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("delta")?.optString("content")
+                ?.takeIf { it.isNotEmpty() }
+                ?: obj.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("message")?.optString("content")
+                    ?.takeIf { it.isNotEmpty() }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     // ------------------------------------------------------------------

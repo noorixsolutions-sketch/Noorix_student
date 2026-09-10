@@ -1,11 +1,16 @@
 package com.example.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,15 +21,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.core.model.MathErrorType
 import com.example.core.model.Step
+import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
 import com.example.presentation.components.NoorixCameraCaptureDialog
+import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
 
 @Composable
@@ -34,8 +44,8 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
     val isOcrScanning by viewModel.isOcrScanning.collectAsState()
 
     var problemInput by remember { mutableStateOf("x(x+2)") }
-    var step1Input by remember { mutableStateOf("x^2 + 2x") }
-    var step2Input by remember { mutableStateOf("") }
+    var stepsList by remember { mutableStateOf(listOf("x^2 + 2x")) }
+    var activeStepFocusIndex by remember { mutableIntStateOf(0) }
     var showCameraCapture by remember { mutableStateOf(false) }
 
     if (showCameraCapture) {
@@ -50,64 +60,67 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .background(NearBlackBg)
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
+        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Student Friendly Header
+        // 1. Danish Math Lab Header
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                border = BorderStroke(1.dp, SubtleBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_danish_math),
-                            contentDescription = "Danish AI Tutor",
+                        Image(
+                            painter = painterResource(id = R.drawable.img_danish_math),
+                            contentDescription = "Danish AI Math Tutor",
                             modifier = Modifier
-                                .size(42.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
-                                .border(1.5.dp, CyanAccent, CircleShape),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                .border(1.5.dp, TealAccent, CircleShape),
+                            contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "CAMBRIDGE MATH LAB • MENTORED BY DANISH",
+                                text = "CAMBRIDGE MATH LAB • DANISH",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = CyanAccent,
+                                color = TealAccent,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
                             Text(
-                                text = "Step-by-Step Problem Solver",
+                                text = "Step-by-Step Symbolic Verifier",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Write your algebraic steps line-by-line. Your AI tutor verifies every step mathematically and immediately highlights sign flips or expansion errors so you never lose marks on Cambridge exams.",
+                        text = "Write your algebraic working line-by-line. The deterministic engine verifies every algebraic transformation and highlights sign flips or bracket expansion traps.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextSecondary
                     )
                 }
             }
         }
 
-        // 2. Preset Cambridge Problems Selector
+        // 2. Preset Cambridge Problems
         item {
             Column {
                 Text(
-                    text = "Quick Cambridge Practice Problems:",
-                    style = MaterialTheme.typography.labelMedium,
+                    text = "QUICK PRACTICE PROBLEMS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -117,45 +130,56 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
                     SuggestionChip(
                         onClick = {
                             problemInput = "x(x+2)"
-                            step1Input = "x^2 + 2x"
+                            stepsList = listOf("x^2 + 2x")
+                            activeStepFocusIndex = 0
                         },
-                        label = { Text("x(x+2)", fontSize = 12.sp) }
+                        label = { Text("x(x+2)", fontSize = 11.sp) },
+                        colors = SuggestionChipDefaults.suggestionChipColors(containerColor = NearBlackSurface, labelColor = TextPrimary),
+                        border = BorderStroke(1.dp, SubtleBorder)
                     )
                     SuggestionChip(
                         onClick = {
                             problemInput = "2x^2 + 8x"
-                            step1Input = "2x(x+4)"
+                            stepsList = listOf("2x(x+4)")
+                            activeStepFocusIndex = 0
                         },
-                        label = { Text("2x² + 8x", fontSize = 12.sp) }
+                        label = { Text("2x² + 8x", fontSize = 11.sp) },
+                        colors = SuggestionChipDefaults.suggestionChipColors(containerColor = NearBlackSurface, labelColor = TextPrimary),
+                        border = BorderStroke(1.dp, SubtleBorder)
                     )
                     SuggestionChip(
                         onClick = {
                             problemInput = "x(x+2)"
-                            step1Input = "x^2 + 3x" // test sign error
+                            stepsList = listOf("x^2 + 3x") // Intentional sign trap
+                            activeStepFocusIndex = 0
                         },
-                        label = { Text("Test Sign Error", fontSize = 12.sp, color = Color(0xFFFF9999)) }
+                        label = { Text("Sign Error Trap", fontSize = 11.sp, color = StepIssue) },
+                        colors = SuggestionChipDefaults.suggestionChipColors(containerColor = NearBlackSurface, labelColor = StepIssue),
+                        border = BorderStroke(1.dp, StepIssue.copy(alpha = 0.5f))
                     )
                 }
             }
         }
 
-        // 3. Problem & Step Workspace
+        // 3. Problem & Multi-Step Working Editor
         item {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("math_lab_workspace"),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "PROBLEM EXPRESSION",
+                        text = "PROBLEM EXPRESSION / EQUATION",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = CyanAccent
+                        color = TealAccent,
+                        letterSpacing = 1.sp
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = problemInput,
                         onValueChange = { problemInput = it },
@@ -165,42 +189,131 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
                         textStyle = LocalTextStyle.current.copy(
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 15.sp,
+                            color = TextPrimary
                         ),
                         singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = NearBlackBg,
+                            unfocusedContainerColor = NearBlackBg,
+                            focusedBorderColor = TealAccent,
+                            unfocusedBorderColor = SubtleBorder
+                        ),
                         shape = RoundedCornerShape(10.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "STEP 1 (YOUR WORKING):",
+                        text = "WORKING STEPS",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = TextSecondary,
+                        letterSpacing = 1.sp
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = step1Input,
-                        onValueChange = { step1Input = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("step1_input_field"),
-                        placeholder = { Text("e.g. x^2 + 2x") },
-                        textStyle = LocalTextStyle.current.copy(
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        ),
-                        singleLine = true,
-                        shape = RoundedCornerShape(10.dp)
-                    )
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    // Virtual Math Helper Toolbar
+                    stepsList.forEachIndexed { index, stepText ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (activeStepFocusIndex == index) TealAccentSubtle else NearBlackBg,
+                                border = BorderStroke(1.dp, if (activeStepFocusIndex == index) TealAccent else SubtleBorder),
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = "${index + 1}",
+                                        color = if (activeStepFocusIndex == index) TealAccent else TextSecondary,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            OutlinedTextField(
+                                value = stepText,
+                                onValueChange = { newText ->
+                                    val updated = stepsList.toMutableList()
+                                    updated[index] = newText
+                                    stepsList = updated
+                                    activeStepFocusIndex = index
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("step_${index + 1}_input"),
+                                placeholder = { Text("e.g. x^2 + 2x", color = TextMuted) },
+                                textStyle = LocalTextStyle.current.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = TextPrimary
+                                ),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = NearBlackBg,
+                                    unfocusedContainerColor = NearBlackBg,
+                                    focusedBorderColor = TealAccent,
+                                    unfocusedBorderColor = SubtleBorder
+                                ),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            if (stepsList.size > 1) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                IconButton(
+                                    onClick = {
+                                        val updated = stepsList.toMutableList()
+                                        updated.removeAt(index)
+                                        stepsList = updated
+                                        if (activeStepFocusIndex >= stepsList.size) {
+                                            activeStepFocusIndex = stepsList.size - 1
+                                        }
+                                    },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Remove", tint = TextMuted, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                stepsList = stepsList + ""
+                                activeStepFocusIndex = stepsList.size - 1
+                            }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = TealAccent, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add Next Step", color = TealAccent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Text(
+                            text = "${stepsList.size} step(s)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted
+                        )
+                    }
+
+                    // Virtual Math Symbol Keyboard
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Quick Math Symbols:",
+                        text = "MATH SYMBOLS PALETTE",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextMuted,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
@@ -210,246 +323,275 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
                         listOf("^2", "+", "-", "(", ")", "*", "/", "x").forEach { symbol ->
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.clickable {
-                                    step1Input += symbol
-                                }
+                                color = NearBlackBg,
+                                border = BorderStroke(1.dp, SubtleBorder),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        val targetIdx = activeStepFocusIndex.coerceIn(0, stepsList.size - 1)
+                                        val updated = stepsList.toMutableList()
+                                        updated[targetIdx] = updated[targetIdx] + symbol
+                                        stepsList = updated
+                                    }
                             ) {
-                                Text(
-                                    text = symbol,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp
-                                )
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = symbol,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = TealAccent
+                                    )
+                                }
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Verification CTA button
                     Button(
                         onClick = {
-                            val steps = mutableListOf(Step(1, step1Input))
-                            if (step2Input.isNotEmpty()) {
-                                steps.add(Step(2, step2Input))
-                            }
+                            val steps = stepsList
+                                .filter { it.isNotBlank() }
+                                .mapIndexed { idx, expr -> Step(stepIndex = idx + 1, expression = expr) }
                             viewModel.verifyCustomMathSteps(problemInput, steps, "concept:4024:factorisation")
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("verify_math_steps_button"),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent, contentColor = Color.Black)
+                        colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CheckCircleOutline, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Verify My Algebraic Steps", fontWeight = FontWeight.Bold)
+                        Text("Verify Math Working", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        // 4. Live Tutor Feedback Card
+        // 4. Deterministic Verification Feedback Card
         verificationResult?.let { res ->
             item {
                 val isSuccess = res.isValid
-                val cardBg = if (isSuccess) Color(0xFF0D2818) else Color(0xFF331414)
-                val borderColor = if (isSuccess) Color(0xFF48BB78) else Color(0xFFFF5252)
+                val borderColor = if (isSuccess) StepCorrect else StepIssue
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("math_feedback_card"),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardBg),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, borderColor)
+                        .testTag("verification_result_card"),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.5.dp, borderColor)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                if (isSuccess) Icons.Default.CheckCircle else Icons.Default.ErrorOutline,
-                                contentDescription = null,
-                                tint = borderColor,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isSuccess) "Step Verified Correct! 🎉" else "Algebraic Issue Spotted ⚠️",
-                                fontWeight = FontWeight.ExtraBold,
-                                color = borderColor,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        if (isSuccess) {
-                            Text(
-                                text = "Your working is mathematically equivalent to the problem expression. Proven valid across all test points. Excellent Cambridge exam technique!",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFE2E8F0)
-                            )
-                        } else {
-                            val tipText = when (res.errorType) {
-                                MathErrorType.SIGN_ERROR -> "Tutor Tip: You have a sign or coefficient mismatch in Step ${res.firstInvalidStepIndex}. Double-check your multiplication when expanding terms."
-                                MathErrorType.EXPANSION_ERROR -> "Tutor Tip: Parentheses expansion error in Step ${res.firstInvalidStepIndex}. Remember that each term inside the bracket must be multiplied."
-                                MathErrorType.FACTORISATION_ERROR -> "Tutor Tip: Common factor not fully factored out in Step ${res.firstInvalidStepIndex}."
-                                else -> "Tutor Tip: Step ${res.firstInvalidStepIndex} does not equal the previous line. Recheck your arithmetic."
+                            Surface(
+                                shape = CircleShape,
+                                color = borderColor.copy(alpha = 0.2f),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = borderColor,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
-                            Text(
-                                text = tipText,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFFFE0E0),
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = if (isSuccess) "VERIFIED AS MATHEMATICALLY VALID" else "STEP MISMATCH DETECTED",
+                                    color = borderColor,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    letterSpacing = 0.8.sp
+                                )
+                                Text(
+                                    text = if (isSuccess) "All steps preserve equivalence" else "Step ${res.firstInvalidStepIndex ?: 1}: ${UiCopy.formatMathError(res.errorType)}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = if (isSuccess) {
+                                "Your working is mathematically equivalent to the problem expression across all test evaluations. Excellent Cambridge examination rigor!"
+                            } else {
+                                UiCopy.formatMathErrorExplanation(res.errorType)
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = Color(0x33000000)
+                            color = NearBlackBg,
+                            border = BorderStroke(1.dp, SubtleBorder),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = res.symbolicTrace.lines().take(4).joinToString("\n"),
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 10.sp,
-                                color = Color(0xFFA0AEC0),
-                                modifier = Modifier.padding(8.dp)
-                            )
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("DETERMINISTIC VERIFIER TRACE:", style = MaterialTheme.typography.labelSmall, color = TealAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = res.symbolicTrace.lines().take(4).joinToString("\n"),
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 10.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                viewModel.selectAgent("danish")
+                                viewModel.setTab(AppNavigationTab.AI_AGENTS)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = NearBlackElevated, contentColor = TealAccent),
+                            border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.5f)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Discuss this proof with Danish", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                         }
                     }
                 }
             }
         }
 
-        // 5. Notebook Handwriting Scanner Section
+        // 5. Notebook Handwriting Camera Scanner
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Scan Notebook Handwritten Working",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Surface(
+                            shape = CircleShape,
+                            color = TealAccentSubtle,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = TealAccent, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "PAPER NOTEBOOK OCR SCANNER",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TealAccent,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Text(
+                                text = "Scan Handwritten Working",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Snap a photo of your paper working. The AI OCR scans your handwriting and automatically flags any messy or unclear steps before submitting.",
+                        text = "Snap a photo of your handwritten paper working. On-device ML Kit v2 extracts the equations, and low confidence lines are flagged for review before submission.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextSecondary
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Button(
                         onClick = { showCameraCapture = true },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("open_camerax_scanner_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
-                        shape = RoundedCornerShape(12.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = CyberDarkBg)
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Open CameraX Live Scanner", color = CyberDarkBg, fontWeight = FontWeight.Bold)
+                        Text("Open CameraX Live Scanner", fontWeight = FontWeight.Bold)
                     }
 
                     if (isOcrScanning) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = NeonCyan, strokeWidth = 2.dp)
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TealAccent, strokeWidth = 2.dp)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Running ML Kit v2 OCR + Gemini Vision pass...",
+                                "Processing handwriting with ML Kit OCR...",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = NeonCyan
+                                color = TealAccent
                             )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                val lines = listOf(
-                                    "x(x+2)" to 0.95,
-                                    "x^2 + 2x" to 0.92
-                                )
-                                viewModel.runNotebookOcr(lines)
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("Test Valid Sample", fontSize = 11.sp)
-                        }
-
-                        OutlinedButton(
-                            onClick = {
-                                val lines = listOf(
-                                    "x(x+2)" to 0.90,
-                                    "x?2 + ????" to 0.42 // Below 0.70 floor
-                                )
-                                viewModel.runNotebookOcr(lines)
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("Test Blurry Sample", fontSize = 11.sp, color = Color(0xFFFF9999))
                         }
                     }
 
                     ocrResult?.let { ocr ->
                         val hasUnclear = ocr.regions.any { it.isUnclear }
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surface
+                            shape = RoundedCornerShape(10.dp),
+                            color = NearBlackBg,
+                            border = BorderStroke(1.dp, if (hasUnclear) StepIssue.copy(alpha = 0.5f) else StepCorrect.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
+                            Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text = "Scan Status: ${if (hasUnclear) "⚠️ Re-take photo (handwriting unclear)" else "✅ Handwriting clean & verified"}",
+                                    text = if (hasUnclear) "⚠️ Note: Some handwritten steps were unclear" else "✅ Handwriting successfully extracted",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp,
-                                    color = if (hasUnclear) Color(0xFFFF8080) else Color(0xFF68D391)
+                                    color = if (hasUnclear) StepIssue else StepCorrect
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = ocr.rawTrace,
                                     fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = TextSecondary
                                 )
 
                                 if (ocr.extractedSteps.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(10.dp))
                                     Button(
                                         onClick = {
                                             problemInput = ocr.extractedSteps.firstOrNull()?.expression ?: problemInput
-                                            step1Input = ocr.extractedSteps.getOrNull(1)?.expression ?: step1Input
-                                            step2Input = ocr.extractedSteps.getOrNull(2)?.expression ?: ""
+                                            stepsList = ocr.extractedSteps.drop(1).map { it.expression }.ifEmpty { listOf("x^2 + 2x") }
+                                            activeStepFocusIndex = 0
                                         },
-                                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent),
+                                        colors = ButtonDefaults.buttonColors(containerColor = NearBlackElevated, contentColor = TealAccent),
+                                        border = BorderStroke(1.dp, TealAccentSubtle),
                                         shape = RoundedCornerShape(8.dp),
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .testTag("import_ocr_steps_button")
                                     ) {
-                                        Icon(Icons.Default.UploadFile, contentDescription = null, tint = CyberDarkBg, modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Import ${ocr.extractedSteps.size} Extracted Steps to Math Lab", color = CyberDarkBg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Text("Import ${ocr.extractedSteps.size} Extracted Steps to Workspace", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }

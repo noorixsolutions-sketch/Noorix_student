@@ -50,6 +50,15 @@ class ExampleRobolectricTest {
         assertFalse("Expected x(x+2) = x^2+3x to be rejected", invalidResult.isValid)
         assertEquals(1, invalidResult.firstInvalidStepIndex)
         assertNotNull(invalidResult.errorType)
+
+        // Negative sign expansion test: x(x - 3) = x^2 - 3x (valid) vs x^2 + 3x (sign error)
+        val validNegSteps = listOf(Step(1, "x^2 - 3x"))
+        val validNegResult = verifier.verifySteps("x(x - 3)", validNegSteps, "2025-2027")
+        assertTrue("Expected x(x - 3) = x^2 - 3x to pass", validNegResult.isValid)
+
+        val invalidSignSteps = listOf(Step(1, "x^2 + 3x"))
+        val invalidSignResult = verifier.verifySteps("x(x - 3)", invalidSignSteps, "2025-2027")
+        assertFalse("Expected x(x - 3) = x^2 + 3x to be rejected as sign error", invalidSignResult.isValid)
     }
 
     @Test

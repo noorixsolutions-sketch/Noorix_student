@@ -22,6 +22,7 @@ import com.example.core.model.NodeType
 import com.example.core.model.PlanClassification
 import com.example.core.model.PlanObservation
 import com.example.core.model.QuestionItem
+import com.example.core.model.RecalibrationRecord
 import com.example.core.model.ResourceItem
 import com.example.core.model.Step
 import com.example.core.model.StudentModel
@@ -110,8 +111,8 @@ class LearningRepository(context: Context) {
     val mediaRecord: StateFlow<MediaLearningRecord?> = _mediaRecord.asStateFlow()
 
     // Curriculum knowledge graph (Cambridge_Curriculum_Library @ master)
-    private val _curriculumGraph = MutableStateFlow<com.example.core.model.CurriculumGraph?>(null)
-    val curriculumGraph: StateFlow<com.example.core.model.CurriculumGraph?> = _curriculumGraph.asStateFlow()
+    private val _curriculumGraph = MutableStateFlow<CurriculumGraph?>(null)
+    val curriculumGraph: StateFlow<CurriculumGraph?> = _curriculumGraph.asStateFlow()
 
     // Google account (Credential Manager OAuth)
     private val _userAccount = MutableStateFlow<UserProfile?>(null)
@@ -131,9 +132,7 @@ class LearningRepository(context: Context) {
     }
 
     // ==========================================
-    // Package readiness (fixes first-launch race:
-    // onboarding Test C must not start before the
-    // default package is loaded)
+    // Package readiness (fixes first-launch race)
     // ==========================================
 
     /** Awaits the initial package load (used by diagnostics to avoid an empty question bank). */
@@ -151,13 +150,10 @@ class LearningRepository(context: Context) {
             installAndActivatePackage(defaultMath)
         } else {
             val pkg = deserializePackage(existing)
-            // The stored package is re-verified on every launch — a tampered
-            // DB row can never silently re-activate.
             val status = PackageVerifier.verifyPackage(pkg)
             if (status is VerificationStatus.Valid) {
                 _activePackage.value = pkg
             } else {
-                // Corrupted/tampered store: fall back to the signed bundled package.
                 val fallback = packageProvider.createMath4024Package()
                 installAndActivatePackage(fallback)
             }
@@ -191,14 +187,12 @@ class LearningRepository(context: Context) {
     }
 
     // ==========================================
-    // Student model projection (debounced — fixes the
-    // O(n^2) re-projection on every recordEvent)
+    // Student model projection (debounced)
     // ==========================================
 
     private var projectionJob: Job? = null
     private val projectionDebounceMs = 250L
 
-    /** Debounced projection for high-frequency event recording. */
     fun scheduleStudentModelRefresh() {
         projectionJob?.cancel()
         projectionJob = scope.launch {
@@ -226,7 +220,8 @@ class LearningRepository(context: Context) {
                 courseVersionId = projected.courseVersionId,
                 targetConceptId = targetConcept,
                 targetConceptName = targetName,
-                academicState = projected.academicStates[targetConcept]
+                academicState = projected.academicStates[targetConcept],
+                profileCalibration = projected.profileCalibration
             )
         }
     }
@@ -235,15 +230,7 @@ class LearningRepository(context: Context) {
     // Course Package Operations (Invariant P1)
     // ==========================================
 
-    /**
-     * Installs + activates a course package.
-     *
-     * SECURITY: verification is NEVER bypassed — not even for the initial
-     * default package. The bundled package is signed by the offline publisher
-     * tool; only the public key ships in the APK.
-     */
     suspend fun installAndActivatePackage(pkg: CoursePackage): Pair<Boolean, String> {
-        // 1. Verify signature and cryptographic hash (always)
         val verifyStatus = PackageVerifier.verifyPackage(pkg)
         if (verifyStatus !is VerificationStatus.Valid) {
             val reason = when (verifyStatus) {
@@ -257,7 +244,6 @@ class LearningRepository(context: Context) {
             return Pair(false, "REJECTED BY PACKAGE VERIFIER: $reason")
         }
 
-        // 2. Stage into DB (full-field serialization so restarts round-trip)
         val entity = CoursePackageEntity(
             packageId = pkg.manifest.packageId,
             courseId = pkg.manifest.courseId,
@@ -277,7 +263,6 @@ class LearningRepository(context: Context) {
             packageDao.insertPackage(entity)
         }
 
-        // 3. Emit immutable event
         val payload = JSONObject().apply {
             put("packageId", pkg.manifest.packageId)
             put("courseId", pkg.manifest.courseId)
@@ -403,6 +388,15 @@ class LearningRepository(context: Context) {
             recordEvent(EventType.MASTERY_UPDATED, assessPayload)
         }
 
+        // Automatic Continuous Closed-Loop Calibration Trigger
+        evaluateContinuousCalibration(
+            conceptId = conceptId,
+            activityType = "SYMBOLIC_VERIFIER",
+            score = if (result.isValid) 1.0 else 0.40,
+            durationMinutes = 5,
+            errorType = result.errorType?.name
+        )
+
         return result
     }
 
@@ -423,12 +417,18 @@ class LearningRepository(context: Context) {
     // ==========================================
 
     fun startDiagnostic() {
-        // Reset immediately; the question bank may still be loading on first
-        // launch — Test C / DiagnosticScreen show a "preparing" state until
-        // activePackage is ready, and submission finalizes safely either way.
-        _diagnosticSession.value = DiagnosticSessionState()
+        val profile = _studentModel.value.profileCalibration
+        _diagnosticSession.value = AdaptiveDiagnosticEngine.initializeSession(profile)
         scope.launch {
-            recordEvent(EventType.DIAGNOSTIC_STARTED, "{}")
+            recordEvent(
+                EventType.DIAGNOSTIC_STARTED,
+                JSONObject().apply {
+                    put("grade", profile.studentGrade)
+                    put("age", profile.studentAge)
+                    put("targetGrade", profile.targetGrade)
+                    put("priorTheta", profile.priorTheta)
+                }.toString()
+            )
         }
     }
 
@@ -438,7 +438,9 @@ class LearningRepository(context: Context) {
             session = currentSession,
             question = question,
             selectedIndex = selectedIndex,
-            durationMs = 15000L
+            durationMs = 15000L,
+            studentId = _studentModel.value.studentId,
+            courseVersionId = _studentModel.value.courseVersionId
         )
         _diagnosticSession.value = updatedSession
 
@@ -453,10 +455,6 @@ class LearningRepository(context: Context) {
 
         recordEvent(EventType.DIAGNOSTIC_ITEM_SUBMITTED, payload)
 
-        // FIX (onboarding stuck): if the stopping criteria were not met but no
-        // further question can be served (bank exhausted, or the IRT optimal
-        // item filter left nothing), finalize the session explicitly so the
-        // UI can advance instead of dead-ending on "Start Fresh".
         val bank = _activePackage.value?.questions ?: emptyList()
         val nextAvailable = if (bank.isNotEmpty()) {
             AdaptiveDiagnosticEngine.getNextQuestion(updatedSession, bank)
@@ -465,15 +463,45 @@ class LearningRepository(context: Context) {
         }
 
         if (updatedSession.isCompleted || (bank.isNotEmpty() && nextAvailable == null)) {
-            val sessionToComplete = if (updatedSession.isCompleted) {
+            val sessionToComplete = if (updatedSession.isCompleted && updatedSession.synthesizedPlan != null) {
                 updatedSession
             } else {
-                val summary = "Diagnostic bank exhausted after ${updatedSession.itemsAnswered.size} questions. " +
-                    "Estimated ability: ${"%.2f".format(updatedSession.estimatedAbility)}. " +
-                    "Gaps identified: ${updatedSession.identifiedGaps.joinToString(", ")}."
-                updatedSession.copy(isCompleted = true, diagnosticSummary = summary)
+                val gaps = updatedSession.identifiedGaps
+                val planConcept = if (gaps.isNotEmpty()) gaps.first() else question.targetConceptId
+                val planConceptName = planConcept.substringAfterLast(":").replaceFirstChar { it.uppercase() }
+                val plan = AdaptivePlannerEngine.createPlan(
+                    studentId = _studentModel.value.studentId,
+                    courseVersionId = _studentModel.value.courseVersionId,
+                    targetConceptId = planConcept,
+                    targetConceptName = planConceptName,
+                    academicState = AcademicState(
+                        conceptId = planConcept,
+                        conceptName = planConceptName,
+                        baseMastery = updatedSession.estimatedAbility,
+                        confidence = updatedSession.confidence
+                    ),
+                    profileCalibration = _studentModel.value.profileCalibration,
+                    identifiedGaps = gaps
+                )
+                val summary = "Diagnostic completed in ${updatedSession.itemsAnswered.size} questions. " +
+                    "Estimated ability: ${String.format("%.2f", updatedSession.estimatedAbility)}. " +
+                    "Gaps identified: ${if (gaps.isEmpty()) "None" else gaps.joinToString(", ")}. Adaptive plan active."
+                updatedSession.copy(isCompleted = true, diagnosticSummary = summary, synthesizedPlan = plan)
             }
             _diagnosticSession.value = sessionToComplete
+
+            if (sessionToComplete.synthesizedPlan != null) {
+                _activePlan.value = sessionToComplete.synthesizedPlan
+                recordEvent(
+                    EventType.PLAN_CREATED,
+                    JSONObject().apply {
+                        put("planId", sessionToComplete.synthesizedPlan.planId)
+                        put("targetConceptId", sessionToComplete.synthesizedPlan.targetConceptId)
+                        put("interventionType", sessionToComplete.synthesizedPlan.interventionType)
+                        put("expectedAccuracy", sessionToComplete.synthesizedPlan.predictions.expectedAccuracy)
+                    }.toString()
+                )
+            }
 
             val compPayload = JSONObject().apply {
                 put("questionsAnswered", sessionToComplete.itemsAnswered.size)
@@ -486,12 +514,82 @@ class LearningRepository(context: Context) {
                 "DIAGNOSTIC_COMPLETED",
                 "Completed in ${sessionToComplete.itemsAnswered.size} questions with ability ${sessionToComplete.estimatedAbility}"
             )
+            refreshStudentModel()
         }
     }
 
     // ==========================================
-    // Planner Execution & Plan Evaluation
+    // Continuous Closed-Loop Calibration Engine
     // ==========================================
+
+    suspend fun evaluateContinuousCalibration(
+        conceptId: String,
+        activityType: String,
+        score: Double,
+        durationMinutes: Int,
+        errorType: String? = null
+    ): RecalibrationRecord? {
+        val currentModel = _studentModel.value
+        val baselineState = currentModel.academicStates[conceptId]
+
+        // Look up prerequisite state in KG
+        val prereqs = getPrerequisites(conceptId)
+        val prereqState = prereqs.firstOrNull()?.let { currentModel.academicStates[it.id] }
+
+        val plan = _activePlan.value ?: AdaptivePlannerEngine.createPlan(
+            studentId = currentModel.studentId,
+            courseVersionId = currentModel.courseVersionId,
+            targetConceptId = conceptId,
+            targetConceptName = baselineState?.conceptName ?: conceptId.substringAfterLast(":"),
+            academicState = baselineState,
+            profileCalibration = currentModel.profileCalibration
+        )
+
+        val observedGain = (score * 0.20).coerceIn(0.0, 0.40)
+        val obs = PlanObservation(
+            observedMasteryGain = observedGain,
+            observedAccuracy = score,
+            observedDurationMinutes = durationMinutes,
+            completion = true
+        )
+
+        val (evaluatedPlan, recalibrationRecord) = AdaptivePlannerEngine.evaluatePlanExecution(
+            plan = plan,
+            observation = obs,
+            baselineAcademicState = baselineState,
+            prerequisiteAcademicState = prereqState,
+            errorType = errorType,
+            triggerSource = activityType
+        )
+
+        _activePlan.value = evaluatedPlan
+
+        val payload = JSONObject().apply {
+            put("recalibrationId", recalibrationRecord.recalibrationId)
+            put("triggerSource", activityType)
+            put("conceptId", conceptId)
+            put("attribution", recalibrationRecord.attribution.name)
+            put("previousIntervention", recalibrationRecord.previousIntervention)
+            put("newIntervention", recalibrationRecord.newIntervention)
+            put("deltaAccuracy", evaluatedPlan.deviation?.deltaAccuracy)
+            put("deltaGain", evaluatedPlan.deviation?.deltaMasteryGain)
+            put("diagnosisNote", recalibrationRecord.diagnosisNote)
+            put("actionTaken", recalibrationRecord.actionTaken)
+        }.toString()
+
+        recordEvent(EventType.PLAN_DEVIATION_DETECTED, payload)
+        if (recalibrationRecord.previousIntervention != recalibrationRecord.newIntervention) {
+            recordEvent(EventType.PLAN_REVISED, payload)
+        }
+
+        logAudit(
+            "RECALIBRATION_TRIGGERED",
+            "Attribution: ${recalibrationRecord.attribution.name} for $conceptId (${recalibrationRecord.diagnosisNote})"
+        )
+
+        refreshStudentModel()
+        return recalibrationRecord
+    }
 
     suspend fun evaluateCurrentPlan(
         observedGain: Double,
@@ -500,6 +598,8 @@ class LearningRepository(context: Context) {
     ): LearningPlan? {
         val plan = _activePlan.value ?: return null
         val baseline = _studentModel.value.academicStates[plan.targetConceptId]
+        val prereqs = getPrerequisites(plan.targetConceptId)
+        val prereqState = prereqs.firstOrNull()?.let { _studentModel.value.academicStates[it.id] }
 
         val obs = PlanObservation(
             observedMasteryGain = observedGain,
@@ -508,11 +608,18 @@ class LearningRepository(context: Context) {
             completion = true
         )
 
-        val evaluatedPlan = AdaptivePlannerEngine.evaluatePlanExecution(plan, obs, baseline)
+        val (evaluatedPlan, recalRecord) = AdaptivePlannerEngine.evaluatePlanExecution(
+            plan = plan,
+            observation = obs,
+            baselineAcademicState = baseline,
+            prerequisiteAcademicState = prereqState
+        )
         _activePlan.value = evaluatedPlan
 
         val payload = JSONObject().apply {
             put("planId", plan.planId)
+            put("recalibrationId", recalRecord.recalibrationId)
+            put("attribution", recalRecord.attribution.name)
             put("classification", evaluatedPlan.classification?.name)
             put("deltaAccuracy", evaluatedPlan.deviation?.deltaAccuracy)
             put("deltaGain", evaluatedPlan.deviation?.deltaMasteryGain)
@@ -521,6 +628,7 @@ class LearningRepository(context: Context) {
 
         recordEvent(EventType.PLAN_DEVIATION_DETECTED, payload)
         logAudit("PLAN_EVALUATED", "Plan ${plan.planId} evaluated as ${evaluatedPlan.classification?.name}: ${evaluatedPlan.diagnosisNote}")
+        refreshStudentModel()
         return evaluatedPlan
     }
 
@@ -536,6 +644,7 @@ class LearningRepository(context: Context) {
             targetConceptId = conceptId,
             targetConceptName = conceptName,
             academicState = state,
+            profileCalibration = _studentModel.value.profileCalibration,
             preferredIntervention = newIntervention
         )
         _activePlan.value = newPlan
@@ -548,6 +657,7 @@ class LearningRepository(context: Context) {
 
         recordEvent(EventType.PLAN_REVISED, payload)
         logAudit("PLAN_REVISED", "Swapped intervention to $newIntervention with expected accuracy ${newPlan.predictions.expectedAccuracy}")
+        refreshStudentModel()
         return newPlan
     }
 
@@ -607,6 +717,15 @@ class LearningRepository(context: Context) {
             masteryUpdated = passed
         )
 
+        // Continuous Closed-Loop Calibration Trigger
+        evaluateContinuousCalibration(
+            conceptId = task.targetConceptId,
+            activityType = "TRANSFER_TASK",
+            score = if (passed) 0.95 else 0.35,
+            durationMinutes = 8,
+            errorType = if (passed) null else "TRANSFER_APPLICATION_ERROR"
+        )
+
         return Pair(passed, message)
     }
 
@@ -615,7 +734,6 @@ class LearningRepository(context: Context) {
     // ==========================================
 
     suspend fun simulateRemoteSyncBatch(): SyncBatchResult {
-        // Create 2 simulated remote events from another device during offline 7-day period
         val remoteTime = _simulatedWallTimeMs.value - 86_400_000L
         val remoteHlc = hybridClock.now(remoteTime).toString()
 
@@ -644,13 +762,6 @@ class LearningRepository(context: Context) {
 
     // ==========================================
     // Cryptographic Deletion & Audit (Acceptance Criteria)
-    //
-    // The audit log is a HASH-CHAINED log: each entry's verification hash is
-    // SHA-256(action | details | timestampMs | prevHash), where prevHash is the
-    // previous entry's hash (GENESIS for the first). verifyAuditChain() can
-    // recompute the whole chain. The purge "proof" is a deterministic hash
-    // committed INTO the chain — an honest, reproducible attestation, not a
-    // non-repudiable certificate.
     // ==========================================
 
     companion object {
@@ -686,12 +797,29 @@ class LearningRepository(context: Context) {
 
     val auditLogsFlow: Flow<List<AuditLogEntity>> = auditDao.getAllAuditsFlow()
 
-    /** Recomputes the hash chain in oldest-first order. Returns true iff intact. */
     fun verifyAuditChain(logs: List<AuditLogEntity>): Boolean {
+        if (logs.isEmpty()) return true
+
+        val byPrevHash = logs.associateBy { if (it.prevHash.isEmpty()) AUDIT_GENESIS_HASH else it.prevHash }
+
+        if (byPrevHash.size == logs.size && byPrevHash.containsKey(AUDIT_GENESIS_HASH)) {
+            var currentPrev = AUDIT_GENESIS_HASH
+            var visitedCount = 0
+            while (visitedCount < logs.size) {
+                val nextEntry = byPrevHash[currentPrev] ?: return false
+                val expectedPrev = if (nextEntry.prevHash.isEmpty()) AUDIT_GENESIS_HASH else nextEntry.prevHash
+                if (expectedPrev != currentPrev) return false
+                if (auditChainHash(nextEntry.action, nextEntry.details, nextEntry.timestampMs, expectedPrev) != nextEntry.verificationHash) {
+                    return false
+                }
+                currentPrev = nextEntry.verificationHash
+                visitedCount++
+            }
+            return true
+        }
+
         var prev = AUDIT_GENESIS_HASH
         for (entry in logs.sortedBy { it.timestampMs }) {
-            // Legacy pre-v3 rows have no prevHash; treat an empty value as genesis
-            // only for the first entry, otherwise the chain is broken.
             val expectedPrev = if (entry.prevHash.isEmpty()) AUDIT_GENESIS_HASH else entry.prevHash
             if (entry.prevHash.isNotEmpty() && entry.prevHash != prev) return false
             if (entry.prevHash.isEmpty() && prev != AUDIT_GENESIS_HASH) return false
@@ -731,12 +859,6 @@ class LearningRepository(context: Context) {
         )
     }
 
-    /**
-     * Reconstructs a [CoursePackage] from the stored DB JSON (manifest + nodes +
-     * edges + questions + resources). Fixes the previous behavior of silently
-     * substituting the math package (with a forged signature) for ANY stored
-     * package — e.g. physics reverting to math after a restart.
-     */
     private fun deserializePackage(entity: CoursePackageEntity): CoursePackage {
         val m = JSONObject(entity.manifestJson)
         val manifest = com.example.core.model.CoursePackageManifest(

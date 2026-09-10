@@ -1,6 +1,8 @@
 package com.example.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,13 +18,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
+import com.example.core.model.MediaArtifact
+import com.example.core.model.TransferTask
+import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
-import com.example.ui.theme.CyanAccent
-import com.example.ui.theme.GoldAccent
+import com.example.ui.theme.*
 
 @Composable
 fun MediaTransferScreen(viewModel: OLevelViewModel) {
@@ -32,8 +39,9 @@ fun MediaTransferScreen(viewModel: OLevelViewModel) {
     val mediaRecord by viewModel.mediaRecord.collectAsState()
 
     var isPlaying by remember { mutableStateOf(false) }
-    var audioProgress by remember { mutableFloatStateOf(0.75f) }
+    var audioProgress by remember { mutableFloatStateOf(0.85f) }
     var selectedOption by remember { mutableIntStateOf(-1) }
+    var showTranscript by remember { mutableStateOf(false) }
 
     // Auto-generate media if none is loaded yet
     LaunchedEffect(Unit) {
@@ -45,51 +53,53 @@ fun MediaTransferScreen(viewModel: OLevelViewModel) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .background(NearBlackBg)
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
+        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Header Card
+        // 1. Zoya Header Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                border = BorderStroke(1.dp, SubtleBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_zoya_science),
+                        Image(
+                            painter = painterResource(id = R.drawable.img_zoya_science),
                             contentDescription = "Zoya AI Sciences Tutor",
                             modifier = Modifier
-                                .size(42.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
-                                .border(1.5.dp, CyanAccent, CircleShape),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                .border(1.5.dp, StepCorrect, CircleShape),
+                            contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
                                 text = "REVISION BITES • PRESENTED BY ZOYA",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = CyanAccent,
+                                color = StepCorrect,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
                             Text(
-                                text = "High-Yield Audio Lessons",
+                                text = "Audio Walkthrough & Transfer Lab",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Short 3-minute concept breakdowns aligned to official Cambridge syllabus objectives. Listen anywhere, then solve the Mastery Challenge to lock in your score.",
+                        text = "Listen to curriculum-grounded revision audio briefs, then prove conceptual mastery by solving a novel transfer problem.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextSecondary
                     )
                 }
             }
@@ -99,12 +109,10 @@ fun MediaTransferScreen(viewModel: OLevelViewModel) {
         artifact?.let { media ->
             item {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("audio_player_card"),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, SubtleBorder)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(
@@ -114,104 +122,124 @@ fun MediaTransferScreen(viewModel: OLevelViewModel) {
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
-                                color = CyanAccent.copy(alpha = 0.15f)
+                                color = StepCorrect.copy(alpha = 0.15f)
                             ) {
                                 Text(
-                                    text = "PODCAST BRIEF",
-                                    color = CyanAccent,
-                                    fontWeight = FontWeight.Bold,
+                                    text = "AUDIO BRIEF",
+                                    color = StepCorrect,
                                     fontSize = 10.sp,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
                             }
+
                             Text(
-                                text = "Duration: 3m 45s",
+                                text = "${media.audioDurationSeconds / 60} mins",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextMuted
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = media.title,
                             style = MaterialTheme.typography.titleMedium,
+                            color = TextPrimary,
                             fontWeight = FontWeight.Bold
                         )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = media.summaryText,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = TextSecondary
                         )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Audio Wave Visualizer Simulation
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(28.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val barHeights = listOf(0.4f, 0.7f, 0.3f, 0.9f, 0.6f, 1.0f, 0.8f, 0.5f, 0.9f, 0.4f, 0.7f, 0.85f, 0.6f, 0.95f, 0.5f, 0.3f)
+                            barHeights.forEachIndexed { idx, h ->
+                                val active = (idx.toFloat() / barHeights.size) <= audioProgress
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight(if (isPlaying) h else (h * 0.5f).coerceAtLeast(0.2f))
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(if (active) StepCorrect else SubtleBorder)
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Progress scrubber
-                        Slider(
-                            value = audioProgress,
-                            onValueChange = { audioProgress = it },
-                            colors = SliderDefaults.colors(
-                                thumbColor = CyanAccent,
-                                activeTrackColor = CyanAccent,
-                                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
+                        // Player controls
                         Row(
                             modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "02:48",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = "03:45",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Controls
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(onClick = { audioProgress = (audioProgress - 0.1f).coerceAtLeast(0f) }) {
-                                Icon(Icons.Default.Replay10, contentDescription = "Back 10s", tint = MaterialTheme.colorScheme.onSurface)
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Surface(
-                                shape = CircleShape,
-                                color = CyanAccent,
-                                modifier = Modifier
-                                    .size(54.dp)
-                                    .clickable { isPlaying = !isPlaying }
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                        contentDescription = if (isPlaying) "Pause" else "Play",
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(28.dp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = StepCorrect,
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clickable { isPlaying = !isPlaying }
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = "Play/Pause",
+                                            tint = NearBlackBg,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = if (isPlaying) "Playing audio..." else "Audio ready",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                    Text(
+                                        text = "${(audioProgress * 100).toInt()}% completed",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary
                                     )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.width(16.dp))
+                            TextButton(onClick = { showTranscript = !showTranscript }) {
+                                Icon(Icons.Default.MenuBook, contentDescription = null, tint = StepCorrect, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(if (showTranscript) "Hide Script" else "Read Script", color = StepCorrect, fontSize = 12.sp)
+                            }
+                        }
 
-                            IconButton(onClick = { audioProgress = (audioProgress + 0.1f).coerceAtMost(1f) }) {
-                                Icon(Icons.Default.Forward10, contentDescription = "Forward 10s", tint = MaterialTheme.colorScheme.onSurface)
+                        // Transcript Reader
+                        AnimatedVisibility(visible = showTranscript) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = NearBlackBg,
+                                border = BorderStroke(1.dp, SubtleBorder),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("AUDIO SCRIPT TRANSCRIPT:", style = MaterialTheme.typography.labelSmall, color = StepCorrect, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                    media.scriptSegments.forEach { line ->
+                                        Text(text = line, style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 11.sp)
+                                    }
+                                }
                             }
                         }
                     }
@@ -219,82 +247,67 @@ fun MediaTransferScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 3. The Mastery Challenge (Novel Transfer Task)
+        // 3. Transfer Task Challenge
         transferTask?.let { task ->
             item {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("transfer_challenge_card"),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.5f))
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, SubtleBorder)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = GoldAccent.copy(alpha = 0.2f),
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Stars, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(18.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "MASTERY CHALLENGE",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = GoldAccent,
-                                    letterSpacing = 1.sp
-                                )
-                                Text(
-                                    text = "Prove Your Understanding",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Cambridge examiners look for novel application. Apply what you learned in the audio to solve this geometric context question:",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Challenge Prompt
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.surface,
-                            modifier = Modifier.fillMaxWidth()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = CyberGold.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "TRANSFER CHALLENGE • ${task.bloomLevel}",
+                                    color = CyberGold,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+
                             Text(
-                                text = task.prompt,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(14.dp)
+                                text = "Min. Score: ${(task.thresholdScore * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMuted
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = task.scenarioContext,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = task.prompt,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
 
-                        task.solutionOptions.forEachIndexed { optIndex, optionText ->
-                            val isSelected = selectedOption == optIndex
-                            Card(
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        task.solutionOptions.forEachIndexed { optIdx, optText ->
+                            val isSelected = selectedOption == optIdx
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) TealAccentSubtle else NearBlackBg,
+                                border = BorderStroke(1.dp, if (isSelected) TealAccent else SubtleBorder),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
-                                    .clickable { selectedOption = optIndex },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) GoldAccent.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
-                                ),
-                                border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, GoldAccent) else null
+                                    .clickable { selectedOption = optIdx }
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -302,22 +315,32 @@ fun MediaTransferScreen(viewModel: OLevelViewModel) {
                                         .padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    RadioButton(
-                                        selected = isSelected,
-                                        onClick = { selectedOption = optIndex },
-                                        colors = RadioButtonDefaults.colors(selectedColor = GoldAccent)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (isSelected) TealAccent else NearBlackElevated,
+                                        modifier = Modifier.size(22.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = ('A' + optIdx).toString(),
+                                                color = if (isSelected) NearBlackBg else TextSecondary,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
                                     Text(
-                                        text = optionText,
+                                        text = optText,
                                         style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Button(
                             onClick = {
@@ -326,30 +349,39 @@ fun MediaTransferScreen(viewModel: OLevelViewModel) {
                                 }
                             },
                             enabled = selectedOption != -1,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("submit_transfer_task_button"),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = Color.Black)
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg)
                         ) {
-                            Icon(Icons.Default.Verified, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Submit & Earn Cambridge Mastery", fontWeight = FontWeight.Bold)
+                            Text("Submit Transfer Solution", fontWeight = FontWeight.Bold)
                         }
 
-                        feedback?.let { fb ->
+                        feedback?.let { msg ->
+                            val isSuccess = msg.contains("TRANSFER VALIDATED")
                             Spacer(modifier = Modifier.height(12.dp))
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (fb.contains("APPROVED") || fb.contains("AWARDED") || fb.contains("PASSED")) Color(0xFF0D2818) else Color(0xFF331414)
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSuccess) StepCorrect.copy(alpha = 0.1f) else StepIssue.copy(alpha = 0.1f),
+                                border = BorderStroke(1.dp, if (isSuccess) StepCorrect else StepIssue),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = fb,
-                                    color = if (fb.contains("APPROVED") || fb.contains("AWARDED") || fb.contains("PASSED")) Color(0xFF68D391) else Color(0xFFFF8080),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.padding(10.dp)
-                                )
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                                        contentDescription = null,
+                                        tint = if (isSuccess) StepCorrect else StepIssue,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = msg,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextPrimary
+                                    )
+                                }
                             }
                         }
                     }

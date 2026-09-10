@@ -2,44 +2,86 @@
   "manifest": {
     "packageId": "pkg-5054-2025-2027",
     "courseId": "course:physics-5054",
-    "subjectName": "Physics (Cambridge 5054)",
+    "subjectName": "Physics (Cambridge 5054 & Grade 6-O Level)",
     "version": "2025-2027",
     "schemaVersion": "1.0",
     "createdAt": "2026-09-08T00:00:00Z",
     "parentVersion": null,
-    "contentHash": "3f2d95836bb85025affa78aca9dcc371a45e9ca0eb4b3807d7cd23e9d798bbaf",
-    "signature": "uG7H+i1bHupn/koELsgQPFAREgNYqiufkyssKD8dvvXWQe7PceMDqlhV9Jj4d7amrjq/dTBQk6epUbnkK8QKBQ=="
+    "contentHash": "a70770a35a9b4c8025e8d5645cc3652ac6f9805955c688461fec2e79348ea219",
+    "signature": "HXPV/zMiL685qz7JN45C4ZckYn3J3JoGBBT+5mk+9tIunJJeeJj70RAEU1uAsoSeZLmCNkznDIPCsb//npkuCA=="
   },
   "nodes": [
     {
       "id": "course:physics-5054",
       "type": "COURSE",
-      "name": "Physics 5054",
+      "name": "Physics 5054 & Lower Secondary Science",
       "properties": {}
     },
     {
       "id": "topic:5054:mechanics",
       "type": "TOPIC",
-      "name": "Newtonian Mechanics",
+      "name": "Forces & Motion (Grade 6-O Level)",
       "properties": {}
+    },
+    {
+      "id": "topic:5054:energy-thermal",
+      "type": "TOPIC",
+      "name": "Energy, Work & Thermal Physics",
+      "properties": {}
+    },
+    {
+      "id": "topic:5054:electricity-waves",
+      "type": "TOPIC",
+      "name": "Electricity, Magnetism & Waves",
+      "properties": {}
+    },
+    {
+      "id": "concept:5054:measurement-units",
+      "type": "CONCEPT",
+      "name": "Measurement, Units & Density (Grade 6-7)",
+      "properties": {
+        "difficulty": "0.30"
+      }
+    },
+    {
+      "id": "concept:5054:speed-motion",
+      "type": "CONCEPT",
+      "name": "Speed & Distance-Time Graphs (Grade 7-8)",
+      "properties": {
+        "difficulty": "0.38"
+      }
     },
     {
       "id": "concept:5054:kinematics",
       "type": "CONCEPT",
-      "name": "Speed, Velocity & Acceleration",
-      "properties": {}
+      "name": "Velocity, Acceleration & v-t Graphs (Grade 9-10)",
+      "properties": {
+        "difficulty": "0.55"
+      }
     },
     {
       "id": "concept:5054:forces",
       "type": "CONCEPT",
-      "name": "Newton's Laws of Motion",
-      "properties": {}
+      "name": "Newton's Laws & Resultant Forces (Grade 9-10)",
+      "properties": {
+        "difficulty": "0.62"
+      }
     },
     {
       "id": "concept:5054:energy",
       "type": "CONCEPT",
-      "name": "Work, Energy & Power",
-      "properties": {}
+      "name": "Work, Kinetic Energy & Conservation (Grade 9-11)",
+      "properties": {
+        "difficulty": "0.68"
+      }
+    },
+    {
+      "id": "concept:5054:electricity",
+      "type": "CONCEPT",
+      "name": "Current, Voltage & Ohm's Law (Grade 8-O Level)",
+      "properties": {
+        "difficulty": "0.72"
+      }
     }
   ],
   "edges": [
@@ -52,23 +94,71 @@
     {
       "id": "pe2",
       "type": "CONTAINS",
+      "source": "course:physics-5054",
+      "target": "topic:5054:energy-thermal"
+    },
+    {
+      "id": "pe3",
+      "type": "CONTAINS",
+      "source": "course:physics-5054",
+      "target": "topic:5054:electricity-waves"
+    },
+    {
+      "id": "pe4",
+      "type": "CONTAINS",
+      "source": "topic:5054:mechanics",
+      "target": "concept:5054:measurement-units"
+    },
+    {
+      "id": "pe5",
+      "type": "CONTAINS",
+      "source": "topic:5054:mechanics",
+      "target": "concept:5054:speed-motion"
+    },
+    {
+      "id": "pe6",
+      "type": "CONTAINS",
       "source": "topic:5054:mechanics",
       "target": "concept:5054:kinematics"
     },
     {
-      "id": "pe3",
+      "id": "pe7",
       "type": "CONTAINS",
       "source": "topic:5054:mechanics",
       "target": "concept:5054:forces"
     },
     {
-      "id": "pe4",
+      "id": "pe8",
+      "type": "CONTAINS",
+      "source": "topic:5054:energy-thermal",
+      "target": "concept:5054:energy"
+    },
+    {
+      "id": "pe9",
+      "type": "CONTAINS",
+      "source": "topic:5054:electricity-waves",
+      "target": "concept:5054:electricity"
+    },
+    {
+      "id": "ppr1",
+      "type": "PREREQUISITE_OF",
+      "source": "concept:5054:measurement-units",
+      "target": "concept:5054:speed-motion"
+    },
+    {
+      "id": "ppr2",
+      "type": "PREREQUISITE_OF",
+      "source": "concept:5054:speed-motion",
+      "target": "concept:5054:kinematics"
+    },
+    {
+      "id": "ppr3",
       "type": "PREREQUISITE_OF",
       "source": "concept:5054:kinematics",
       "target": "concept:5054:forces"
     },
     {
-      "id": "pe5",
+      "id": "ppr4",
       "type": "PREREQUISITE_OF",
       "source": "concept:5054:forces",
       "target": "concept:5054:energy"
@@ -78,24 +168,138 @@
     {
       "id": "question:5054:001",
       "courseVersionId": "2025-2027",
-      "targetConceptId": "concept:5054:forces",
+      "targetConceptId": "concept:5054:measurement-units",
       "questionType": "STRUCTURED",
-      "prompt": "A constant resultant force of 15 N acts on a mass of 3.0 kg. What is the acceleration?",
+      "prompt": "A block of wood has mass 240 g and volume 300 cm³. What is its density?",
       "options": [
-        "5.0 m/s²",
-        "45 m/s²",
-        "0.20 m/s²",
-        "12 m/s²"
+        "0.80 g/cm³",
+        "1.25 g/cm³",
+        "72.0 g/cm³",
+        "60 g/cm³"
       ],
       "correctIndex": 0,
       "targetLaTeX": "",
-      "difficulty": 0.45,
-      "maxMarks": 4,
+      "difficulty": 0.3,
+      "maxMarks": 2,
+      "bloomLevel": "APPLICATION",
+      "rubrics": "",
+      "prerequisiteConceptId": null,
+      "potentialMisconceptions": []
+    },
+    {
+      "id": "question:5054:002",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:5054:speed-motion",
+      "questionType": "STRUCTURED",
+      "prompt": "A car travels 150 meters in 6.0 seconds at constant speed. What is its speed?",
+      "options": [
+        "25 m/s",
+        "900 m/s",
+        "0.04 m/s",
+        "156 m/s"
+      ],
+      "correctIndex": 0,
+      "targetLaTeX": "",
+      "difficulty": 0.35,
+      "maxMarks": 2,
+      "bloomLevel": "APPLICATION",
+      "rubrics": "",
+      "prerequisiteConceptId": "concept:5054:measurement-units",
+      "potentialMisconceptions": []
+    },
+    {
+      "id": "question:5054:003",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:5054:kinematics",
+      "questionType": "STRUCTURED",
+      "prompt": "A cyclist accelerates uniformly from 4.0 m/s to 12.0 m/s in 4.0 s. What is the acceleration?",
+      "options": [
+        "2.0 m/s²",
+        "4.0 m/s²",
+        "3.0 m/s²",
+        "8.0 m/s²"
+      ],
+      "correctIndex": 0,
+      "targetLaTeX": "",
+      "difficulty": 0.52,
+      "maxMarks": 3,
+      "bloomLevel": "APPLICATION",
+      "rubrics": "",
+      "prerequisiteConceptId": "concept:5054:speed-motion",
+      "potentialMisconceptions": []
+    },
+    {
+      "id": "question:5054:004",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:5054:forces",
+      "questionType": "STRUCTURED",
+      "prompt": "A resultant force of 18 N acts on a mass of 3.0 kg. What is the acceleration produced?",
+      "options": [
+        "6.0 m/s²",
+        "54 m/s²",
+        "0.17 m/s²",
+        "15 m/s²"
+      ],
+      "correctIndex": 0,
+      "targetLaTeX": "",
+      "difficulty": 0.58,
+      "maxMarks": 3,
       "bloomLevel": "APPLICATION",
       "rubrics": "",
       "prerequisiteConceptId": "concept:5054:kinematics",
       "potentialMisconceptions": []
+    },
+    {
+      "id": "question:5054:005",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:5054:energy",
+      "questionType": "STRUCTURED",
+      "prompt": "Calculate the kinetic energy of a 4.0 kg ball moving at 5.0 m/s (KE = 1/2 m v²).",
+      "options": [
+        "50 J",
+        "100 J",
+        "20 J",
+        "10 J"
+      ],
+      "correctIndex": 0,
+      "targetLaTeX": "",
+      "difficulty": 0.65,
+      "maxMarks": 3,
+      "bloomLevel": "APPLICATION",
+      "rubrics": "",
+      "prerequisiteConceptId": "concept:5054:forces",
+      "potentialMisconceptions": []
+    },
+    {
+      "id": "question:5054:006",
+      "courseVersionId": "2025-2027",
+      "targetConceptId": "concept:5054:electricity",
+      "questionType": "STRUCTURED",
+      "prompt": "A 12 V battery is connected across a 4.0 Ω resistor. What is the current flowing?",
+      "options": [
+        "3.0 A",
+        "48 A",
+        "0.33 A",
+        "8.0 A"
+      ],
+      "correctIndex": 0,
+      "targetLaTeX": "",
+      "difficulty": 0.7,
+      "maxMarks": 3,
+      "bloomLevel": "APPLICATION",
+      "rubrics": "",
+      "prerequisiteConceptId": null,
+      "potentialMisconceptions": []
     }
   ],
-  "resources": []
+  "resources": [
+    {
+      "id": "resource:newton-laws",
+      "conceptId": "concept:5054:forces",
+      "resourceType": "TEXT",
+      "title": "Cambridge 5054: Dynamics & Newton's Laws",
+      "content": "Newton's First Law: Objects remain at rest or in uniform motion unless acted upon by a resultant force. Newton's Second Law: F = ma. Newton's Third Law: Action and reaction forces are equal and opposite.",
+      "contentHash": "hash-phys-res-001"
+    }
+  ]
 }
