@@ -34,6 +34,8 @@ class PackageCanonicalizerTest {
     @Test
     fun `kotlin canonicalizer matches the python publisher tool for math 4024`() {
         val pkg = provider().createMath4024Package()
+        val canonicalStr = PackageCanonicalizer.canonicalize(pkg)
+        java.io.File("kt_canonical.txt").writeText(canonicalStr)
         val hash = PackageCanonicalizer.contentHashOf(pkg)
 
         // Pinned from tools/generate_package_signatures.py (python side):

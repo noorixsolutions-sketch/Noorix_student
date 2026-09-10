@@ -1,5 +1,6 @@
 package com.example.domain.vision
 
+import com.example.BuildConfig
 import android.graphics.Bitmap
 import com.example.core.model.Step
 import com.google.android.gms.tasks.Tasks
@@ -90,7 +91,7 @@ object VisionPipeline {
         if (needsGeminiPass) {
             try {
                 val geminiModel = Firebase.ai.generativeModel(
-                    modelName = "gemini-2.5-flash",
+                    modelName = BuildConfig.GEMINI_MODEL_NAME,
                     systemInstruction = content {
                         text(
                             "You are a specialized mathematical vision model for Cambridge O-Level notebooks. " +

@@ -29,11 +29,14 @@ import java.security.MessageDigest
  */
 object PackageCanonicalizer {
 
-    fun esc(value: String): String = value
-        .replace("\\", "\\\\")
-        .replace("|", "\\|")
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
+    fun esc(value: String): String {
+        if (value == "null") return "-" // Catch "null" strings
+        return value
+            .replace("\\", "\\\\")
+            .replace("|", "\\|")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+    }
 
     private fun propsStr(properties: Map<String, String>): String {
         if (properties.isEmpty()) return ""
@@ -66,7 +69,7 @@ object PackageCanonicalizer {
             esc(q.targetLaTeX.ifEmpty { "-" }) + "|" +
             esc(q.rubrics.ifEmpty { "-" }) + "|" +
             esc(q.prerequisiteConceptId ?: "-") + "|" +
-            esc(q.potentialMisconceptions.joinToString(",").ifEmpty { "-" })
+            esc(if (q.potentialMisconceptions.isEmpty()) "-" else q.potentialMisconceptions.joinToString(","))
 
     private fun resourceLine(r: ResourceItem): String =
         "RESOURCE|" +

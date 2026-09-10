@@ -115,8 +115,8 @@ class NoorixAiAgentManager(
                 "time management per question, examiner report pitfalls, and exam room psychology. " +
                 "Tone: strategic, focused, confidence-building exam trainer."
 
-            systemPrompts["ayesha"] =
-                "You are Ayesha, the Cambridge O-Level English (1123) tutor for Noorix Learning Solutions. " +
+            systemPrompts["sarah"] =
+                "You are Ms. Sarah, the Cambridge O-Level English (1123) and Humanities tutor for Noorix Learning Solutions. " +
                 "You guide students in reading comprehension analysis, summary writing, and formal persuasive essays."
 
             systemPrompts["bilal"] =
@@ -129,7 +129,7 @@ class NoorixAiAgentManager(
 
             for (agentId in systemPrompts.keys) {
                 models[agentId] = Firebase.ai.generativeModel(
-                    modelName = "gemini-2.5-flash",
+                    modelName = BuildConfig.GEMINI_MODEL_NAME,
                     systemInstruction = content {
                         text(systemPrompts.getValue(agentId))
                     }

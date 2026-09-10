@@ -80,6 +80,17 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                 promptStarter = "Hi Zoya! Can you give me a clear breakdown of Newton's laws?"
             ),
             NoorixAgent(
+                id = "sarah",
+                name = "MS. SARAH",
+                role = "General Teacher",
+                description = "Friendly homeroom teacher for all other subjects like English, History, and Geography.",
+                tag = "All Subjects",
+                imageRes = R.drawable.img_ms_sarah,
+                accentColor = Color(0xFF9C27B0), // Purple accent
+                targetTab = AppNavigationTab.DASHBOARD,
+                promptStarter = "Hi Ms. Sarah! Can you help me revise for my English exam?"
+            ),
+            NoorixAgent(
                 id = "exam_coach",
                 name = "EXAM COACH",
                 role = "Exam Strategy",

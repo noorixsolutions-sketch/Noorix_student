@@ -1,0 +1,26 @@
+PACKAGE|pkg-4024-2025-2027|course:mathematics-4024|Mathematics (Cambridge 4024)|2025-2027|1.0|2026-09-08T00:00:00Z|-
+NODE|concept:4024:algebraic-expressions|CONCEPT|Algebraic Expressions & Like Terms|difficulty=0.35;topic=topic:4024:algebra
+NODE|concept:4024:common-factors|CONCEPT|Extracting Common Factors|difficulty=0.45;topic=topic:4024:algebra
+NODE|concept:4024:factorisation|CONCEPT|Quadratic & Binomial Factorisation|difficulty=0.62;topic=topic:4024:algebra
+NODE|concept:4024:quadratic-equations|CONCEPT|Solving Quadratic Equations|difficulty=0.75;topic=topic:4024:algebra
+NODE|course:mathematics-4024|COURSE|Mathematics|code=4024;qualification=qualification:cambridge-o-level
+NODE|lo:4024:factorisation:01|LEARNING_OBJECTIVE|Factorise algebraic expressions completely|masteryThreshold=0.80
+NODE|misconception:factorisation:sign-error|MISCONCEPTION|Sign Distribution Misconception|description=Distributing negative sign without inverting internal terms e.g. -(x-3) -> -x-3;severity=HIGH
+NODE|qualification:cambridge-o-level|QUALIFICATION|Cambridge O Level|provider=Cambridge Assessment International Education
+NODE|skill:algebraic-manipulation|SKILL|Symbolic Algebraic Manipulation|domain=Mathematics
+NODE|topic:4024:algebra|TOPIC|Algebra & Algebraic Manipulation|course=course:mathematics-4024
+EDGE|e1|CONTAINS|course:mathematics-4024|topic:4024:algebra|
+EDGE|e2|CONTAINS|topic:4024:algebra|concept:4024:algebraic-expressions|
+EDGE|e3|CONTAINS|topic:4024:algebra|concept:4024:common-factors|
+EDGE|e4|CONTAINS|topic:4024:algebra|concept:4024:factorisation|
+EDGE|e5|CONTAINS|topic:4024:algebra|concept:4024:quadratic-equations|
+EDGE|e6|PREREQUISITE_OF|concept:4024:algebraic-expressions|concept:4024:common-factors|
+EDGE|e7|PREREQUISITE_OF|concept:4024:common-factors|concept:4024:factorisation|
+EDGE|e8|PREREQUISITE_OF|concept:4024:factorisation|concept:4024:quadratic-equations|
+EDGE|e9|HAS_MISCONCEPTION|concept:4024:factorisation|misconception:factorisation:sign-error|
+QUESTION|question:4024:001|2025-2027|concept:4024:factorisation|STRUCTURED|Factorise completely: 6x^2 + 15x|3x(2x + 5);3(2x^2 + 5x);x(6x + 15);3x(2x - 5)|0|0.48|2|APPLICATION|-|-|concept:4024:common-factors|-
+QUESTION|question:4024:002|2025-2027|concept:4024:factorisation|STRUCTURED|Factorise: x^2 - 5x + 6|(x - 2)(x - 3);(x - 1)(x - 6);(x + 2)(x + 3);(x + 1)(x - 6)|0|0.62|3|APPLICATION|-|-|concept:4024:algebraic-expressions|misconception:factorisation:sign-error
+QUESTION|question:4024:003|2025-2027|concept:4024:common-factors|STRUCTURED|What is the highest common factor (HCF) of 12a^2b and 18ab^2?|6ab;3ab;6a^2b^2;12ab|0|0.42|2|APPLICATION|-|-|-|-
+QUESTION|question:4024:004|2025-2027|concept:4024:algebraic-expressions|STRUCTURED|Simplify: 4(x - 2) - 3(2x - 5)|-2x + 7;-2x - 23;10x - 7;-2x - 7|0|0.52|3|APPLICATION|-|-|-|misconception:factorisation:sign-error
+QUESTION|question:4024:005|2025-2027|concept:4024:quadratic-equations|STRUCTURED|Solve for x: x^2 - 7x + 12 = 0|x = 3 or x = 4;x = -3 or x = -4;x = 2 or x = 6;x = 1 or x = 12|0|0.72|4|APPLICATION|-|-|concept:4024:factorisation|-
+RESOURCE|resource:factorisation-explanation-001|concept:4024:factorisation|TEXT|Cambridge O-Level: Guide to Factorising Quadratics|de1a492e6007973394d12acf7b2b9ed231c7858a2189fe120460cd50f864b4ab|hash-math-res-001

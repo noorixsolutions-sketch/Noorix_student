@@ -73,9 +73,9 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    if (userAccount != null) {
+                    val account = userAccount
+                    if (account != null) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            val account = userAccount!!
                             account.photoUrl?.let { url ->
                                 AsyncImage(
                                     model = url,

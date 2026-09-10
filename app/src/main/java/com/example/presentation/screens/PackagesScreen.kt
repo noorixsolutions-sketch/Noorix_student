@@ -1,5 +1,8 @@
 package com.example.presentation.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +33,23 @@ import com.example.ui.theme.GoldAccent
 fun PackagesScreen(viewModel: OLevelViewModel) {
     val activePkg by viewModel.activePackage.collectAsState()
     val curriculumGraph by viewModel.curriculumGraph.collectAsState()
+    val context = LocalContext.current
+    var importStatus by remember { mutableStateOf<String?>(null) }
+    
+    val zipPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { 
+            importStatus = "Loading ZIP package..."
+            val pkg = com.example.domain.repository.ZipPackageReader.parseFromZip(context, it)
+            if (pkg != null) {
+                // Now pass it to ViewModel to install
+                viewModel.installCustomPackage(pkg) { success, msg ->
+                    importStatus = if (success) "Success! $msg" else "Error: $msg"
+                }
+            } else {
+                importStatus = "Error: Invalid or corrupted ZIP file"
+            }
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -62,6 +82,26 @@ fun PackagesScreen(viewModel: OLevelViewModel) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Button(
+                        onClick = { zipPickerLauncher.launch("application/zip") },
+                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent, contentColor = Color.Black),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.UploadFile, contentDescription = "Upload ZIP")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Load Custom Study Pack (ZIP)", fontWeight = FontWeight.Bold)
+                    }
+                    
+                    if (importStatus != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = importStatus!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (importStatus!!.startsWith("Success")) StepCorrect else Color.Red
+                        )
+                    }
                 }
             }
         }

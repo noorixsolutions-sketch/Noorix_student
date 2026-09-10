@@ -468,6 +468,13 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     // ==========================================
     // Package Installation / Agnosticism
+
+    fun installCustomPackage(pkg: CoursePackage, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val (success, message) = repository.installAndActivatePackage(pkg)
+            onResult(success, message)
+        }
+    }
     // ==========================================
 
     fun installMathCourse() {
