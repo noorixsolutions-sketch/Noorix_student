@@ -88,8 +88,10 @@ object PackageVerifier {
         }
         for (q in pkg.questions) {
             if (!nodeIds.contains(q.targetConceptId)) missing.add(q.targetConceptId)
-            q.prerequisiteConceptId?.let { if (!nodeIds.contains(it)) missing.add(it) }
-            for (misc in q.potentialMisconceptions) if (!nodeIds.contains(misc)) missing.add(misc)
+            q.prerequisiteConceptId?.let { if (it.isNotEmpty() && it != "null" && !nodeIds.contains(it)) missing.add(it) }
+            for (misc in q.potentialMisconceptions) {
+                if (misc.isNotEmpty() && misc != "null" && !nodeIds.contains(misc)) missing.add(misc)
+            }
         }
         for (r in pkg.resources) {
             if (!nodeIds.contains(r.conceptId)) missing.add(r.conceptId)

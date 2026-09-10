@@ -29,11 +29,14 @@ import java.security.MessageDigest
  */
 object PackageCanonicalizer {
 
-    fun esc(value: String): String = value
-        .replace("\\", "\\\\")
-        .replace("|", "\\|")
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
+    fun esc(value: String): String {
+        if (value == "null") return "-" // Catch "null" strings
+        return value
+            .replace("\\", "\\\\")
+            .replace("|", "\\|")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+    }
 
     private fun propsStr(properties: Map<String, String>): String {
         if (properties.isEmpty()) return ""
