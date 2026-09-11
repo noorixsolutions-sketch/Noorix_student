@@ -161,7 +161,7 @@ object AdaptivePlannerEngine {
     fun evaluatePlanExecution(
         plan: LearningPlan,
         observation: PlanObservation,
-        baselineAcademicState: AcademicState?,
+        baselineAcademicState: AcademicState? = null,
         prerequisiteAcademicState: AcademicState? = null,
         errorType: String? = null,
         triggerSource: String = "POST_STUDY_QUIZ"

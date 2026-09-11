@@ -101,16 +101,17 @@ class ExampleRobolectricTest {
             completion = true
         )
         val evaluatedAssessmentError = AdaptivePlannerEngine.evaluatePlanExecution(plan, observation, unreliableBaseline)
-        assertEquals(PlanClassification.ASSESSMENT_ERROR, evaluatedAssessmentError.classification)
+        assertEquals(PlanClassification.ASSESSMENT_ERROR, evaluatedAssessmentError.first.classification)
 
-        // Reliable baseline (confidence >= 0.65, count >= 3) -> Underperformance yields PLAN_ERROR
+        // Reliable baseline (confidence >= 0.65, count >= 3, baseMastery >= 0.60) -> Underperformance yields PLAN_ERROR
         val reliableBaseline = AcademicState(
             conceptId = "concept:4024:factorisation",
             evidenceCount = 8,
-            confidence = 0.85
+            confidence = 0.85,
+            baseMastery = 0.80
         )
-        val evaluatedPlanError = AdaptivePlannerEngine.evaluatePlanExecution(plan, observation, reliableBaseline)
-        assertEquals(PlanClassification.PLAN_ERROR, evaluatedPlanError.classification)
+        val evaluatedPlanError = AdaptivePlannerEngine.evaluatePlanExecution(plan, observation, reliableBaseline, reliableBaseline)
+        assertEquals(PlanClassification.PLAN_ERROR, evaluatedPlanError.first.classification)
     }
 
     @Test

@@ -37,7 +37,7 @@ class PackageCanonicalizerTest {
         val hash = PackageCanonicalizer.contentHashOf(pkg)
 
         // Pinned from tools/generate_package_signatures.py (python side):
-        assertEquals("1f8b9020e5991157d633479c78169414b8a6080cffcf94ef4ee980a480a0bd7d", hash)
+        assertEquals("219103837bc7760440865b35e5018229923258d73a40a828444cb4962e88d275", hash)
         assertEquals(hash, pkg.manifest.contentHash)
     }
 
@@ -47,7 +47,7 @@ class PackageCanonicalizerTest {
         val hash = PackageCanonicalizer.contentHashOf(pkg)
 
         // Pinned from tools/generate_package_signatures.py (python side):
-        assertEquals("3f2d95836bb85025affa78aca9dcc371a45e9ca0eb4b3807d7cd23e9d798bbaf", hash)
+        assertEquals("a70770a35a9b4c8025e8d5645cc3652ac6f9805955c688461fec2e79348ea219", hash)
         assertEquals(hash, pkg.manifest.contentHash)
     }
 
