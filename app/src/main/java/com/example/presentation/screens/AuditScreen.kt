@@ -1,6 +1,15 @@
 package com.example.presentation.screens
 
 import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,13 +26,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
+import com.example.presentation.bubble.AishaBubbleService
 import com.example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -411,6 +424,176 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
         }
 
         // ============================================================
+        // 3b. Primary Surfaces: Bubble, Tutor Keyboard, Parent (ADDITIVE)
+        // ============================================================
+        item {
+            val context = LocalContext.current
+            var bubbleOn by remember { mutableStateOf(AishaBubbleService.isRunning) }
+            val notifPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted) {
+                    startBubbleService(context)
+                    bubbleOn = true
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "PRIMARY SURFACES (BETA)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealAccent,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // ---- 1. Aisha Bubble overlay ----
+                    Text(
+                        text = "1. Aisha Bubble ${if (bubbleOn) "(Active)" else "(Off)"}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "A floating 56dp bubble in every app. Tap for tutor chat, double-tap for the 8-layout fan, swipe up for the quick HUD.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (!bubbleOn) {
+                            Button(
+                                onClick = {
+                                    when {
+                                        needsOverlayPermission(context) -> {
+                                            activity?.startActivity(
+                                                Intent(
+                                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                                    Uri.parse("package:${context.packageName}")
+                                                )
+                                            )
+                                        }
+                                        needsNotifPermission(context) -> {
+                                            notifPermissionLauncher.launch(
+                                                android.Manifest.permission.POST_NOTIFICATIONS
+                                            )
+                                        }
+                                        else -> {
+                                            startBubbleService(context)
+                                            bubbleOn = true
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = TealAccent,
+                                    contentColor = NearBlackBg
+                                ),
+                                modifier = Modifier.testTag("enable_bubble_button")
+                            ) {
+                                Text("Enable Bubble", fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    stopBubbleService(context)
+                                    bubbleOn = false
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, SubtleBorderActive)
+                            ) {
+                                Text("Hide Bubble", color = TextPrimary, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    if (needsOverlayPermission(context) && !bubbleOn) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Requires the 'Display over other apps' permission — you'll be taken to system settings.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    // ---- 2. Tutor Keyboard IME ----
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "2. Tutor Keyboard",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "A student-aware keyboard: streak glyph strip, 6-persona Tutor row, QWERTY + Math + Quiz modes. Enable it in system settings, then switch to it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
+                            onClick = {
+                                activity?.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = TealAccent,
+                                contentColor = NearBlackBg
+                            )
+                        ) {
+                            Text("Enable in Settings", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                                imm.showInputMethodPicker()
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, SubtleBorderActive)
+                        ) {
+                            Text("Switch keyboard", color = TextPrimary, fontSize = 12.sp)
+                        }
+                    }
+
+                    // ---- 3. Parent Dashboard ----
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "3. Parent Dashboard",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "PIN-gated weekly narrative, attention items and encouragement for parents.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { viewModel.setTab(AppNavigationTab.PARENT) },
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f)),
+                        modifier = Modifier.testTag("open_parent_dashboard_button")
+                    ) {
+                        Icon(Icons.Default.FamilyRestroom, contentDescription = null, tint = CyberGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Open Parent Dashboard", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        // ============================================================
         // 4. Sovereign Data Management (Right to be Forgotten)
         // ============================================================
         item {
@@ -483,4 +666,29 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
             }
         )
     }
+}
+
+// ------------------------------------------------------------------
+// Primary-surface helpers (ADDITIVE): bubble service + permissions.
+// ------------------------------------------------------------------
+
+private fun needsOverlayPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)
+
+private fun needsNotifPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT >= 33 &&
+        ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+
+private fun startBubbleService(context: Context) {
+    ContextCompat.startForegroundService(
+        context,
+        Intent(context, AishaBubbleService::class.java).setAction(AishaBubbleService.ACTION_START)
+    )
+}
+
+private fun stopBubbleService(context: Context) {
+    context.stopService(Intent(context, AishaBubbleService::class.java))
 }

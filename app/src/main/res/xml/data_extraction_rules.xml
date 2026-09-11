@@ -2,8 +2,10 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="database" path="olevel_runtime.db" />
+        <exclude domain="database" path="study_tools.db" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="database" path="olevel_runtime.db" />
+        <exclude domain="database" path="study_tools.db" />
     </device-transfer>
 </data-extraction-rules>

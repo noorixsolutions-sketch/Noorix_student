@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tutor Keyboard IME descriptor (§3.5 Goal Architecture). -->
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.example.MainActivity">
+    <subtype
+        android:label="@string/tutor_keyboard_label"
+        android:imeSubtypeLocale="en"
+        android:imeSubtypeMode="keyboard" />
+</input-method>

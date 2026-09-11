@@ -9,18 +9,30 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.core.model.AnalyticsSnapshot
+import com.example.core.model.Bookmark
+import com.example.core.model.BookmarkKind
 import com.example.core.model.CoursePackage
 import com.example.core.model.CurriculumGraph
+import com.example.core.model.Flashcard
+import com.example.core.model.FlashcardReview
+import com.example.core.model.GamificationSnapshot
 import com.example.core.model.LearningEvent
 import com.example.core.model.LearningPlan
 import com.example.core.model.MediaArtifact
 import com.example.core.model.MediaLearningRecord
 import com.example.core.model.QuestionItem
+import com.example.core.model.ReviewGrade
 import com.example.core.model.Step
 import com.example.core.model.StudentModel
+import com.example.core.model.StudyNote
 import com.example.core.model.TransferTask
 import com.example.core.model.UserProfile
 import com.example.core.model.VerificationResult
+import com.example.domain.analytics.LearningAnalyticsEngine
+import com.example.domain.gamification.GamificationEngine
+import com.example.domain.studytools.FlashcardReviewEngine
+import com.example.domain.studytools.StudyToolsRepository
 import com.example.BuildConfig
 import com.example.data.curriculum.CoursePackageProvider
 import com.example.data.curriculum.LearningContentProvider
@@ -40,6 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -48,6 +61,7 @@ import java.util.Locale
 import com.example.domain.onboarding.OnboardingState
 import com.example.domain.onboarding.OnboardingPhase
 import com.example.domain.onboarding.OnboardingData
+import com.example.domain.parent.ParentPrefs
 
 
 import com.example.core.network.OpenRouterApi
@@ -67,7 +81,9 @@ enum class AppNavigationTab {
     SYMBOLIC_TUTOR,
     MEDIA_TRANSFER,
     DECAY_SYNC,
-    AUDIT
+    AUDIT,
+    // ADDITIVE (§9 Goal Architecture): PIN-gated parent report.
+    PARENT
 }
 
 class OLevelViewModel(application: Application) : AndroidViewModel(application) {
@@ -695,5 +711,120 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun formatTime(timestampMs: Long): String {
         return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(timestampMs))
+    }
+
+    // ==========================================
+    // Progress analytics + gamification (ADDITIVE, derived)
+    // Snapshots are recomputed from the existing event log + student model;
+    // no new tables, no changes to existing flows.
+    // ==========================================
+
+    private val studyTools = StudyToolsRepository(getApplication<Application>().applicationContext)
+
+    val gamificationSnapshot: StateFlow<GamificationSnapshot> =
+        combine(eventsList, studentModel) { events, model ->
+            val mastered = model.academicStates.values.count { it.effectiveMastery >= 0.85 }
+            GamificationEngine.computeSnapshot(
+                events = events,
+                dailyTargetMinutes = model.profileCalibration.dailyTargetMinutes,
+                masteredConceptCount = mastered
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = GamificationEngine.emptySnapshot()
+        )
+
+    val analyticsSnapshot: StateFlow<AnalyticsSnapshot> =
+        combine(eventsList, studentModel) { events, model ->
+            LearningAnalyticsEngine.computeSnapshot(events, model)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AnalyticsSnapshot()
+        )
+
+    // ==========================================
+    // Study tools: bookmarks, notes, review (ADDITIVE)
+    // ==========================================
+
+    val bookmarks: StateFlow<List<Bookmark>> = studyTools.bookmarksFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    val flashcardProgress: StateFlow<Map<String, FlashcardReview>> = studyTools.reviewProgressFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
+
+    fun notesForConcept(conceptId: String): kotlinx.coroutines.flow.Flow<List<StudyNote>> =
+        studyTools.notesForConcept(conceptId)
+
+    fun toggleBookmark(kind: BookmarkKind, refId: String, conceptId: String, title: String) {
+        viewModelScope.launch {
+            val added = studyTools.toggleBookmark(kind, refId, conceptId, title)
+            _statusBanner.value = if (added) "Bookmarked: ${title.take(48)}" else "Bookmark removed."
+        }
+    }
+
+    fun isBookmarked(kind: BookmarkKind, refId: String): Boolean =
+        bookmarks.value.any { it.kind == kind && it.refId == refId }
+
+    fun saveStudyNote(
+        noteId: String? = null,
+        conceptId: String,
+        conceptName: String = "",
+        title: String,
+        body: String
+    ) {
+        viewModelScope.launch {
+            studyTools.saveNote(noteId, conceptId, conceptName, title, body)
+            _statusBanner.value = "Note saved."
+        }
+    }
+
+    fun deleteStudyNote(noteId: String) {
+        viewModelScope.launch {
+            studyTools.deleteNote(noteId)
+            _statusBanner.value = "Note deleted."
+        }
+    }
+
+    fun gradeFlashcard(cardId: String, conceptId: String, grade: ReviewGrade) {
+        viewModelScope.launch {
+            studyTools.gradeFlashcard(cardId, conceptId, grade)
+        }
+    }
+
+    /** Cards due for review right now (including never-reviewed). */
+    fun dueFlashcards(cards: List<Flashcard>): List<Flashcard> =
+        FlashcardReviewEngine.dueCards(cards, flashcardProgress.value)
+
+    /** Ordered review queue: most-overdue first, then fresh cards. */
+    fun reviewQueue(cards: List<Flashcard>): List<Flashcard> =
+        FlashcardReviewEngine.sessionOrder(cards, flashcardProgress.value)
+
+    // ==========================================
+    // Tutor chat helpers (ADDITIVE)
+    // ==========================================
+
+    /** Parent encouragement: lights the 💛 badge on the bubble (flag stored by the caller). */
+    fun sendParentEncouragement() {
+        ParentPrefs.setMessageWaiting(getApplication(), true)
+        _statusBanner.value = "Encouragement sent — it will glow on the student's bubble. 💛"
+    }
+
+    /** Quick-reply suggestion chips shown above the chat input per agent. */
+    fun agentSuggestions(agentId: String): List<String> = when (agentId) {
+        "danish" -> listOf("Explain factorisation simply", "Quiz me on quadratics", "Show common sign mistakes")
+        "zoya" -> listOf("Explain Newton's laws visually", "Quiz me on forces", "Give a worked example")
+        "ayesha" -> listOf("How do I write a 10-mark summary?", "Give me vocabulary drills", "Check my paragraph")
+        "bilal" -> listOf("Give me a logic puzzle", "Explain this pattern", "Speed drill please")
+        "exam_coach" -> listOf("Top Paper 1 pitfalls?", "How are method marks awarded?", "Make me a revision plan")
+        "career_guide" -> listOf("Best subjects for Computer Science?", "Engineering vs Medicine?", "Map my A-Level cluster")
+        else -> listOf("Explain simply", "Quiz me", "Give an example")
     }
 }
