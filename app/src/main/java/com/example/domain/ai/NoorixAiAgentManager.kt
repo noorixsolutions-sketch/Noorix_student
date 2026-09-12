@@ -28,13 +28,11 @@ import java.util.concurrent.TimeUnit
  * Manages specialized Cambridge O-Level AI Tutoring Agents.
  *
  * Model routing (per message):
- *   1. If a local llama-server is connected (Audit → Local LLM), chat is
- *      served by the local model — fully offline-capable.
- *   2. If an OpenRouter API key and model are selected (Audit → OpenRouter),
+ *   1. If an OpenRouter API key and model are selected (Audit → OpenRouter),
  *      chat streams via OpenRouter.
- *   3. Otherwise, Firebase AI Logic (Gemini) is used when a real
+ *   2. Otherwise, Firebase AI Logic (Gemini) is used when a real
  *      GEMINI_API_KEY is configured (BuildConfig, injected from .env).
- *   4. Otherwise the student gets an honest offline notice (plus the
+ *   3. Otherwise the student gets an honest offline notice (plus the
  *      deterministic verifier trace when one was computed).
  *
  * Agents:
@@ -53,7 +51,6 @@ class NoorixAiAgentManager(
     private val systemPrompts = mutableMapOf<String, String>()
     private var geminiAvailable = false
 
-    private var localEngine: LlamaCppEngine? = null
     private var openRouterApiKey: String? = null
     private var openRouterModelId: String? = null
 
@@ -72,24 +69,17 @@ class NoorixAiAgentManager(
     // Engine configuration
     // ------------------------------------------------------------------
 
-    /** Routes agent chat through the given local llama-server engine (or null for cloud). */
-    fun setLocalEngine(engine: LlamaCppEngine?) {
-        this.localEngine = engine
-    }
-
     fun setOpenRouterConfig(apiKey: String?, modelId: String?) {
         this.openRouterApiKey = apiKey?.takeIf { it.isNotBlank() }
         this.openRouterModelId = modelId?.takeIf { it.isNotBlank() }
     }
-
-    fun localEngine(): LlamaCppEngine? = localEngine
 
     val geminiReady: Boolean get() = geminiAvailable
 
     private fun ensureFirebase() {
         val apiKey = BuildConfig.GEMINI_API_KEY
         if (apiKey.isNullOrBlank() || apiKey == "MY_GEMINI_API_KEY") {
-            // No real key configured — Gemini path disabled, local engine may still work.
+            // No real key configured — Gemini path disabled.
             geminiAvailable = false
             return
         }
@@ -175,7 +165,7 @@ class NoorixAiAgentManager(
     }
 
     // ------------------------------------------------------------------
-    // Messaging with real streaming (local llama-server preferred, Gemini fallback)
+    // Messaging with real streaming (OpenRouter preferred, Gemini fallback)
     // ------------------------------------------------------------------
 
     fun sendMessageStream(
@@ -232,32 +222,12 @@ class NoorixAiAgentManager(
         )
         chatMessageDao.insertMessage(userEntity)
 
-        // 2. Stream: local llama-server first, then Gemini, then honest offline notice
-        val local = localEngine
+        // 2. Stream: OpenRouter first, then Gemini, then honest offline notice
         val geminiModel = models[agentId] ?: if (agentId != "danish") models["danish"] else null
         val agentMsgId = "msg-a-" + UUID.randomUUID().toString().take(6)
         val responseBuilder = StringBuilder()
 
         when {
-            local != null && local.isConnected -> {
-                try {
-                    local.streamChat(systemPrompts[agentId] ?: DEFAULT_PROMPT, enrichedPrompt).collect { partial ->
-                        responseBuilder.setLength(0)
-                        responseBuilder.append(partial)
-                        emit(partial)
-                    }
-                } catch (e: Exception) {
-                    val notice = if (responseBuilder.isEmpty()) {
-                        "Local LLM stream failed (${e.localizedMessage ?: "connection error"}). " +
-                            "Re-check host:port in Audit → Local LLM."
-                    } else {
-                        "\n[Local LLM stream interrupted: ${e.localizedMessage}]"
-                    }
-                    responseBuilder.append(if (responseBuilder.isEmpty()) notice else "\n$notice")
-                    emit(responseBuilder.toString())
-                }
-            }
-
             openRouterApiKey != null && openRouterModelId != null -> {
                 try {
                     streamOpenRouter(
@@ -305,8 +275,8 @@ class NoorixAiAgentManager(
 
             else -> {
                 val notice = buildString {
-                    append("No tutor model is reachable right now. Connect a local llama-server (Settings → Local LLM), ")
-                    append("set an OpenRouter API key, or configure GEMINI_API_KEY to enable ${agentId}.")
+                    append("No tutor model is reachable right now. ")
+                    append("Set an OpenRouter API key, or configure GEMINI_API_KEY to enable ${agentId}.")
                     if (isMathVerified && mathVerificationTrace != null) {
                         append("\n\nDeterministic Verifier Result:\n$mathVerificationTrace")
                     }

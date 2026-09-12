@@ -10,6 +10,7 @@ import com.example.core.model.NodeType
 import com.example.core.model.Provenance
 import com.example.core.model.QuestionItem
 import com.example.core.model.ResourceItem
+import com.example.data.local.CoursePackageEntity
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -17,18 +18,18 @@ import org.json.JSONObject
  * Loads official, publisher-SIGNED course packages from APK assets.
  *
  * The package JSON files under app/src/main/assets/curriculum are generated
- * offline by tools/generate_package_signatures.py, which computes the canonical
+ * offline by tools/sign_course_package.py, which computes the canonical
  * content hash and the Ed25519 signature with the publisher key. The app only
  * ever verifies (see PackageVerifier) — it cannot sign.
  */
 class CoursePackageProvider(private val context: Context) {
 
-    fun createMath4024Package(): CoursePackage = loadPackage("curriculum/math_4024.json")
+    fun createMath4024Package(): CoursePackage = loadPackageFromAssets("curriculum/math_4024.json")
 
-    fun createPhysics5054Package(): CoursePackage = loadPackage("curriculum/physics_5054.json")
+    fun createPhysics5054Package(): CoursePackage = loadPackageFromAssets("curriculum/physics_5054.json")
 
     /** Loads and parses a signed course package asset. */
-    fun loadPackage(assetPath: String): CoursePackage {
+    fun loadPackageFromAssets(assetPath: String): CoursePackage {
         val json = context.assets.open(assetPath).bufferedReader(Charsets.UTF_8).use { it.readText() }
         return parsePackageFromJson(json)
     }
@@ -46,8 +47,8 @@ class CoursePackageProvider(private val context: Context) {
             schemaVersion = m.optString("schemaVersion", "1.0"),
             createdAt = m.getString("createdAt"),
             contentHash = m.getString("contentHash"),
-            parentVersion = m.optString("parentVersion", "").takeIf { it.isNotEmpty() },
-            deltaBase = m.optString("deltaBase", "").takeIf { it.isNotEmpty() },
+            parentVersion = optNullableString(m, "parentVersion"),
+            deltaBase = optNullableString(m, "deltaBase"),
             signature = m.getString("signature")
         )
 
@@ -123,7 +124,7 @@ class CoursePackageProvider(private val context: Context) {
                     maxMarks = q.optInt("maxMarks", 4),
                     bloomLevel = q.optString("bloomLevel", "APPLICATION"),
                     rubrics = q.optString("rubrics", ""),
-                    prerequisiteConceptId = q.optString("prerequisiteConceptId", "").takeIf { it.isNotEmpty() },
+                    prerequisiteConceptId = optNullableString(q, "prerequisiteConceptId"),
                     potentialMisconceptions = misc
                 )
             )
@@ -149,9 +150,134 @@ class CoursePackageProvider(private val context: Context) {
     }
 
     // ==========================================
-    // DB storage serializers (full field coverage —
-    // deserializePackage in LearningRepository round-trips these)
+    // DB storage codecs (serialize* + deserializePackage round-trip;
+    // pinned by CoursePackageRoundTripTest)
     // ==========================================
+
+    /**
+     * Reads a nullable string field. Unlike [JSONObject.optString], JSON null
+     * (and missing keys) become real null instead of the literal "null" string.
+     */
+    private fun optNullableString(obj: JSONObject, key: String): String? {
+        if (obj.isNull(key)) return null
+        return obj.optString(key).takeIf { it.isNotEmpty() }
+    }
+
+    /**
+     * Rebuilds a [CoursePackage] from its DB row. Inverse of the serialize*
+     * functions below; must round-trip identically w.r.t. canonicalization.
+     */
+    fun deserializePackage(entity: CoursePackageEntity): CoursePackage {
+        val m = JSONObject(entity.manifestJson)
+        val manifest = CoursePackageManifest(
+            packageId = m.optString("packageId", entity.packageId),
+            courseId = m.optString("courseId", entity.courseId),
+            subjectName = m.optString("subjectName", entity.subjectName),
+            version = m.optString("version", entity.version),
+            schemaVersion = m.optString("schemaVersion", "1.0"),
+            createdAt = m.optString("createdAt", "2026-09-08T00:00:00Z"),
+            contentHash = m.optString("contentHash", entity.contentHash),
+            parentVersion = optNullableString(m, "parentVersion"),
+            deltaBase = optNullableString(m, "deltaBase"),
+            signature = m.optString("signature", "")
+        )
+
+        val nodes = ArrayList<KGNode>()
+        val nodesArr = JSONArray(entity.nodesJson)
+        for (i in 0 until nodesArr.length()) {
+            val n = nodesArr.getJSONObject(i)
+            val props = HashMap<String, String>()
+            val propObj = n.optJSONObject("properties")
+            if (propObj != null) {
+                val keys = propObj.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    props[k] = propObj.optString(k, "")
+                }
+            }
+            nodes.add(
+                KGNode(
+                    id = n.getString("id"),
+                    type = NodeType.valueOf(n.getString("type")),
+                    name = n.getString("name"),
+                    properties = props
+                )
+            )
+        }
+
+        val edges = ArrayList<KGEdge>()
+        val edgesArr = JSONArray(entity.edgesJson)
+        for (i in 0 until edgesArr.length()) {
+            val e = edgesArr.getJSONObject(i)
+            val props = HashMap<String, String>()
+            val propObj = e.optJSONObject("properties")
+            if (propObj != null) {
+                val keys = propObj.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    props[k] = propObj.optString(k, "")
+                }
+            }
+            edges.add(
+                KGEdge(
+                    id = e.getString("id"),
+                    type = EdgeType.valueOf(e.getString("type")),
+                    source = e.getString("source"),
+                    target = e.getString("target"),
+                    properties = props
+                )
+            )
+        }
+
+        val questions = ArrayList<QuestionItem>()
+        val qArr = JSONArray(entity.questionsJson)
+        for (i in 0 until qArr.length()) {
+            val q = qArr.getJSONObject(i)
+            val options = ArrayList<String>()
+            val optArr = q.optJSONArray("options")
+            if (optArr != null) for (j in 0 until optArr.length()) options.add(optArr.getString(j))
+            val misc = ArrayList<String>()
+            val miscArr = q.optJSONArray("potentialMisconceptions")
+            if (miscArr != null) for (j in 0 until miscArr.length()) misc.add(miscArr.getString(j))
+            questions.add(
+                QuestionItem(
+                    id = q.getString("id"),
+                    courseVersionId = q.getString("courseVersionId"),
+                    targetConceptId = q.getString("targetConceptId"),
+                    questionType = q.optString("questionType", "STRUCTURED"),
+                    prompt = q.getString("prompt"),
+                    options = options,
+                    correctIndex = q.optInt("correctIndex", -1),
+                    targetLaTeX = q.optString("targetLaTeX", ""),
+                    difficulty = q.optDouble("difficulty", 0.5),
+                    maxMarks = q.optInt("maxMarks", 4),
+                    bloomLevel = q.optString("bloomLevel", "APPLICATION"),
+                    rubrics = q.optString("rubrics", ""),
+                    prerequisiteConceptId = optNullableString(q, "prerequisiteConceptId"),
+                    potentialMisconceptions = misc
+                )
+            )
+        }
+
+        val resources = ArrayList<ResourceItem>()
+        val rArr = JSONArray(entity.resourcesJson)
+        for (i in 0 until rArr.length()) {
+            val r = rArr.getJSONObject(i)
+            resources.add(
+                ResourceItem(
+                    id = r.getString("id"),
+                    conceptId = r.getString("conceptId"),
+                    resourceType = r.optString("resourceType", "TEXT"),
+                    title = r.getString("title"),
+                    content = r.getString("content"),
+                    contentHash = r.optString("contentHash", "")
+                )
+            )
+        }
+
+        return CoursePackage(manifest, nodes, edges, questions, resources)
+    }
+
 
     fun serializeManifest(pkg: CoursePackage): String = JSONObject().apply {
         put("packageId", pkg.manifest.packageId)

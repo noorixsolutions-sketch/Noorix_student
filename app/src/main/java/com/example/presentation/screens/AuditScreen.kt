@@ -49,12 +49,6 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
     val openRouterModels by viewModel.openRouterModels.collectAsState()
     val selectedOpenRouterModel by viewModel.selectedOpenRouterModel.collectAsState()
 
-    val localHost by viewModel.localLlamaHost.collectAsState()
-    val localPort by viewModel.localLlamaPort.collectAsState()
-    val localConnected by viewModel.localLlamaConnected.collectAsState()
-    val localStatus by viewModel.localLlamaStatus.collectAsState()
-    val localModels by viewModel.localLlamaModels.collectAsState()
-    val selectedLocalModel by viewModel.selectedLocalLlamaModel.collectAsState()
 
     val userAccount by viewModel.userAccount.collectAsState()
     val googleBusy by viewModel.googleSignInBusy.collectAsState()
@@ -187,93 +181,10 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // ---------------- Local llama-server ----------------
-                    Text(
-                        text = "1. Local LLM (llama.cpp server)",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Direct HTTP SSE connection to llama-server (on-device or LAN). Fully offline capable.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedTextField(
-                            value = localHost,
-                            onValueChange = { viewModel.setLocalLlamaHost(it) },
-                            label = { Text("Host", fontSize = 11.sp) },
-                            placeholder = { Text("127.0.0.1") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = NearBlackBg,
-                                unfocusedContainerColor = NearBlackBg,
-                                focusedBorderColor = TealAccent,
-                                unfocusedBorderColor = SubtleBorder
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1.4f)
-                        )
-                        OutlinedTextField(
-                            value = localPort,
-                            onValueChange = { viewModel.setLocalLlamaPort(it.filter { c -> c.isDigit() }) },
-                            label = { Text("Port", fontSize = 11.sp) },
-                            placeholder = { Text("8080") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = NearBlackBg,
-                                unfocusedContainerColor = NearBlackBg,
-                                focusedBorderColor = TealAccent,
-                                unfocusedBorderColor = SubtleBorder
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (!localConnected) {
-                            Button(
-                                onClick = { viewModel.connectLocalLlama() },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg)
-                            ) {
-                                Text("Connect", fontWeight = FontWeight.Bold)
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { viewModel.disconnectLocalLlama() },
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(1.dp, StepIssue.copy(alpha = 0.5f))
-                            ) {
-                                Text("Disconnect", color = StepIssue, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-
-                    localStatus?.let { status ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = status,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (localConnected) StepCorrect else TextSecondary
-                        )
-                    }
-
                     // ---------------- OpenRouter Cloud Models ----------------
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        text = "2. OpenRouter Cloud Models (Optional)",
+                        text = "1. OpenRouter Cloud Models (Optional)",
                         style = MaterialTheme.typography.titleSmall,
                         color = TextPrimary,
                         fontWeight = FontWeight.Bold

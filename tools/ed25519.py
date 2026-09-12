@@ -1,6 +1,6 @@
 """Ed25519 (RFC 8032) — Python reference implementation (RFC 8032, Section 6).
 
-Used OFFLINE by tools/generate_package_signatures.py so the Noorix publisher
+Used OFFLINE by tools/sign_course_package.py so the Noorix publisher
 private key never ships in the Android APK. Self-test runs the RFC 8032
 Section 7.1 test vectors (1, 2, 3) on every invocation.
 """

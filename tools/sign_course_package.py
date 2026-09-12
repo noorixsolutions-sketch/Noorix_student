@@ -11,8 +11,8 @@ The Android app ships ONLY the publisher PUBLIC key (see PackageVerifier.kt),
 so tampered packages can never be re-signed on device.
 
 Usage:
-  python3 tools/generate_package_signatures.py            # regenerate assets
-  python3 tools/generate_package_signatures.py --verify   # CI: verify committed assets
+  python3 tools/sign_course_package.py            # regenerate assets
+  python3 tools/sign_course_package.py --verify   # CI: verify committed assets
 """
 import base64
 import hashlib

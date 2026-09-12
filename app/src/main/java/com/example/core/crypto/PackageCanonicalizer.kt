@@ -22,7 +22,7 @@ import java.security.MessageDigest
  *
  * Every free-text field passes through [esc].
  *
- * THIS MUST AGREE BYTE-FOR-BYTE with tools/generate_package_signatures.py (Python,
+ * THIS MUST AGREE BYTE-FOR-BYTE with tools/sign_course_package.py (Python,
  * publisher side). The unit test PackageCanonicalizerTest pins the math/physics
  * packages' content hashes, and CI re-runs the Python tool in --verify mode —
  * any drift on either side fails the build.
@@ -30,7 +30,6 @@ import java.security.MessageDigest
 object PackageCanonicalizer {
 
     fun esc(value: String): String {
-        if (value == "null") return "-" // Catch "null" strings
         return value
             .replace("\\", "\\\\")
             .replace("|", "\\|")

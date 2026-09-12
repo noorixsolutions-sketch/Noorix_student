@@ -441,25 +441,6 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = NearBlackBg,
-                            border = BorderStroke(1.dp, SubtleBorder),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Text("DETERMINISTIC VERIFIER TRACE:", style = MaterialTheme.typography.labelSmall, color = TealAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = res.symbolicTrace.lines().take(4).joinToString("\n"),
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 10.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
 
                         Button(
                             onClick = {
