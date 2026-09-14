@@ -106,7 +106,12 @@ class OfflineAgentEngineTest {
 
     @Test
     fun `valid verification confirms success`() {
-        val v = VerificationResult(isValid = true, symbolicTrace = "ok")
+        val v = VerificationResult(
+            isValid = true,
+            firstInvalidStepIndex = null,
+            errorType = null,
+            symbolicTrace = "ok",
+        )
         val reply = ask("danish", "check my steps", v)
         assertTrue(reply.contains("check out", ignoreCase = true))
     }

@@ -425,7 +425,7 @@ class OfflineAgentEngine(private val context: Context) {
         return if (v.isValid) {
             "**${UiCopy.formatMathVerification(true, null, null)}** ✅\n\nWant to lock it in? Say **\"quiz me on $example\"**."
         } else {
-            val step = v.firstInvalidStepIndex.coerceAtLeast(1)
+            val step = (v.firstInvalidStepIndex ?: 1).coerceAtLeast(1)
             "**${UiCopy.formatMathVerification(false, step, v.errorType)}**\n\n" +
                 "${UiCopy.formatMathErrorExplanation(v.errorType)}\n\n" +
                 "Fix it by rewriting step $step from step ${(step - 1).coerceAtLeast(1)}, changing one thing at a time — then send your steps again and I'll re-check."
