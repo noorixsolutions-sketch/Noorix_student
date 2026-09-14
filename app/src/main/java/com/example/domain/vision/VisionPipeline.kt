@@ -3,9 +3,6 @@ package com.example.domain.vision
 import android.graphics.Bitmap
 import com.example.core.model.Step
 import com.google.android.gms.tasks.Tasks
-import com.google.firebase.Firebase
-import com.google.firebase.ai.ai
-import com.google.firebase.ai.type.content
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
@@ -39,14 +36,13 @@ object VisionPipeline {
     /**
      * Real OCR pipeline for student notebook scanning.
      * Pass 1: On-device ML Kit Text Recognition v2 (Fast, free, zero API cost).
-     * Pass 2 (Conditional): Gemini Vision via Firebase AI for ambiguous or low-confidence math handwriting.
+     * Low-confidence lines are flagged UNCLEAR (never auto-corrected): the student re-takes the photo or types the step.
      *
      * Invariant: Confidence < 0.70 is strictly flagged as "UNCLEAR" and never hallucinated or auto-corrected.
      */
     suspend fun parseNotebookBitmap(bitmap: Bitmap): NotebookParseResult = withContext(Dispatchers.IO) {
         val captureId = "ocr-" + UUID.randomUUID().toString().take(6)
         val extractedLines = mutableListOf<Pair<String, Double>>()
-        var usedSecondaryGeminiPass = false
 
         // =========================================================================
         // PASS 1: On-Device ML Kit Text Recognition v2
@@ -81,45 +77,6 @@ object VisionPipeline {
             android.util.Log.w("VisionPipeline", "ML Kit Pass 1 error: ${e.message}")
         }
 
-        // =========================================================================
-        // PASS 2: Gemini Vision Secondary Pass (if ML Kit confidence is low or handwriting unclear)
-        // =========================================================================
-        val avgConfidence = if (extractedLines.isNotEmpty()) extractedLines.map { it.second }.average() else 0.0
-        val needsGeminiPass = extractedLines.isEmpty() || avgConfidence < CONFIDENCE_FLOOR || extractedLines.any { it.second < CONFIDENCE_FLOOR && containsMathSymbols(it.first) }
-
-        if (needsGeminiPass) {
-            try {
-                val geminiModel = Firebase.ai.generativeModel(
-                    modelName = "gemini-2.5-flash",
-                    systemInstruction = content {
-                        text(
-                            "You are a specialized mathematical vision model for Cambridge O-Level notebooks. " +
-                            "Transcribe handwritten algebra equations line by line. " +
-                            "Format each line strictly as: LINE: <mathematical expression> | CONF: <0.00 to 1.00>. " +
-                            "If handwriting is genuinely illegible, output: LINE: [UNCLEAR] | CONF: 0.30."
-                        )
-                    }
-                )
-
-                val promptContent = content {
-                    image(bitmap)
-                    text("Transcribe the student's handwritten math notebook steps with confidence scores.")
-                }
-
-                val response = geminiModel.generateContent(promptContent)
-                val geminiText = response.text ?: ""
-
-                val geminiLines = parseGeminiVisionLines(geminiText)
-                if (geminiLines.isNotEmpty()) {
-                    usedSecondaryGeminiPass = true
-                    extractedLines.clear()
-                    extractedLines.addAll(geminiLines)
-                }
-            } catch (e: Exception) {
-                android.util.Log.w("VisionPipeline", "Gemini Vision Pass 2 fallback: ${e.message}")
-            }
-        }
-
         // Build structured NotebookParseResult enforcing CONFIDENCE_FLOOR invariant
         val regions = mutableListOf<ParsedRegion>()
         val extractedSteps = mutableListOf<Step>()
@@ -148,7 +105,7 @@ object VisionPipeline {
                     Step(
                         stepIndex = stepIndex++,
                         expression = line.trim(),
-                        note = "OCR Conf: ${String.format("%.2f", conf)} (${if (usedSecondaryGeminiPass) "Gemini Vision" else "ML Kit v2"})"
+                        note = "OCR Conf: ${String.format("%.2f", conf)} (ML Kit v2)"
                     )
                 )
             }
@@ -158,9 +115,6 @@ object VisionPipeline {
 
         val trace = buildString {
             append("ML Kit Text Recognition v2 (On-device)")
-            if (usedSecondaryGeminiPass) {
-                append(" -> Gemini Vision Pass 2 (Math notation enhancement)")
-            }
             append(". Filtered ${regions.count { it.isUnclear }} unclear lines below floor ($CONFIDENCE_FLOOR).")
         }
 
@@ -221,25 +175,6 @@ object VisionPipeline {
             extractedSteps = extractedSteps,
             rawTrace = "Pre-transcribed OCR Parser. Filtered ${regions.count { it.isUnclear }} unclear lines below floor ($CONFIDENCE_FLOOR)."
         )
-    }
-
-    private fun parseGeminiVisionLines(rawResponse: String): List<Pair<String, Double>> {
-        val result = mutableListOf<Pair<String, Double>>()
-        val lines = rawResponse.lines().map { it.trim() }.filter { it.isNotEmpty() }
-
-        val linePattern = Regex("LINE:\\s*(.*?)\\s*\\|\\s*CONF:\\s*([0-9.]+)", RegexOption.IGNORE_CASE)
-
-        for (line in lines) {
-            val match = linePattern.find(line)
-            if (match != null) {
-                val text = match.groupValues[1].trim()
-                val conf = match.groupValues[2].toDoubleOrNull() ?: 0.85
-                result.add(text to conf)
-            } else if (line.contains("=")) {
-                result.add(line to 0.88)
-            }
-        }
-        return result
     }
 
     private fun estimateConfidenceFromTextQuality(line: String): Double {

@@ -39,6 +39,7 @@ import com.example.data.curriculum.LearningContentProvider
 import com.example.data.local.AuditLogEntity
 import com.example.presentation.util.UiCopy
 import com.example.domain.ai.NoorixAiAgentManager
+import com.example.domain.ai.OpenRouterPrefs
 import com.example.data.local.ChatMessageEntity
 import com.example.domain.diagnostic.DiagnosticSessionState
 import com.example.domain.planner.AdaptivePlannerEngine
@@ -126,32 +127,66 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     private val openRouterApi = retrofit.create(OpenRouterApi::class.java)
 
-    fun updateOpenRouterApiKey(key: String) {
-        _openRouterApiKey.value = key
-        agentManager.setOpenRouterConfig(key, _selectedOpenRouterModel.value)
-        if (key.isNotBlank()) {
-            fetchOpenRouterModels(key)
-        }
+    private val _openRouterModelsLoading = MutableStateFlow(false)
+    val openRouterModelsLoading: StateFlow<Boolean> = _openRouterModelsLoading.asStateFlow()
+
+    private val _openRouterModelsError = MutableStateFlow<String?>(null)
+    val openRouterModelsError: StateFlow<String?> = _openRouterModelsError.asStateFlow()
+
+    init {
+        // Restore persisted cloud config, then load the free-models catalogue
+        // (the /models endpoint is public, so this works with no key).
+        val (savedKey, savedModel) = OpenRouterPrefs.load(application.applicationContext)
+        _openRouterApiKey.value = savedKey
+        _selectedOpenRouterModel.value = savedModel.ifBlank { null }
+        agentManager.setOpenRouterConfig(savedKey, savedModel.ifBlank { null })
+        refreshOpenRouterModels()
     }
 
-    private fun fetchOpenRouterModels(key: String) {
+    fun updateOpenRouterApiKey(key: String) {
+        _openRouterApiKey.value = key
+        OpenRouterPrefs.saveApiKey(application.applicationContext, key)
+        agentManager.setOpenRouterConfig(key, _selectedOpenRouterModel.value)
+    }
+
+    /**
+     * Reloads the free-models catalogue from OpenRouter, newest list every
+     * time. Public endpoint — works with no key; a saved key is attached
+     * when present so key-gated free models appear too.
+     */
+    fun refreshOpenRouterModels() {
         viewModelScope.launch {
+            _openRouterModelsLoading.value = true
+            _openRouterModelsError.value = null
             try {
-                val response = openRouterApi.getModels("Bearer $key")
-                _openRouterModels.value = response.data
-                if (response.data.isNotEmpty() && _selectedOpenRouterModel.value == null) {
-                    val defaultModel = response.data.first().id
-                    _selectedOpenRouterModel.value = defaultModel
-                    agentManager.setOpenRouterConfig(_openRouterApiKey.value, defaultModel)
+                val key = _openRouterApiKey.value
+                val auth = key.takeIf { it.isNotBlank() }?.let { "Bearer $it" }
+                val response = openRouterApi.getModels(auth)
+                val free = response.data.filter { it.isFree }.sortedBy { it.displayName.lowercase() }
+                _openRouterModels.value = free
+                if (free.isEmpty()) {
+                    _openRouterModelsError.value = "No free models found. Check your connection and retry."
+                } else {
+                    val persisted = _selectedOpenRouterModel.value
+                    if (persisted.isNullOrBlank()) {
+                        selectOpenRouterModel(free.first().id)
+                    } else if (free.none { it.id == persisted }) {
+                        _openRouterModelsError.value =
+                            "Saved model \"" + persisted + "\" is no longer free — pick a new one below."
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                _openRouterModelsError.value = "Couldn't load models: ${e.message ?: "network error"}"
+            } finally {
+                _openRouterModelsLoading.value = false
             }
         }
     }
 
     fun selectOpenRouterModel(modelId: String) {
         _selectedOpenRouterModel.value = modelId
+        OpenRouterPrefs.saveModelId(application.applicationContext, modelId)
         agentManager.setOpenRouterConfig(_openRouterApiKey.value, modelId)
     }
 

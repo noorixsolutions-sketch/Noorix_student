@@ -48,6 +48,8 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
     val openRouterKey by viewModel.openRouterApiKey.collectAsState()
     val openRouterModels by viewModel.openRouterModels.collectAsState()
     val selectedOpenRouterModel by viewModel.selectedOpenRouterModel.collectAsState()
+    val openRouterModelsLoading by viewModel.openRouterModelsLoading.collectAsState()
+    val openRouterModelsError by viewModel.openRouterModelsError.collectAsState()
 
 
     val userAccount by viewModel.userAccount.collectAsState()
@@ -55,7 +57,6 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
 
     var showPurgeConfirmDialog by remember { mutableStateOf(false) }
     var expandedModelDropdown by remember { mutableStateOf(false) }
-    var expandedLocalModelDropdown by remember { mutableStateOf(false) }
     val auditChainVerified = remember(auditLogs) { viewModel.verifyAuditChainNow() }
 
     LazyColumn(
@@ -191,7 +192,7 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Connect to Claude, GPT-4o, or Llama 3 via OpenRouter API key.",
+                        text = "Pick any free model — the list loads live from OpenRouter. Without a key, every tutor runs on the built-in offline brain.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
@@ -213,17 +214,65 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (openRouterModels.isEmpty()) "Free models" else "Free models (${openRouterModels.size})",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        TextButton(
+                            onClick = { viewModel.refreshOpenRouterModels() },
+                            enabled = !openRouterModelsLoading
+                        ) {
+                            Text("Refresh", fontSize = 11.sp)
+                        }
+                    }
+                    if (openRouterModelsLoading && openRouterModels.isEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = TealAccent
+                            )
+                            Text(
+                                text = "Loading free models…",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                    if (openRouterModelsError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = openRouterModelsError ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StepIssue
+                        )
+                        TextButton(onClick = { viewModel.refreshOpenRouterModels() }) {
+                            Text("Retry", fontSize = 11.sp)
+                        }
+                    }
                     if (openRouterModels.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         ExposedDropdownMenuBox(
                             expanded = expandedModelDropdown,
                             onExpandedChange = { expandedModelDropdown = !expandedModelDropdown }
                         ) {
                             OutlinedTextField(
-                                value = openRouterModels.find { it.id == selectedOpenRouterModel }?.name ?: "Select Model...",
+                                value = openRouterModels.find { it.id == selectedOpenRouterModel }?.displayName ?: "Select Model...",
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Active Model", fontSize = 11.sp) },
+                                label = { Text("Active Model (free)", fontSize = 11.sp) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModelDropdown) },
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = NearBlackBg,
@@ -240,9 +289,10 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                                 expanded = expandedModelDropdown,
                                 onDismissRequest = { expandedModelDropdown = false }
                             ) {
-                                openRouterModels.take(15).forEach { model ->
+                                openRouterModels.forEach { model ->
                                     DropdownMenuItem(
-                                        text = { Text(model.name, fontSize = 12.sp) },
+                                        text = { Text(model.displayName, fontSize = 12.sp) },
+                                        supportingText = { Text(model.id, fontSize = 10.sp, color = TextSecondary) },
                                         onClick = {
                                             viewModel.selectOpenRouterModel(model.id)
                                             expandedModelDropdown = false
@@ -251,6 +301,12 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                                 }
                             }
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Cloud answers use the model above when a key is set; otherwise every tutor answers offline.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
                     }
                 }
             }
