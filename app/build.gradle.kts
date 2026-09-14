@@ -8,7 +8,7 @@ plugins {
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
-  // alias(libs.plugins.google.services) // Firebase/Gemini removed — see note at top
+  // alias(libs.plugins.google.services) // Firebase/Gemini removed - see note at top
 }
 
 android {
