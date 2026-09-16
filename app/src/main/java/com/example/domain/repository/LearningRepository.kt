@@ -3,7 +3,9 @@ package com.example.domain.repository
 import android.content.Context
 import com.example.core.crypto.PackageVerifier
 import com.example.core.crypto.VerificationStatus
+import com.example.BuildConfig
 import com.example.core.hlc.HybridClock
+import com.example.core.network.NoorixSyncClient
 import com.example.core.model.AcademicState
 import com.example.core.model.AuditLogItem
 import com.example.core.model.CoursePackage
@@ -88,6 +90,7 @@ class LearningRepository(context: Context) {
         }
     private val hybridClock = HybridClock(nodeId)
     private val syncEngine = HlcSyncEngine(eventDao, syncQueueDao, hybridClock, db)
+    private val syncClient = NoorixSyncClient(BuildConfig.NOORIX_SYNC_BASE_URL)
     private val mathVerifier = SymbolicMathVerifier()
     private val mediaProvider = StandardMediaProvider()
 
@@ -733,31 +736,34 @@ class LearningRepository(context: Context) {
     // Offline Sync Simulation
     // ==========================================
 
-    suspend fun simulateRemoteSyncBatch(): SyncBatchResult {
-        val remoteTime = _simulatedWallTimeMs.value - 86_400_000L
-        val remoteHlc = hybridClock.now(remoteTime).toString()
 
-        val remoteEvents = listOf(
-            LearningEvent(
-                eventId = "remote-evt-" + UUID.randomUUID().toString(),
-                eventType = EventType.CONCEPT_ASSESSED,
-                studentId = _studentModel.value.studentId,
-                courseVersionId = _studentModel.value.courseVersionId,
-                hlcTimestamp = remoteHlc,
-                physicalMs = remoteTime,
-                payloadJson = JSONObject().apply {
-                    put("conceptId", "concept:4024:factorisation")
-                    put("conceptName", "Factorisation")
-                    put("score", 0.78)
-                    put("confidence", 0.90)
-                }.toString()
+    /**
+     * Attempts a real upload of the pending sync queue. Events are marked
+     * SYNCED only after the server acknowledges them; any failure leaves the
+     * queue untouched for a later retry. No sync server exists yet, so this
+     * currently fails (honestly) until the endpoint ships.
+     */
+    suspend fun syncNow(): Result<SyncBatchResult> {
+        val pending = syncQueueDao.getPendingItems()
+        if (pending.isEmpty()) {
+            val hlc = hybridClock.now(_simulatedWallTimeMs.value).toString()
+            return Result.success(SyncBatchResult(emptyList(), emptyList(), emptyList(), hlc, "queue empty"))
+        }
+        return runCatching {
+            val upload = syncClient.uploadBatch(_studentModel.value.studentId, pending).getOrThrow()
+            syncEngine.acknowledgeUploadedEvents(upload.acceptedEventIds)
+            val result = SyncBatchResult(
+                acceptedEvents = upload.acceptedEventIds,
+                duplicateEvents = emptyList(),
+                mergedConflictedEvents = emptyList(),
+                updatedHlc = upload.serverHlc ?: hybridClock.now(_simulatedWallTimeMs.value).toString(),
+                summary = "Uploaded ${upload.acceptedEventIds.size} event(s)."
             )
-        )
-
-        val result = syncEngine.mergeRemoteEvents(remoteEvents, _simulatedWallTimeMs.value)
-        refreshStudentModel()
-        logAudit("SYNC_MERGED", result.summary)
-        return result
+            logAudit("SYNC_UPLOADED", result.summary)
+            result
+        }.onFailure { e ->
+            logAudit("SYNC_FAILED", e.message ?: "unknown sync error")
+        }
     }
 
     // ==========================================
@@ -859,116 +865,8 @@ class LearningRepository(context: Context) {
         )
     }
 
-    private fun deserializePackage(entity: CoursePackageEntity): CoursePackage {
-        val m = JSONObject(entity.manifestJson)
-        val manifest = com.example.core.model.CoursePackageManifest(
-            packageId = m.optString("packageId", entity.packageId),
-            courseId = m.optString("courseId", entity.courseId),
-            subjectName = m.optString("subjectName", entity.subjectName),
-            version = m.optString("version", entity.version),
-            schemaVersion = m.optString("schemaVersion", "1.0"),
-            createdAt = m.optString("createdAt", "2026-09-08T00:00:00Z"),
-            contentHash = m.optString("contentHash", entity.contentHash),
-            parentVersion = m.optString("parentVersion", "").takeIf { it.isNotEmpty() },
-            deltaBase = m.optString("deltaBase", "").takeIf { it.isNotEmpty() },
-            signature = m.optString("signature", "")
-        )
-
-        val nodes = ArrayList<KGNode>()
-        val nodesArr = JSONArray(entity.nodesJson)
-        for (i in 0 until nodesArr.length()) {
-            val n = nodesArr.getJSONObject(i)
-            val props = HashMap<String, String>()
-            val propObj = n.optJSONObject("properties")
-            if (propObj != null) {
-                val keys = propObj.keys()
-                while (keys.hasNext()) {
-                    val k = keys.next()
-                    props[k] = propObj.optString(k, "")
-                }
-            }
-            nodes.add(
-                KGNode(
-                    id = n.getString("id"),
-                    type = NodeType.valueOf(n.getString("type")),
-                    name = n.getString("name"),
-                    properties = props
-                )
-            )
-        }
-
-        val edges = ArrayList<KGEdge>()
-        val edgesArr = JSONArray(entity.edgesJson)
-        for (i in 0 until edgesArr.length()) {
-            val e = edgesArr.getJSONObject(i)
-            val props = HashMap<String, String>()
-            val propObj = e.optJSONObject("properties")
-            if (propObj != null) {
-                val keys = propObj.keys()
-                while (keys.hasNext()) {
-                    val k = keys.next()
-                    props[k] = propObj.optString(k, "")
-                }
-            }
-            edges.add(
-                KGEdge(
-                    id = e.getString("id"),
-                    type = EdgeType.valueOf(e.getString("type")),
-                    source = e.getString("source"),
-                    target = e.getString("target"),
-                    properties = props
-                )
-            )
-        }
-
-        val questions = ArrayList<QuestionItem>()
-        val qArr = JSONArray(entity.questionsJson)
-        for (i in 0 until qArr.length()) {
-            val q = qArr.getJSONObject(i)
-            val options = ArrayList<String>()
-            val optArr = q.optJSONArray("options")
-            if (optArr != null) for (j in 0 until optArr.length()) options.add(optArr.getString(j))
-            val misc = ArrayList<String>()
-            val miscArr = q.optJSONArray("potentialMisconceptions")
-            if (miscArr != null) for (j in 0 until miscArr.length()) misc.add(miscArr.getString(j))
-            questions.add(
-                QuestionItem(
-                    id = q.getString("id"),
-                    courseVersionId = q.getString("courseVersionId"),
-                    targetConceptId = q.getString("targetConceptId"),
-                    questionType = q.optString("questionType", "STRUCTURED"),
-                    prompt = q.getString("prompt"),
-                    options = options,
-                    correctIndex = q.optInt("correctIndex", -1),
-                    targetLaTeX = q.optString("targetLaTeX", ""),
-                    difficulty = q.optDouble("difficulty", 0.5),
-                    maxMarks = q.optInt("maxMarks", 4),
-                    bloomLevel = q.optString("bloomLevel", "APPLICATION"),
-                    rubrics = q.optString("rubrics", ""),
-                    prerequisiteConceptId = q.optString("prerequisiteConceptId", "").takeIf { it.isNotEmpty() },
-                    potentialMisconceptions = misc
-                )
-            )
-        }
-
-        val resources = ArrayList<ResourceItem>()
-        val rArr = JSONArray(entity.resourcesJson)
-        for (i in 0 until rArr.length()) {
-            val r = rArr.getJSONObject(i)
-            resources.add(
-                ResourceItem(
-                    id = r.getString("id"),
-                    conceptId = r.getString("conceptId"),
-                    resourceType = r.optString("resourceType", "TEXT"),
-                    title = r.getString("title"),
-                    content = r.getString("content"),
-                    contentHash = r.optString("contentHash", "")
-                )
-            )
-        }
-
-        return CoursePackage(manifest, nodes, edges, questions, resources)
-    }
+    private fun deserializePackage(entity: CoursePackageEntity): CoursePackage =
+        packageProvider.deserializePackage(entity)
 }
 
 private fun UserAccountEntity.toProfile() = UserProfile(

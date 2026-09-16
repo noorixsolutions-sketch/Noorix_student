@@ -31,7 +31,12 @@ import com.example.R
 import com.example.core.model.RecalibrationAttribution
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
+import com.example.presentation.components.BadgesCard
+import com.example.presentation.components.ConceptMasteryCard
+import com.example.presentation.components.DailyGoalCard
 import com.example.presentation.components.NoorixSegmentedProgressBar
+import com.example.presentation.components.WeeklyActivityCard
+import com.example.presentation.components.XpLevelCard
 import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
 
@@ -42,6 +47,8 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
     val events by viewModel.eventsList.collectAsState()
     val userAccount by viewModel.userAccount.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
+    val gamification by viewModel.gamificationSnapshot.collectAsState()
+    val analytics by viewModel.analyticsSnapshot.collectAsState()
 
     val courseTitle = activePkg?.manifest?.subjectName ?: "Cambridge O-Level"
     val latestConcept = studentModel.academicStates.values.maxByOrNull { it.lastAssessedPhysicalMs }
@@ -138,7 +145,7 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
                         MiniStatBadge("Focus", targetConceptName.take(12), TealAccent, Modifier.weight(1f))
                         MiniStatBadge("Target", "${studentModel.profileCalibration.targetGrade}", CyberGold, Modifier.weight(1f))
                         MiniStatBadge("Readiness", "${(averageMastery * 100).toInt()}%", StepCorrect, Modifier.weight(1f))
-                        MiniStatBadge("Streak", "12 Days", CyanAccent, Modifier.weight(1f))
+                        MiniStatBadge("Streak", "${gamification.streakDays} Days", CyanAccent, Modifier.weight(1f))
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -181,6 +188,15 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
                     }
                 }
             }
+        }
+
+        // 1b. XP + Level and Daily Goal (ADDITIVE progress layer)
+        item {
+            XpLevelCard(snapshot = gamification)
+        }
+
+        item {
+            DailyGoalCard(snapshot = gamification, analytics = analytics)
         }
 
         // 2. Continuous Closed-Loop Calibration Engine HUD Card
@@ -503,6 +519,24 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
                     modifier = Modifier.weight(1f)
                 )
             }
+        }
+
+        // 6. Weekly Activity Chart (ADDITIVE)
+        item {
+            WeeklyActivityCard(snapshot = analytics)
+        }
+
+        // 7. Per-Concept Mastery Breakdown (ADDITIVE)
+        item {
+            ConceptMasteryCard(
+                rows = analytics.conceptRows,
+                averageMastery = analytics.averageMastery
+            )
+        }
+
+        // 8. Achievements / Badges (ADDITIVE)
+        item {
+            BadgesCard(earned = gamification.earnedBadges)
         }
     }
 }

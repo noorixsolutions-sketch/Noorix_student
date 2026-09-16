@@ -6,7 +6,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -33,6 +35,7 @@ import com.example.core.model.MathErrorType
 import com.example.core.model.Step
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
+import com.example.presentation.components.MATH_SYMBOLS
 import com.example.presentation.components.NoorixCameraCaptureDialog
 import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
@@ -317,29 +320,31 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        listOf("^2", "+", "-", "(", ")", "*", "/", "x").forEach { symbol ->
+                        // Shared math-keyboard symbols (pretty display, verifier-compatible insert).
+                        MATH_SYMBOLS.forEach { mathSymbol ->
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = NearBlackBg,
                                 border = BorderStroke(1.dp, SubtleBorder),
                                 modifier = Modifier
-                                    .weight(1f)
                                     .clickable {
                                         val targetIdx = activeStepFocusIndex.coerceIn(0, stepsList.size - 1)
                                         val updated = stepsList.toMutableList()
-                                        updated[targetIdx] = updated[targetIdx] + symbol
+                                        updated[targetIdx] = updated[targetIdx] + mathSymbol.insert
                                         stepsList = updated
                                     }
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
-                                    modifier = Modifier.padding(vertical = 8.dp)
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
                                     Text(
-                                        text = symbol,
+                                        text = mathSymbol.display,
                                         fontFamily = FontFamily.Monospace,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
@@ -436,25 +441,6 @@ fun SymbolicTutorScreen(viewModel: OLevelViewModel) {
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = NearBlackBg,
-                            border = BorderStroke(1.dp, SubtleBorder),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Text("DETERMINISTIC VERIFIER TRACE:", style = MaterialTheme.typography.labelSmall, color = TealAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = res.symbolicTrace.lines().take(4).joinToString("\n"),
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 10.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
 
                         Button(
                             onClick = {

@@ -1,6 +1,15 @@
 package com.example.presentation.screens
 
 import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,13 +26,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
+import com.example.presentation.bubble.AishaBubbleService
 import com.example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,20 +48,15 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
     val openRouterKey by viewModel.openRouterApiKey.collectAsState()
     val openRouterModels by viewModel.openRouterModels.collectAsState()
     val selectedOpenRouterModel by viewModel.selectedOpenRouterModel.collectAsState()
+    val openRouterModelsLoading by viewModel.openRouterModelsLoading.collectAsState()
+    val openRouterModelsError by viewModel.openRouterModelsError.collectAsState()
 
-    val localHost by viewModel.localLlamaHost.collectAsState()
-    val localPort by viewModel.localLlamaPort.collectAsState()
-    val localConnected by viewModel.localLlamaConnected.collectAsState()
-    val localStatus by viewModel.localLlamaStatus.collectAsState()
-    val localModels by viewModel.localLlamaModels.collectAsState()
-    val selectedLocalModel by viewModel.selectedLocalLlamaModel.collectAsState()
 
     val userAccount by viewModel.userAccount.collectAsState()
     val googleBusy by viewModel.googleSignInBusy.collectAsState()
 
     var showPurgeConfirmDialog by remember { mutableStateOf(false) }
     var expandedModelDropdown by remember { mutableStateOf(false) }
-    var expandedLocalModelDropdown by remember { mutableStateOf(false) }
     val auditChainVerified = remember(auditLogs) { viewModel.verifyAuditChainNow() }
 
     LazyColumn(
@@ -174,100 +182,17 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // ---------------- Local llama-server ----------------
-                    Text(
-                        text = "1. Local LLM (llama.cpp server)",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Direct HTTP SSE connection to llama-server (on-device or LAN). Fully offline capable.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedTextField(
-                            value = localHost,
-                            onValueChange = { viewModel.setLocalLlamaHost(it) },
-                            label = { Text("Host", fontSize = 11.sp) },
-                            placeholder = { Text("127.0.0.1") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = NearBlackBg,
-                                unfocusedContainerColor = NearBlackBg,
-                                focusedBorderColor = TealAccent,
-                                unfocusedBorderColor = SubtleBorder
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1.4f)
-                        )
-                        OutlinedTextField(
-                            value = localPort,
-                            onValueChange = { viewModel.setLocalLlamaPort(it.filter { c -> c.isDigit() }) },
-                            label = { Text("Port", fontSize = 11.sp) },
-                            placeholder = { Text("8080") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = NearBlackBg,
-                                unfocusedContainerColor = NearBlackBg,
-                                focusedBorderColor = TealAccent,
-                                unfocusedBorderColor = SubtleBorder
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (!localConnected) {
-                            Button(
-                                onClick = { viewModel.connectLocalLlama() },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg)
-                            ) {
-                                Text("Connect", fontWeight = FontWeight.Bold)
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { viewModel.disconnectLocalLlama() },
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(1.dp, StepIssue.copy(alpha = 0.5f))
-                            ) {
-                                Text("Disconnect", color = StepIssue, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-
-                    localStatus?.let { status ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = status,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (localConnected) StepCorrect else TextSecondary
-                        )
-                    }
-
                     // ---------------- OpenRouter Cloud Models ----------------
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        text = "2. OpenRouter Cloud Models (Optional)",
+                        text = "1. OpenRouter Cloud Models (Optional)",
                         style = MaterialTheme.typography.titleSmall,
                         color = TextPrimary,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Connect to Claude, GPT-4o, or Llama 3 via OpenRouter API key.",
+                        text = "Pick any free model — the list loads live from OpenRouter. Without a key, every tutor runs on the built-in offline brain.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
@@ -289,17 +214,65 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (openRouterModels.isEmpty()) "Free models" else "Free models (${openRouterModels.size})",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        TextButton(
+                            onClick = { viewModel.refreshOpenRouterModels() },
+                            enabled = !openRouterModelsLoading
+                        ) {
+                            Text("Refresh", fontSize = 11.sp)
+                        }
+                    }
+                    if (openRouterModelsLoading && openRouterModels.isEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = TealAccent
+                            )
+                            Text(
+                                text = "Loading free models…",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                    if (openRouterModelsError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = openRouterModelsError ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StepIssue
+                        )
+                        TextButton(onClick = { viewModel.refreshOpenRouterModels() }) {
+                            Text("Retry", fontSize = 11.sp)
+                        }
+                    }
                     if (openRouterModels.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         ExposedDropdownMenuBox(
                             expanded = expandedModelDropdown,
                             onExpandedChange = { expandedModelDropdown = !expandedModelDropdown }
                         ) {
                             OutlinedTextField(
-                                value = openRouterModels.find { it.id == selectedOpenRouterModel }?.name ?: "Select Model...",
+                                value = openRouterModels.find { it.id == selectedOpenRouterModel }?.displayName ?: "Select Model...",
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Active Model", fontSize = 11.sp) },
+                                label = { Text("Active Model (free)", fontSize = 11.sp) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModelDropdown) },
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = NearBlackBg,
@@ -316,9 +289,10 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                                 expanded = expandedModelDropdown,
                                 onDismissRequest = { expandedModelDropdown = false }
                             ) {
-                                openRouterModels.take(15).forEach { model ->
+                                openRouterModels.forEach { model ->
                                     DropdownMenuItem(
-                                        text = { Text(model.name, fontSize = 12.sp) },
+                                        text = { Text(model.displayName, fontSize = 12.sp) },
+                                        supportingText = { Text(model.id, fontSize = 10.sp, color = TextSecondary) },
                                         onClick = {
                                             viewModel.selectOpenRouterModel(model.id)
                                             expandedModelDropdown = false
@@ -327,6 +301,12 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                                 }
                             }
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Cloud answers use the model above when a key is set; otherwise every tutor answers offline.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
                     }
                 }
             }
@@ -411,6 +391,176 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
         }
 
         // ============================================================
+        // 3b. Primary Surfaces: Bubble, Tutor Keyboard, Parent (ADDITIVE)
+        // ============================================================
+        item {
+            val context = LocalContext.current
+            var bubbleOn by remember { mutableStateOf(AishaBubbleService.isRunning) }
+            val notifPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted) {
+                    startBubbleService(context)
+                    bubbleOn = true
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "PRIMARY SURFACES (BETA)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealAccent,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // ---- 1. Aisha Bubble overlay ----
+                    Text(
+                        text = "1. Aisha Bubble ${if (bubbleOn) "(Active)" else "(Off)"}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "A floating 56dp bubble in every app. Tap for tutor chat, double-tap for the 8-layout fan, swipe up for the quick HUD.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (!bubbleOn) {
+                            Button(
+                                onClick = {
+                                    when {
+                                        needsOverlayPermission(context) -> {
+                                            activity?.startActivity(
+                                                Intent(
+                                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                                    Uri.parse("package:${context.packageName}")
+                                                )
+                                            )
+                                        }
+                                        needsNotifPermission(context) -> {
+                                            notifPermissionLauncher.launch(
+                                                android.Manifest.permission.POST_NOTIFICATIONS
+                                            )
+                                        }
+                                        else -> {
+                                            startBubbleService(context)
+                                            bubbleOn = true
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = TealAccent,
+                                    contentColor = NearBlackBg
+                                ),
+                                modifier = Modifier.testTag("enable_bubble_button")
+                            ) {
+                                Text("Enable Bubble", fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    stopBubbleService(context)
+                                    bubbleOn = false
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, SubtleBorderActive)
+                            ) {
+                                Text("Hide Bubble", color = TextPrimary, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    if (needsOverlayPermission(context) && !bubbleOn) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Requires the 'Display over other apps' permission — you'll be taken to system settings.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    // ---- 2. Tutor Keyboard IME ----
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "2. Tutor Keyboard",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "A student-aware keyboard: streak glyph strip, 6-persona Tutor row, QWERTY + Math + Quiz modes. Enable it in system settings, then switch to it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
+                            onClick = {
+                                activity?.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = TealAccent,
+                                contentColor = NearBlackBg
+                            )
+                        ) {
+                            Text("Enable in Settings", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                                imm.showInputMethodPicker()
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, SubtleBorderActive)
+                        ) {
+                            Text("Switch keyboard", color = TextPrimary, fontSize = 12.sp)
+                        }
+                    }
+
+                    // ---- 3. Parent Dashboard ----
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "3. Parent Dashboard",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "PIN-gated weekly narrative, attention items and encouragement for parents.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { viewModel.setTab(AppNavigationTab.PARENT) },
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f)),
+                        modifier = Modifier.testTag("open_parent_dashboard_button")
+                    ) {
+                        Icon(Icons.Default.FamilyRestroom, contentDescription = null, tint = CyberGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Open Parent Dashboard", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        // ============================================================
         // 4. Sovereign Data Management (Right to be Forgotten)
         // ============================================================
         item {
@@ -483,4 +633,29 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
             }
         )
     }
+}
+
+// ------------------------------------------------------------------
+// Primary-surface helpers (ADDITIVE): bubble service + permissions.
+// ------------------------------------------------------------------
+
+private fun needsOverlayPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)
+
+private fun needsNotifPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT >= 33 &&
+        ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+
+private fun startBubbleService(context: Context) {
+    ContextCompat.startForegroundService(
+        context,
+        Intent(context, AishaBubbleService::class.java).setAction(AishaBubbleService.ACTION_START)
+    )
+}
+
+private fun stopBubbleService(context: Context) {
+    context.stopService(Intent(context, AishaBubbleService::class.java))
 }

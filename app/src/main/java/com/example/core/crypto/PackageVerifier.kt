@@ -19,9 +19,9 @@ sealed class VerificationStatus {
  * Cryptographic Course Package Verifier (Ed25519 via Google Tink).
  *
  * SECURITY MODEL: the publisher's Ed25519 PRIVATE key lives only in the offline
- * signing tooling (tools/generate_package_signatures.py, run in CI / publisher
- * environment). This APK embeds the PUBLIC key alone, so a tampered package can
- * never be re-signed on device.
+ * signing tooling (tools/sign_course_package.py, run in the publisher
+ * environment). This APK embeds the PUBLIC key alone ([CoursePackagePublicKey]),
+ * so a tampered package can never be re-signed on device.
  *
  * Verification chain:
  *   1. schema version gate
@@ -35,15 +35,6 @@ sealed class VerificationStatus {
 object PackageVerifier {
 
     const val SUPPORTED_SCHEMA_VERSION = "1.0"
-
-    // Noorix curriculum publisher public key (base64).
-    // Generated offline: python3 tools/generate_package_signatures.py
-    // Seed: "NoorixCurriculumPublisherKey2025" (NOT shipped in the APK).
-    const val PUBLISHER_PUBLIC_KEY_BASE64 = "pzvLXgi6p9ugtgcEQhJ0od14BkfjXFJEeCau0rpGmJA="
-
-    val PUBLISHER_PUBLIC_KEY: ByteArray by lazy {
-        Base64.getDecoder().decode(PUBLISHER_PUBLIC_KEY_BASE64)
-    }
 
     fun computeSha256(content: String): String = PackageCanonicalizer.sha256Hex(content)
 
@@ -68,7 +59,7 @@ object PackageVerifier {
         // 4. Real Ed25519 cryptographic signature verification using Google Tink
         //    Signature is over the CANONICAL BYTES, not the hash string.
         try {
-            val verifier = Ed25519Verify(PUBLISHER_PUBLIC_KEY)
+            val verifier = Ed25519Verify(CoursePackagePublicKey.bytes)
             val signatureBytes = Base64.getDecoder().decode(pkg.manifest.signature)
             verifier.verify(signatureBytes, canonical.toByteArray(Charsets.UTF_8))
         } catch (e: IllegalArgumentException) {
@@ -88,9 +79,9 @@ object PackageVerifier {
         }
         for (q in pkg.questions) {
             if (!nodeIds.contains(q.targetConceptId)) missing.add(q.targetConceptId)
-            q.prerequisiteConceptId?.let { if (it.isNotEmpty() && it != "null" && !nodeIds.contains(it)) missing.add(it) }
+            q.prerequisiteConceptId?.let { if (it.isNotEmpty() && !nodeIds.contains(it)) missing.add(it) }
             for (misc in q.potentialMisconceptions) {
-                if (misc.isNotEmpty() && misc != "null" && !nodeIds.contains(misc)) missing.add(misc)
+                if (misc.isNotEmpty() && !nodeIds.contains(misc)) missing.add(misc)
             }
         }
         for (r in pkg.resources) {

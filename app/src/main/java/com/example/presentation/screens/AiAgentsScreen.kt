@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
@@ -25,14 +27,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.TextRange
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.data.local.ChatMessageEntity
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
+import com.example.presentation.components.MathKeyboardStrip
+import com.example.presentation.components.NoorixChatBubble
+import com.example.presentation.components.NoorixStreamingBubble
+import com.example.presentation.components.SuggestionChipsRow
+import com.example.presentation.components.backspaceToken
+import com.example.presentation.components.insertToken
 import com.example.ui.theme.*
 
 data class NoorixAgent(
@@ -134,8 +143,10 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
         viewModel.onAgentOpened(currentAgent.id, currentAgent.promptStarter)
     }
 
-    var inputText by remember { mutableStateOf("") }
+    // TextFieldValue enables cursor-aware insertion from the math keyboard.
+    var inputText by remember(currentAgent.id) { mutableStateOf(TextFieldValue("")) }
     var isMathVerificationMode by remember { mutableStateOf(false) }
+    var showMathKeyboard by remember(currentAgent.id) { mutableStateOf(currentAgent.id == "danish") }
     val listState = rememberLazyListState()
 
     // Scroll to bottom when new message arrives or stream updates
@@ -300,12 +311,22 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
             contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
         ) {
             items(chatMessages, key = { it.messageId }) { message ->
-                ChatMessageBubble(message = message, agentAccentColor = currentAgent.accentColor)
+                NoorixChatBubble(
+                    message = message,
+                    agentName = currentAgent.name,
+                    agentAccentColor = currentAgent.accentColor,
+                    agentImageRes = currentAgent.imageRes
+                )
             }
 
             if (!streamingText.isNullOrEmpty()) {
                 item {
-                    StreamingMessageBubble(text = streamingText!!, agentAccentColor = currentAgent.accentColor)
+                    NoorixStreamingBubble(
+                        text = streamingText!!,
+                        agentName = currentAgent.name,
+                        agentAccentColor = currentAgent.accentColor,
+                        agentImageRes = currentAgent.imageRes
+                    )
                 }
             } else if (isThinking) {
                 item {
@@ -333,13 +354,41 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 4. Chat Input Section
+        // 4. Chat Input Section (suggestions + math keyboard accessory)
+        val sendMessage: () -> Unit = {
+            if (inputText.text.isNotBlank() && !isThinking) {
+                val textToSend = inputText.text.trim()
+                val verifyMode = isMathVerificationMode
+                inputText = TextFieldValue("")
+                viewModel.sendAgentMessage(
+                    agentId = currentAgent.id,
+                    text = textToSend,
+                    isStepVerification = verifyMode
+                )
+            }
+        }
         Surface(
             color = NearBlackSurface,
             border = BorderStroke(1.dp, SubtleBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                SuggestionChipsRow(
+                    suggestions = viewModel.agentSuggestions(currentAgent.id),
+                    accentColor = currentAgent.accentColor,
+                    onSuggestionClick = { suggestion ->
+                        inputText = TextFieldValue(suggestion)
+                    },
+                    enabled = !isThinking
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                MathKeyboardStrip(
+                    expanded = showMathKeyboard,
+                    onToggleExpanded = { showMathKeyboard = !showMathKeyboard },
+                    onInsert = { token -> inputText = insertToken(inputText, token) },
+                    onBackspace = { inputText = backspaceToken(inputText) }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 if (currentAgent.id == "danish") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -392,167 +441,29 @@ fun AiAgentsScreen(viewModel: OLevelViewModel) {
                             unfocusedTextColor = TextPrimary
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        maxLines = 4
+                        maxLines = 4,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(onSend = { sendMessage() })
                     )
 
                     Spacer(modifier = Modifier.width(8.dp))
 
                     IconButton(
-                        onClick = {
-                            if (inputText.isNotBlank() && !isThinking) {
-                                val textToSend = inputText
-                                val verifyMode = isMathVerificationMode
-                                inputText = ""
-                                viewModel.sendAgentMessage(
-                                    agentId = currentAgent.id,
-                                    text = textToSend,
-                                    isStepVerification = verifyMode
-                                )
-                            }
-                        },
-                        enabled = inputText.isNotBlank() && !isThinking,
+                        onClick = { sendMessage() },
+                        enabled = inputText.text.isNotBlank() && !isThinking,
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(if (inputText.isNotBlank()) currentAgent.accentColor else SubtleBorder)
+                            .background(if (inputText.text.isNotBlank()) currentAgent.accentColor else SubtleBorder)
                             .testTag("agent_send_button")
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
-                            tint = if (inputText.isNotBlank()) NearBlackBg else TextMuted
+                            tint = if (inputText.text.isNotBlank()) NearBlackBg else TextMuted
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun ChatMessageBubble(message: ChatMessageEntity, agentAccentColor: Color) {
-    val isUser = message.sender == "student"
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
-    ) {
-        Surface(
-            shape = RoundedCornerShape(
-                topStart = 14.dp,
-                topEnd = 14.dp,
-                bottomStart = if (isUser) 14.dp else 2.dp,
-                bottomEnd = if (isUser) 2.dp else 14.dp
-            ),
-            color = if (isUser) TealAccent.copy(alpha = 0.15f) else NearBlackSurface,
-            border = BorderStroke(
-                width = 1.dp,
-                color = if (isUser) TealAccent.copy(alpha = 0.5f) else agentAccentColor.copy(alpha = 0.4f)
-            ),
-            modifier = Modifier.widthIn(max = 320.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (isUser) "YOU" else "AI TUTOR",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isUser) TealAccent else agentAccentColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    )
-
-                    if (message.isVerifiedMath) {
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = StepCorrect.copy(alpha = 0.15f),
-                            border = BorderStroke(1.dp, StepCorrect)
-                        ) {
-                            Text(
-                                text = "MATH VERIFIED",
-                                color = StepCorrect,
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = message.content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary,
-                    lineHeight = 20.sp
-                )
-
-                if (!message.mathVerificationTrace.isNullOrEmpty() && !isUser) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = NearBlackBg,
-                        border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.3f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            Text(
-                                text = "DETERMINISTIC VERIFIER TRACE:",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TealAccent,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = message.mathVerificationTrace,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary,
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun StreamingMessageBubble(text: String, agentAccentColor: Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start
-    ) {
-        Surface(
-            shape = RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp, bottomStart = 2.dp, bottomEnd = 14.dp),
-            color = NearBlackSurface,
-            border = BorderStroke(1.dp, agentAccentColor),
-            modifier = Modifier.widthIn(max = 320.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(agentAccentColor))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "STREAMING...",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = agentAccentColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    )
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary,
-                    lineHeight = 20.sp
-                )
             }
         }
     }

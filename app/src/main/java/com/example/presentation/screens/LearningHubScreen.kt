@@ -31,11 +31,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.core.model.BookmarkKind
 import com.example.core.model.ExplainerVideo
 import com.example.core.model.Flashcard
 import com.example.core.model.LearningQuiz
 import com.example.core.model.safeEmbedUrl
 import com.example.presentation.OLevelViewModel
+import com.example.presentation.components.FlashcardReviewSession
+import com.example.presentation.components.NotesEditorDialog
 import com.example.ui.theme.*
 
 @Composable
@@ -56,6 +59,53 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val selectedConcept = concepts.firstOrNull { it.id == selectedConceptId }
     val filtered = content.forConcept(selectedConceptId)
+
+    // --- ADDITIVE study-tools state (search, bookmarks, review, notes) ---
+    var searchQuery by remember { mutableStateOf("") }
+    var showBookmarksOnly by remember { mutableStateOf(false) }
+    var showReview by remember { mutableStateOf(false) }
+    var showNotes by remember { mutableStateOf(false) }
+    val bookmarks by viewModel.bookmarks.collectAsState()
+    val flashProgress by viewModel.flashcardProgress.collectAsState()
+    val conceptNotes by viewModel.notesForConcept(selectedConceptId).collectAsState(initial = emptyList())
+
+    fun isMarked(kind: BookmarkKind, refId: String): Boolean =
+        bookmarks.any { it.kind == kind && it.refId == refId }
+
+    val visibleVideos = remember(filtered.videos, searchQuery, showBookmarksOnly, bookmarks) {
+        filtered.videos.filter { video ->
+            (!showBookmarksOnly || isMarked(BookmarkKind.VIDEO, video.id)) &&
+                (searchQuery.isBlank() ||
+                    video.title.contains(searchQuery, ignoreCase = true) ||
+                    video.description.contains(searchQuery, ignoreCase = true))
+        }
+    }
+    val visibleFlashcards = remember(filtered.flashcards, searchQuery, showBookmarksOnly, bookmarks) {
+        filtered.flashcards.filter { card ->
+            (!showBookmarksOnly || isMarked(BookmarkKind.FLASHCARD, card.id)) &&
+                (searchQuery.isBlank() ||
+                    card.front.contains(searchQuery, ignoreCase = true) ||
+                    card.back.contains(searchQuery, ignoreCase = true) ||
+                    card.hint.contains(searchQuery, ignoreCase = true))
+        }
+    }
+    val visibleQuizzes = remember(filtered.quizzes, searchQuery, showBookmarksOnly, bookmarks) {
+        filtered.quizzes.filter { quiz ->
+            (!showBookmarksOnly || isMarked(BookmarkKind.QUIZ, quiz.id)) &&
+                (searchQuery.isBlank() ||
+                    quiz.question.contains(searchQuery, ignoreCase = true) ||
+                    quiz.explanation.contains(searchQuery, ignoreCase = true))
+        }
+    }
+    val reviewQueue = remember(filtered.flashcards, flashProgress) {
+        viewModel.reviewQueue(filtered.flashcards)
+    }
+    val dueCount = remember(filtered.flashcards, flashProgress) {
+        viewModel.dueFlashcards(filtered.flashcards).size
+    }
+    val selectedConceptName = selectedConcept?.name
+        ?: selectedConceptId.substringAfterLast(":").replace("-", " ")
+            .replaceFirstChar { it.uppercase() }
 
     LazyColumn(
         modifier = Modifier
@@ -164,6 +214,77 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
             }
         }
 
+        // 2b. Search + Study Tools (ADDITIVE)
+        item {
+            Column {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("hub_search_field"),
+                    placeholder = { Text("Search videos, flashcards, quizzes…", color = TextMuted, fontSize = 12.sp) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Default.Clear, contentDescription = "Clear search", tint = TextMuted, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = NearBlackSurface,
+                        unfocusedContainerColor = NearBlackSurface,
+                        focusedBorderColor = TealAccent,
+                        unfocusedBorderColor = SubtleBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HubToolChip(
+                        label = if (dueCount > 0) "Review ($dueCount due)" else "Review Mode",
+                        icon = Icons.Default.Autorenew,
+                        active = false,
+                        onClick = { selectedTab = 1; showReview = true },
+                        modifier = Modifier.weight(1f)
+                    )
+                    HubToolChip(
+                        label = if (conceptNotes.isEmpty()) "Notes" else "Notes (${conceptNotes.size})",
+                        icon = Icons.Default.StickyNote2,
+                        active = false,
+                        onClick = { showNotes = true },
+                        modifier = Modifier.weight(1f)
+                    )
+                    HubToolChip(
+                        label = "Saved",
+                        icon = if (showBookmarksOnly) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                        active = showBookmarksOnly,
+                        onClick = { showBookmarksOnly = !showBookmarksOnly },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (showBookmarksOnly || searchQuery.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "${visibleVideos.size + visibleFlashcards.size + visibleQuizzes.size} result(s)" +
+                            (if (showBookmarksOnly) " in Saved" else "") +
+                            (if (searchQuery.isNotBlank()) " for \"$searchQuery\"" else ""),
+                        color = TextMuted,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+
         // 3. Tab Selector (Explainers, Flashcards, Quiz)
         item {
             TabRow(
@@ -173,9 +294,9 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
                 divider = { HorizontalDivider(color = SubtleBorder) }
             ) {
                 listOf(
-                    "Explainers (${filtered.videos.size})" to Icons.Default.PlayCircleOutline,
-                    "Flashcards (${filtered.flashcards.size})" to Icons.Default.FlipToBack,
-                    "Concept Quiz (${filtered.quizzes.size})" to Icons.Default.Quiz
+                    "Explainers (${visibleVideos.size})" to Icons.Default.PlayCircleOutline,
+                    "Flashcards (${visibleFlashcards.size})" to Icons.Default.FlipToBack,
+                    "Concept Quiz (${visibleQuizzes.size})" to Icons.Default.Quiz
                 ).forEachIndexed { index, (label, icon) ->
                     Tab(
                         selected = selectedTab == index,
@@ -197,57 +318,139 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
         // 4. Tab Content
         when (selectedTab) {
             0 -> {
-                if (filtered.videos.isEmpty()) {
+                if (visibleVideos.isEmpty()) {
                     item {
                         EmptyHubState(
                             icon = Icons.Default.VideoLibrary,
-                            title = "No Video Explainers Available",
-                            subtitle = "Video explainers for ${selectedConcept?.name ?: "this concept"} will appear here once linked."
+                            title = if (showBookmarksOnly || searchQuery.isNotBlank()) "No Matching Videos" else "No Video Explainers Available",
+                            subtitle = if (showBookmarksOnly || searchQuery.isNotBlank()) "Try clearing search or Saved filter." else "Video explainers for ${selectedConcept?.name ?: "this concept"} will appear here once linked."
                         )
                     }
                 } else {
-                    items(filtered.videos, key = { it.id }) { video ->
-                        HubVideoCard(video)
-                    }
-                }
-            }
-
-            1 -> {
-                if (filtered.flashcards.isEmpty()) {
-                    item {
-                        EmptyHubState(
-                            icon = Icons.Default.Style,
-                            title = "No Flashcards Linked",
-                            subtitle = "Active recall cards for ${selectedConcept?.name ?: "this concept"} are being prepared."
-                        )
-                    }
-                } else {
-                    items(filtered.flashcards, key = { it.id }) { card ->
-                        HubFlashcardCard(card)
-                    }
-                }
-            }
-
-            else -> {
-                if (filtered.quizzes.isEmpty()) {
-                    item {
-                        EmptyHubState(
-                            icon = Icons.Default.Psychology,
-                            title = "No Practice Quiz Found",
-                            subtitle = "Practice quizzes for ${selectedConcept?.name ?: "this concept"} will appear here."
-                        )
-                    }
-                } else {
-                    items(filtered.quizzes, key = { it.id }) { quiz ->
-                        HubQuizCard(
-                            quiz = quiz,
-                            onAnswerSubmitted = { isCorrect ->
-                                viewModel.submitLearningHubQuiz(selectedConceptId, quiz.id, isCorrect)
+                    items(visibleVideos, key = { it.id }) { video ->
+                        HubVideoCard(
+                            video = video,
+                            isBookmarked = isMarked(BookmarkKind.VIDEO, video.id),
+                            onToggleBookmark = {
+                                viewModel.toggleBookmark(BookmarkKind.VIDEO, video.id, selectedConceptId, video.title)
                             }
                         )
                     }
                 }
             }
+
+            1 -> {
+                if (visibleFlashcards.isEmpty()) {
+                    item {
+                        EmptyHubState(
+                            icon = Icons.Default.Style,
+                            title = if (showBookmarksOnly || searchQuery.isNotBlank()) "No Matching Flashcards" else "No Flashcards Linked",
+                            subtitle = if (showBookmarksOnly || searchQuery.isNotBlank()) "Try clearing search or Saved filter." else "Active recall cards for ${selectedConcept?.name ?: "this concept"} are being prepared."
+                        )
+                    }
+                } else {
+                    items(visibleFlashcards, key = { it.id }) { card ->
+                        HubFlashcardCard(
+                            card = card,
+                            isBookmarked = isMarked(BookmarkKind.FLASHCARD, card.id),
+                            onToggleBookmark = {
+                                viewModel.toggleBookmark(BookmarkKind.FLASHCARD, card.id, selectedConceptId, card.front.take(60))
+                            }
+                        )
+                    }
+                }
+            }
+
+            else -> {
+                if (visibleQuizzes.isEmpty()) {
+                    item {
+                        EmptyHubState(
+                            icon = Icons.Default.Psychology,
+                            title = if (showBookmarksOnly || searchQuery.isNotBlank()) "No Matching Quizzes" else "No Practice Quiz Found",
+                            subtitle = if (showBookmarksOnly || searchQuery.isNotBlank()) "Try clearing search or Saved filter." else "Practice quizzes for ${selectedConcept?.name ?: "this concept"} will appear here."
+                        )
+                    }
+                } else {
+                    items(visibleQuizzes, key = { it.id }) { quiz ->
+                        HubQuizCard(
+                            quiz = quiz,
+                            onAnswerSubmitted = { isCorrect ->
+                                viewModel.submitLearningHubQuiz(selectedConceptId, quiz.id, isCorrect)
+                            },
+                            isBookmarked = isMarked(BookmarkKind.QUIZ, quiz.id),
+                            onToggleBookmark = {
+                                viewModel.toggleBookmark(BookmarkKind.QUIZ, quiz.id, selectedConceptId, quiz.question.take(60))
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // --- ADDITIVE dialogs: Review Mode + Notes ---
+    if (showReview) {
+        FlashcardReviewSession(
+            conceptName = selectedConceptName,
+            queue = reviewQueue,
+            onGrade = { card, grade ->
+                viewModel.gradeFlashcard(card.id, card.conceptId, grade)
+            },
+            onDismiss = { showReview = false }
+        )
+    }
+    if (showNotes) {
+        NotesEditorDialog(
+            conceptName = selectedConceptName,
+            notes = conceptNotes,
+            onSave = { noteId, title, body ->
+                viewModel.saveStudyNote(
+                    noteId = noteId,
+                    conceptId = selectedConceptId,
+                    conceptName = selectedConceptName,
+                    title = title,
+                    body = body
+                )
+            },
+            onDelete = { noteId -> viewModel.deleteStudyNote(noteId) },
+            onDismiss = { showNotes = false }
+        )
+    }
+}
+
+@Composable
+private fun HubToolChip(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    active: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = if (active) TealAccent.copy(alpha = 0.18f) else NearBlackSurface,
+        border = BorderStroke(1.dp, if (active) TealAccent else SubtleBorder),
+        modifier = modifier.clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (active) TealAccent else TextSecondary,
+                modifier = Modifier.size(15.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = label,
+                color = if (active) TealAccent else TextPrimary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
         }
     }
 }
@@ -281,7 +484,11 @@ private fun EmptyHubState(
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun HubVideoCard(video: ExplainerVideo) {
+private fun HubVideoCard(
+    video: ExplainerVideo,
+    isBookmarked: Boolean = false,
+    onToggleBookmark: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -314,6 +521,14 @@ private fun HubVideoCard(video: ExplainerVideo) {
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
+                }
+                IconButton(onClick = onToggleBookmark, modifier = Modifier.size(30.dp)) {
+                    Icon(
+                        if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                        contentDescription = if (isBookmarked) "Remove bookmark" else "Bookmark video",
+                        tint = if (isBookmarked) TealAccent else TextMuted,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
@@ -361,7 +576,11 @@ private fun HubVideoCard(video: ExplainerVideo) {
 }
 
 @Composable
-private fun HubFlashcardCard(card: Flashcard) {
+private fun HubFlashcardCard(
+    card: Flashcard,
+    isBookmarked: Boolean = false,
+    onToggleBookmark: () -> Unit = {}
+) {
     var isRevealed by remember(card.id) { mutableStateOf(false) }
     var showHint by remember(card.id) { mutableStateOf(false) }
 
@@ -394,12 +613,22 @@ private fun HubFlashcardCard(card: Flashcard) {
                     )
                 }
 
-                Text(
-                    text = if (isRevealed) "Tap to hide" else "Tap to flip",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
-                    fontSize = 10.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (isRevealed) "Tap to hide" else "Tap to flip",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted,
+                        fontSize = 10.sp
+                    )
+                    IconButton(onClick = onToggleBookmark, modifier = Modifier.size(30.dp)) {
+                        Icon(
+                            if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                            contentDescription = if (isBookmarked) "Remove bookmark" else "Bookmark flashcard",
+                            tint = if (isBookmarked) TealAccent else TextMuted,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -481,7 +710,9 @@ private fun HubFlashcardCard(card: Flashcard) {
 @Composable
 private fun HubQuizCard(
     quiz: LearningQuiz,
-    onAnswerSubmitted: ((Boolean) -> Unit)? = null
+    onAnswerSubmitted: ((Boolean) -> Unit)? = null,
+    isBookmarked: Boolean = false,
+    onToggleBookmark: () -> Unit = {}
 ) {
     var selectedIndex by remember(quiz.id) { mutableIntStateOf(-1) }
     val isAnswered = selectedIndex >= 0
@@ -493,13 +724,27 @@ private fun HubQuizCard(
         border = BorderStroke(1.dp, SubtleBorder)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = "CONCEPT QUIZ",
-                style = MaterialTheme.typography.labelSmall,
-                color = TealAccent,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "CONCEPT QUIZ",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TealAccent,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                IconButton(onClick = onToggleBookmark, modifier = Modifier.size(30.dp)) {
+                    Icon(
+                        if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                        contentDescription = if (isBookmarked) "Remove bookmark" else "Bookmark quiz",
+                        tint = if (isBookmarked) TealAccent else TextMuted,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = quiz.question,

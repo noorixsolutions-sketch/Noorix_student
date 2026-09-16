@@ -15,11 +15,11 @@ import org.robolectric.annotation.Config
 
 /**
  * Parity test between the Kotlin [PackageCanonicalizer] (app side) and the
- * publisher-side Python canonicalizer in tools/generate_package_signatures.py.
+ * publisher-side Python canonicalizer in tools/sign_course_package.py.
  *
  * The pinned hashes below are the SHA-256 digests of the canonical payloads
  * produced by the PYTHON tool for the shipped assets (verified with
- * `python3 tools/generate_package_signatures.py --verify`). If the Kotlin
+ * `python3 tools/sign_course_package.py --verify`). If the Kotlin
  * canonicalizer ever drifts from the Python one, these digests change and the
  * test fails — which would otherwise surface only as "package rejected" at
  * runtime.
@@ -36,7 +36,7 @@ class PackageCanonicalizerTest {
         val pkg = provider().createMath4024Package()
         val hash = PackageCanonicalizer.contentHashOf(pkg)
 
-        // Pinned from tools/generate_package_signatures.py (python side):
+        // Pinned from tools/sign_course_package.py (python side):
         assertEquals("219103837bc7760440865b35e5018229923258d73a40a828444cb4962e88d275", hash)
         assertEquals(hash, pkg.manifest.contentHash)
     }
@@ -46,7 +46,7 @@ class PackageCanonicalizerTest {
         val pkg = provider().createPhysics5054Package()
         val hash = PackageCanonicalizer.contentHashOf(pkg)
 
-        // Pinned from tools/generate_package_signatures.py (python side):
+        // Pinned from tools/sign_course_package.py (python side):
         assertEquals("a70770a35a9b4c8025e8d5645cc3652ac6f9805955c688461fec2e79348ea219", hash)
         assertEquals(hash, pkg.manifest.contentHash)
     }

@@ -2,4 +2,6 @@
 <full-backup-content>
     <!-- Learning events, account profile, audit entries, and tutor chats are sensitive student data. -->
     <exclude domain="database" path="olevel_runtime.db" />
+    <!-- Study-tools store (bookmarks, notes, review schedule) is student-owned and likewise excluded. -->
+    <exclude domain="database" path="study_tools.db" />
 </full-backup-content>

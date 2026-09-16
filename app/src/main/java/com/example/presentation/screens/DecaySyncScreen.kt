@@ -27,6 +27,7 @@ import com.example.core.model.MasteryStatus
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
 import com.example.presentation.components.NoorixSegmentedProgressBar
+import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
 
 @Composable
@@ -34,6 +35,7 @@ fun DecaySyncScreen(viewModel: OLevelViewModel) {
     val studentModel by viewModel.studentModel.collectAsState()
     val simulatedTimeMs by viewModel.simulatedWallTimeMs.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
+    val isSyncing by viewModel.isSyncing.collectAsState()
     val events by viewModel.eventsList.collectAsState()
 
     LazyColumn(
@@ -301,14 +303,15 @@ fun DecaySyncScreen(viewModel: OLevelViewModel) {
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Button(
-                        onClick = { viewModel.simulateOfflineSync() },
+                        onClick = { viewModel.triggerSyncNow() },
+                        enabled = !isSyncing,
                         colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Simulate Peer/Cloud Sync Batch", fontWeight = FontWeight.Bold)
+                        Text(if (isSyncing) "Syncing…" else "Sync Now", fontWeight = FontWeight.Bold)
                     }
 
                     syncResult?.let { res ->
@@ -320,9 +323,9 @@ fun DecaySyncScreen(viewModel: OLevelViewModel) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
-                                Text("SYNC RESULT SUMMARY:", style = MaterialTheme.typography.labelSmall, color = StepCorrect, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                Text("SYNC STATUS:", style = MaterialTheme.typography.labelSmall, color = StepCorrect, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(res.summary, style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontSize = 11.sp)
+                                Text(UiCopy.formatSyncResult(res), style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontSize = 11.sp)
                             }
                         }
                     }

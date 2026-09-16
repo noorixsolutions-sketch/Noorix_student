@@ -9,24 +9,37 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.core.model.AnalyticsSnapshot
+import com.example.core.model.Bookmark
+import com.example.core.model.BookmarkKind
 import com.example.core.model.CoursePackage
 import com.example.core.model.CurriculumGraph
+import com.example.core.model.Flashcard
+import com.example.core.model.FlashcardReview
+import com.example.core.model.GamificationSnapshot
 import com.example.core.model.LearningEvent
 import com.example.core.model.LearningPlan
 import com.example.core.model.MediaArtifact
 import com.example.core.model.MediaLearningRecord
 import com.example.core.model.QuestionItem
+import com.example.core.model.ReviewGrade
 import com.example.core.model.Step
 import com.example.core.model.StudentModel
+import com.example.core.model.StudyNote
 import com.example.core.model.TransferTask
 import com.example.core.model.UserProfile
 import com.example.core.model.VerificationResult
+import com.example.domain.analytics.LearningAnalyticsEngine
+import com.example.domain.gamification.GamificationEngine
+import com.example.domain.studytools.FlashcardReviewEngine
+import com.example.domain.studytools.StudyToolsRepository
 import com.example.BuildConfig
 import com.example.data.curriculum.CoursePackageProvider
 import com.example.data.curriculum.LearningContentProvider
 import com.example.data.local.AuditLogEntity
-import com.example.domain.ai.LlamaCppEngine
+import com.example.presentation.util.UiCopy
 import com.example.domain.ai.NoorixAiAgentManager
+import com.example.domain.ai.OpenRouterPrefs
 import com.example.data.local.ChatMessageEntity
 import com.example.domain.diagnostic.DiagnosticSessionState
 import com.example.domain.planner.AdaptivePlannerEngine
@@ -40,6 +53,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -48,6 +62,7 @@ import java.util.Locale
 import com.example.domain.onboarding.OnboardingState
 import com.example.domain.onboarding.OnboardingPhase
 import com.example.domain.onboarding.OnboardingData
+import com.example.domain.parent.ParentPrefs
 
 
 import com.example.core.network.OpenRouterApi
@@ -67,7 +82,9 @@ enum class AppNavigationTab {
     SYMBOLIC_TUTOR,
     MEDIA_TRANSFER,
     DECAY_SYNC,
-    AUDIT
+    AUDIT,
+    // ADDITIVE (§9 Goal Architecture): PIN-gated parent report.
+    PARENT
 }
 
 class OLevelViewModel(application: Application) : AndroidViewModel(application) {
@@ -110,32 +127,66 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     private val openRouterApi = retrofit.create(OpenRouterApi::class.java)
 
-    fun updateOpenRouterApiKey(key: String) {
-        _openRouterApiKey.value = key
-        agentManager.setOpenRouterConfig(key, _selectedOpenRouterModel.value)
-        if (key.isNotBlank()) {
-            fetchOpenRouterModels(key)
-        }
+    private val _openRouterModelsLoading = MutableStateFlow(false)
+    val openRouterModelsLoading: StateFlow<Boolean> = _openRouterModelsLoading.asStateFlow()
+
+    private val _openRouterModelsError = MutableStateFlow<String?>(null)
+    val openRouterModelsError: StateFlow<String?> = _openRouterModelsError.asStateFlow()
+
+    init {
+        // Restore persisted cloud config, then load the free-models catalogue
+        // (the /models endpoint is public, so this works with no key).
+        val (savedKey, savedModel) = OpenRouterPrefs.load(application.applicationContext)
+        _openRouterApiKey.value = savedKey
+        _selectedOpenRouterModel.value = savedModel.ifBlank { null }
+        agentManager.setOpenRouterConfig(savedKey, savedModel.ifBlank { null })
+        refreshOpenRouterModels()
     }
 
-    private fun fetchOpenRouterModels(key: String) {
+    fun updateOpenRouterApiKey(key: String) {
+        _openRouterApiKey.value = key
+        OpenRouterPrefs.saveApiKey(application.applicationContext, key)
+        agentManager.setOpenRouterConfig(key, _selectedOpenRouterModel.value)
+    }
+
+    /**
+     * Reloads the free-models catalogue from OpenRouter, newest list every
+     * time. Public endpoint — works with no key; a saved key is attached
+     * when present so key-gated free models appear too.
+     */
+    fun refreshOpenRouterModels() {
         viewModelScope.launch {
+            _openRouterModelsLoading.value = true
+            _openRouterModelsError.value = null
             try {
-                val response = openRouterApi.getModels("Bearer $key")
-                _openRouterModels.value = response.data
-                if (response.data.isNotEmpty() && _selectedOpenRouterModel.value == null) {
-                    val defaultModel = response.data.first().id
-                    _selectedOpenRouterModel.value = defaultModel
-                    agentManager.setOpenRouterConfig(_openRouterApiKey.value, defaultModel)
+                val key = _openRouterApiKey.value
+                val auth = key.takeIf { it.isNotBlank() }?.let { "Bearer $it" }
+                val response = openRouterApi.getModels(auth)
+                val free = response.data.filter { it.isFree }.sortedBy { it.displayName.lowercase() }
+                _openRouterModels.value = free
+                if (free.isEmpty()) {
+                    _openRouterModelsError.value = "No free models found. Check your connection and retry."
+                } else {
+                    val persisted = _selectedOpenRouterModel.value
+                    if (persisted.isNullOrBlank()) {
+                        selectOpenRouterModel(free.first().id)
+                    } else if (free.none { it.id == persisted }) {
+                        _openRouterModelsError.value =
+                            "Saved model \"" + persisted + "\" is no longer free — pick a new one below."
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                _openRouterModelsError.value = "Couldn't load models: ${e.message ?: "network error"}"
+            } finally {
+                _openRouterModelsLoading.value = false
             }
         }
     }
 
     fun selectOpenRouterModel(modelId: String) {
         _selectedOpenRouterModel.value = modelId
+        OpenRouterPrefs.saveModelId(application.applicationContext, modelId)
         agentManager.setOpenRouterConfig(_openRouterApiKey.value, modelId)
     }
 
@@ -211,89 +262,6 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
             repository.clearUserAccount()
             _statusBanner.value = "Signed out of Google."
         }
-    }
-
-    // ==========================================
-    // Local LlamaCpp server (llama.cpp / llama-server)
-    // ==========================================
-
-    private val _localLlamaHost = MutableStateFlow("127.0.0.1")
-    val localLlamaHost: StateFlow<String> = _localLlamaHost.asStateFlow()
-
-    private val _localLlamaPort = MutableStateFlow("8080")
-    val localLlamaPort: StateFlow<String> = _localLlamaPort.asStateFlow()
-
-    private val _localLlamaConnected = MutableStateFlow(false)
-    val localLlamaConnected: StateFlow<Boolean> = _localLlamaConnected.asStateFlow()
-
-    private val _localLlamaStatus = MutableStateFlow<String?>(null)
-    val localLlamaStatus: StateFlow<String?> = _localLlamaStatus.asStateFlow()
-
-    private val _localLlamaModels = MutableStateFlow<List<String>>(emptyList())
-    val localLlamaModels: StateFlow<List<String>> = _localLlamaModels.asStateFlow()
-
-    private val _selectedLocalLlamaModel = MutableStateFlow<String?>(null)
-    val selectedLocalLlamaModel: StateFlow<String?> = _selectedLocalLlamaModel.asStateFlow()
-
-    private var localLlamaEngine: LlamaCppEngine? = null
-
-    fun setLocalLlamaHost(host: String) {
-        _localLlamaHost.value = host
-    }
-
-    fun setLocalLlamaPort(port: String) {
-        _localLlamaPort.value = port
-    }
-
-    /**
-     * Connects to a local llama.cpp server (e.g. `llama-server -m model.gguf
-     * --host 127.0.0.1 --port 8080`). On success the AI agents prefer the
-     * local engine over Gemini, and all agent traffic stays on-device.
-     */
-    fun connectLocalLlama() {
-        if (_localLlamaConnected.value) return
-        viewModelScope.launch {
-            val host = _localLlamaHost.value.trim().ifBlank { "127.0.0.1" }
-            val port = _localLlamaPort.value.trim().toIntOrNull()
-            if (port == null) {
-                _localLlamaStatus.value = "Invalid port: '${_localLlamaPort.value}'"
-                return@launch
-            }
-            _localLlamaStatus.value = "Connecting to $host:$port …"
-            val engine = LlamaCppEngine()
-            val connectionResult = engine.connect(host, port)
-            when {
-                connectionResult.isSuccess -> {
-                    localLlamaEngine = engine
-                    agentManager.setLocalEngine(engine)
-                    _localLlamaConnected.value = true
-                    _localLlamaModels.value = engine.models
-                    _selectedLocalLlamaModel.value = engine.selectedModel
-                    _localLlamaStatus.value =
-                        "Connected to llama.cpp @ $host:$port — ${engine.models.size} model(s)"
-                }
-                else -> {
-                    val error = connectionResult.exceptionOrNull()
-                    _localLlamaStatus.value =
-                        "Connection failed: ${error?.localizedMessage ?: "unknown error"}"
-                }
-            }
-        }
-    }
-
-    fun disconnectLocalLlama() {
-        localLlamaEngine?.disconnect()
-        localLlamaEngine = null
-        agentManager.setLocalEngine(null)
-        _localLlamaConnected.value = false
-        _localLlamaModels.value = emptyList()
-        _selectedLocalLlamaModel.value = null
-        _localLlamaStatus.value = "Disconnected — agents fall back to Gemini / offline."
-    }
-
-    fun selectLocalLlamaModel(modelId: String) {
-        _selectedLocalLlamaModel.value = modelId
-        localLlamaEngine?.selectModel(modelId)
     }
 
     // Onboarding State
@@ -514,31 +482,19 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     fun installMathCourse() {
         viewModelScope.launch {
             val mathPkg = CoursePackageProvider(getApplication<Application>().applicationContext).createMath4024Package()
-            val (success, msg) = repository.installAndActivatePackage(mathPkg)
-            _statusBanner.value = msg
+            val (success, _) = repository.installAndActivatePackage(mathPkg)
+            _statusBanner.value = UiCopy.formatInstallResult(success, "Mathematics (Cambridge 4024)")
         }
     }
 
     fun installPhysicsCourse() {
         viewModelScope.launch {
             val physicsPkg = CoursePackageProvider(getApplication<Application>().applicationContext).createPhysics5054Package()
-            val (success, msg) = repository.installAndActivatePackage(physicsPkg)
-            _statusBanner.value = msg
+            val (success, _) = repository.installAndActivatePackage(physicsPkg)
+            _statusBanner.value = UiCopy.formatInstallResult(success, "Physics (Cambridge 5054)")
         }
     }
 
-    fun installTamperedPackageTest() {
-        viewModelScope.launch {
-            val mathPkg = CoursePackageProvider(getApplication<Application>().applicationContext).createMath4024Package()
-            val tamperedManifest = mathPkg.manifest.copy(
-                contentHash = "tampered_hash_00000000000000000000000000000000",
-                signature = "TAMPERED_FORGED_SIGNATURE"
-            )
-            val tamperedPkg = mathPkg.copy(manifest = tamperedManifest)
-            val (success, msg) = repository.installAndActivatePackage(tamperedPkg)
-            _statusBanner.value = msg
-        }
-    }
 
     // ==========================================
     // Symbolic Verifier & Math OCR
@@ -548,11 +504,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val res = repository.verifyMathSolution(problem, steps, conceptId)
             _verificationResult.value = res
-            _statusBanner.value = if (res.isValid) {
-                "Symbolic Math Verification: ALL STEPS VALID. Deterministic proof committed."
-            } else {
-                "Symbolic Math Verification: Invalid step ${res.firstInvalidStepIndex} (${res.errorType}). Error isolated."
-            }
+            _statusBanner.value = UiCopy.formatMathVerification(res.isValid, res.firstInvalidStepIndex, res.errorType)
         }
     }
 
@@ -617,7 +569,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val res = repository.evaluateCurrentPlan(gain, accuracy, duration)
             if (res != null) {
-                _statusBanner.value = "Plan Evaluated: ${res.classification?.name} - ${res.diagnosisNote}"
+                _statusBanner.value = UiCopy.formatPlanClassification(res.classification)
             }
         }
     }
@@ -625,7 +577,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     fun replan(interventionType: String) {
         viewModelScope.launch {
             val p = repository.replanCurrent(interventionType)
-            _statusBanner.value = "Plan Revised: Swapped to $interventionType. Expected Accuracy: ${(p.predictions.expectedAccuracy * 100).toInt()}%"
+            _statusBanner.value = UiCopy.formatReplan(p.interventionType)
         }
     }
 
@@ -665,14 +617,28 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // ==========================================
-    // Offline Sync
+    // Sync (real transport, honest failures)
     // ==========================================
 
-    fun simulateOfflineSync() {
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+
+    fun triggerSyncNow() {
+        if (_isSyncing.value) return
         viewModelScope.launch {
-            val res = repository.simulateRemoteSyncBatch()
-            _syncResult.value = res
-            _statusBanner.value = res.summary
+            _isSyncing.value = true
+            try {
+                val result = repository.syncNow()
+                if (result.isSuccess) {
+                    val res = result.getOrThrow()
+                    _syncResult.value = res
+                    _statusBanner.value = UiCopy.formatSyncResult(res)
+                } else {
+                    _statusBanner.value = UiCopy.formatSyncError()
+                }
+            } finally {
+                _isSyncing.value = false
+            }
         }
     }
 
@@ -688,12 +654,127 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun purgeStudentData() {
         viewModelScope.launch {
-            val proof = repository.purgeStudentData(studentModel.value.studentId)
-            _statusBanner.value = "Student data purged. Proof: $proof"
+            repository.purgeStudentData(studentModel.value.studentId)
+            _statusBanner.value = UiCopy.formatPurgeSuccess()
         }
     }
 
     fun formatTime(timestampMs: Long): String {
         return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(timestampMs))
+    }
+
+    // ==========================================
+    // Progress analytics + gamification (ADDITIVE, derived)
+    // Snapshots are recomputed from the existing event log + student model;
+    // no new tables, no changes to existing flows.
+    // ==========================================
+
+    private val studyTools = StudyToolsRepository(getApplication<Application>().applicationContext)
+
+    val gamificationSnapshot: StateFlow<GamificationSnapshot> =
+        combine(eventsList, studentModel) { events, model ->
+            val mastered = model.academicStates.values.count { it.effectiveMastery >= 0.85 }
+            GamificationEngine.computeSnapshot(
+                events = events,
+                dailyTargetMinutes = model.profileCalibration.dailyTargetMinutes,
+                masteredConceptCount = mastered
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = GamificationEngine.emptySnapshot()
+        )
+
+    val analyticsSnapshot: StateFlow<AnalyticsSnapshot> =
+        combine(eventsList, studentModel) { events, model ->
+            LearningAnalyticsEngine.computeSnapshot(events, model)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AnalyticsSnapshot()
+        )
+
+    // ==========================================
+    // Study tools: bookmarks, notes, review (ADDITIVE)
+    // ==========================================
+
+    val bookmarks: StateFlow<List<Bookmark>> = studyTools.bookmarksFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    val flashcardProgress: StateFlow<Map<String, FlashcardReview>> = studyTools.reviewProgressFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
+
+    fun notesForConcept(conceptId: String): kotlinx.coroutines.flow.Flow<List<StudyNote>> =
+        studyTools.notesForConcept(conceptId)
+
+    fun toggleBookmark(kind: BookmarkKind, refId: String, conceptId: String, title: String) {
+        viewModelScope.launch {
+            val added = studyTools.toggleBookmark(kind, refId, conceptId, title)
+            _statusBanner.value = if (added) "Bookmarked: ${title.take(48)}" else "Bookmark removed."
+        }
+    }
+
+    fun isBookmarked(kind: BookmarkKind, refId: String): Boolean =
+        bookmarks.value.any { it.kind == kind && it.refId == refId }
+
+    fun saveStudyNote(
+        noteId: String? = null,
+        conceptId: String,
+        conceptName: String = "",
+        title: String,
+        body: String
+    ) {
+        viewModelScope.launch {
+            studyTools.saveNote(noteId, conceptId, conceptName, title, body)
+            _statusBanner.value = "Note saved."
+        }
+    }
+
+    fun deleteStudyNote(noteId: String) {
+        viewModelScope.launch {
+            studyTools.deleteNote(noteId)
+            _statusBanner.value = "Note deleted."
+        }
+    }
+
+    fun gradeFlashcard(cardId: String, conceptId: String, grade: ReviewGrade) {
+        viewModelScope.launch {
+            studyTools.gradeFlashcard(cardId, conceptId, grade)
+        }
+    }
+
+    /** Cards due for review right now (including never-reviewed). */
+    fun dueFlashcards(cards: List<Flashcard>): List<Flashcard> =
+        FlashcardReviewEngine.dueCards(cards, flashcardProgress.value)
+
+    /** Ordered review queue: most-overdue first, then fresh cards. */
+    fun reviewQueue(cards: List<Flashcard>): List<Flashcard> =
+        FlashcardReviewEngine.sessionOrder(cards, flashcardProgress.value)
+
+    // ==========================================
+    // Tutor chat helpers (ADDITIVE)
+    // ==========================================
+
+    /** Parent encouragement: lights the 💛 badge on the bubble (flag stored by the caller). */
+    fun sendParentEncouragement() {
+        ParentPrefs.setMessageWaiting(getApplication(), true)
+        _statusBanner.value = "Encouragement sent — it will glow on the student's bubble. 💛"
+    }
+
+    /** Quick-reply suggestion chips shown above the chat input per agent. */
+    fun agentSuggestions(agentId: String): List<String> = when (agentId) {
+        "danish" -> listOf("Explain factorisation simply", "Quiz me on quadratics", "Show common sign mistakes")
+        "zoya" -> listOf("Explain Newton's laws visually", "Quiz me on forces", "Give a worked example")
+        "ayesha" -> listOf("How do I write a 10-mark summary?", "Give me vocabulary drills", "Check my paragraph")
+        "bilal" -> listOf("Give me a logic puzzle", "Explain this pattern", "Speed drill please")
+        "exam_coach" -> listOf("Top Paper 1 pitfalls?", "How are method marks awarded?", "Make me a revision plan")
+        "career_guide" -> listOf("Best subjects for Computer Science?", "Engineering vs Medicine?", "Map my A-Level cluster")
+        else -> listOf("Explain simply", "Quiz me", "Give an example")
     }
 }

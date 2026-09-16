@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.presentation.components.NoorixTopBar
+import com.example.presentation.components.HudGlyphStrip
 import com.example.presentation.screens.*
 import com.example.ui.theme.*
 
@@ -45,6 +46,8 @@ fun MainScreen(viewModel: OLevelViewModel) {
     val onboarding by viewModel.onboardingState.collectAsState()
     val statusBanner by viewModel.statusBanner.collectAsState()
     val activePkg by viewModel.activePackage.collectAsState()
+    val hudGamification by viewModel.gamificationSnapshot.collectAsState()
+    val hudAnalytics by viewModel.analyticsSnapshot.collectAsState()
 
     // Reduced nav: Home, Tutors, Courses, Practice, Media, Settings (Audit)
     val navDestinations = listOf(
@@ -60,10 +63,17 @@ fun MainScreen(viewModel: OLevelViewModel) {
         containerColor = NearBlackBg,
                 topBar = {
             if (currentTab != AppNavigationTab.ONBOARDING) {
-                NoorixTopBar(
-                    onSystemHudClick = { viewModel.setTab(AppNavigationTab.AUDIT) }, 
-                    onProfileClick = { viewModel.setTab(AppNavigationTab.AUDIT) }
-                )
+                Column {
+                    NoorixTopBar(
+                        onSystemHudClick = { viewModel.setTab(AppNavigationTab.AUDIT) },
+                        onProfileClick = { viewModel.setTab(AppNavigationTab.AUDIT) }
+                    )
+                    // Ambient HUD glyph strip (§8): today bar + streak + subject dots.
+                    HudGlyphStrip(
+                        gamification = hudGamification,
+                        analytics = hudAnalytics
+                    )
+                }
             }
         },
                 bottomBar = {
@@ -128,6 +138,7 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 AppNavigationTab.PACKAGES -> PackagesScreen(viewModel)
                 AppNavigationTab.LEARNING_HUB -> LearningHubScreen(viewModel)
                 AppNavigationTab.AUDIT -> AuditScreen(viewModel, activity)
+                AppNavigationTab.PARENT -> ParentDashboardScreen(viewModel)
             }
 
             // High-Tech Cyber Notification Banner -> Calm Notification Banner
