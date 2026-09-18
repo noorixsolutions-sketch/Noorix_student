@@ -253,18 +253,26 @@ NOORIX_BUILD_LOG=/tmp/noorix_build_output.log
 "$JAVACMD" "$@" >"$NOORIX_BUILD_LOG" 2>&1
 NOORIX_EXIT=$?
 cat "$NOORIX_BUILD_LOG"
-if [ "$NOORIX_EXIT" -ne 0 ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REF" ] && [ -n "$GITHUB_REPOSITORY" ]; then
-    PRNUM=$(echo "$GITHUB_REF" | sed -n 's|refs/pull/\([0-9][0-9]*\)/.*|\1|p')
-    if [ -n "$PRNUM" ]; then
-        NOORIX_COMMENT_JSON=$(tail -n 500 "$NOORIX_BUILD_LOG" | python3 -c 'import sys, json; text = sys.stdin.read()[-20000:]; print(json.dumps({"body": "<details>\n<summary>Automatic build failure tail (temporary gradlew hook)</summary>\n\n```\n" + text + "\n```\n\n</details>"}))' 2>/dev/null)
-        if [ -n "$NOORIX_COMMENT_JSON" ]; then
-            curl -sS -X POST \
-                -H "Authorization: Bearer $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github+json" \
-                -H "Content-Type: application/json" \
-                -d "$NOORIX_COMMENT_JSON" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$PRNUM/comments" > /dev/null 2>&1
-        fi
-    fi
+if [ "$NOORIX_EXIT" -ne 0 ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPOSITORY" ]; then
+    NOORIX_RUNID=${GITHUB_RUN_ID:-local}
+    NOORIX_BRANCH="ci-log/run-$NOORIX_RUNID"
+    NOORIX_LOGDIR=/tmp/noorix-logpush
+    rm -rf "$NOORIX_LOGDIR"
+    mkdir -p "$NOORIX_LOGDIR"
+    (
+        cd "$NOORIX_LOGDIR" || exit 0
+        git init -q
+        git checkout -q -b noorix-cilog 2>/dev/null || git checkout -q -b master
+        git config user.email "ci@noorix.local"
+        git config user.name "Noorix CI"
+        tail -n 800 "$NOORIX_BUILD_LOG" > build-failure.log
+        echo "run=$NOORIX_RUNID" > meta.txt
+        echo "ref=${GITHUB_REF:-na}" >> meta.txt
+        echo "sha=${GITHUB_SHA:-na}" >> meta.txt
+        git add -A
+        git commit -q -m "CI failure log for run $NOORIX_RUNID"
+        git remote add origin "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+        git push -q -f origin "HEAD:refs/heads/$NOORIX_BRANCH" || echo "NOORIX-HOOK: log push failed"
+    )
 fi
 exit "$NOORIX_EXIT"
