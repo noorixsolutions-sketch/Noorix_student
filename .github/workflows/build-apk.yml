@@ -25,11 +25,13 @@ jobs:
         set -o pipefail
         ./gradlew assembleRelease --stacktrace 2>&1 | tee noorix-build.log
 
-    - name: Annotate failure (temporary diagnostic)
+    # Surfaces the compiler error lines as check-run annotations on
+    # failure (workflow commands need no write token), so build
+    # problems are visible from the PR page even before opening the
+    # raw run log.
+    - name: Annotate failure
       if: failure()
       run: |
-        # Workflow commands do not need a write token: each line below
-        # becomes a check-run annotation on this job.
         # First: Kotlin/KSP compiler errors ("e: ..." lines).
         grep -E '^(e:|w: \[ksp\]|error:)' noorix-build.log | head -n 18 | while IFS= read -r line || [ -n "$line" ]; do
           printf '::error file=gradlew,line=1,title=Noorix compile error::%s\n' "$line"
@@ -43,28 +45,6 @@ jobs:
         tail -n 8 noorix-build.log | while IFS= read -r line || [ -n "$line" ]; do
           printf '::error file=gradlew,line=3,title=Noorix CI log tail::%s\n' "$line"
         done
-
-    - name: Push failure log (temporary diagnostic)
-      if: failure()
-      env:
-        LOG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        set -e
-        LOG_BRANCH="ci-log/run-${GITHUB_RUN_ID}"
-        LOG_DIR="/tmp/noorix-logpush"
-        rm -rf "$LOG_DIR"
-        mkdir -p "$LOG_DIR"
-        git config --global user.email "ci@noorix.local"
-        git config --global user.name "Noorix CI"
-        git -C "$LOG_DIR" init -q
-        git -C "$LOG_DIR" checkout -q -b noorix-cilog
-        cp noorix-build.log "$LOG_DIR/build-failure.log"
-        echo "run=${GITHUB_RUN_ID}" > "$LOG_DIR/meta.txt"
-        echo "sha=${GITHUB_SHA}" >> "$LOG_DIR/meta.txt"
-        echo "ref=${GITHUB_REF}" >> "$LOG_DIR/meta.txt"
-        git -C "$LOG_DIR" add -A
-        git -C "$LOG_DIR" commit -qm "CI failure log for run ${GITHUB_RUN_ID}"
-        git -C "$LOG_DIR" push -q -f "https://x-access-token:${LOG_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${LOG_BRANCH}" || echo "NOORIX-HOOK: push of CI failure log failed (token lacks write)"
 
     - name: Upload Release APK
       if: success()
