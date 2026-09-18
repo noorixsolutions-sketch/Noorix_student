@@ -25,13 +25,19 @@ jobs:
         set -o pipefail
         ./gradlew assembleRelease --stacktrace 2>&1 | tee noorix-build.log
 
-    - name: Annotate failure tail (temporary diagnostic)
+    - name: Annotate failure (temporary diagnostic)
       if: failure()
       run: |
         # Workflow commands do not need a write token: each line below
         # becomes a check-run annotation on this job.
-        tail -n 40 noorix-build.log | while IFS= read -r line || [ -n "$line" ]; do
-          printf '::error file=gradlew,line=1,title=Noorix CI log tail::%s\n' "$line"
+        # First: everything from the FAILURE marker to the end (the
+        # "What went wrong" + "Caused by" sections), capped at 30 lines.
+        awk '/^FAILURE: Build failed/{f=1} f' noorix-build.log | head -n 30 | while IFS= read -r line || [ -n "$line" ]; do
+          printf '::error file=gradlew,line=1,title=Noorix CI error::%s\n' "$line"
+        done
+        # Second: the last 10 lines (stack trace context).
+        tail -n 10 noorix-build.log | while IFS= read -r line || [ -n "$line" ]; do
+          printf '::error file=gradlew,line=2,title=Noorix CI log tail::%s\n' "$line"
         done
 
     - name: Push failure log (temporary diagnostic)
