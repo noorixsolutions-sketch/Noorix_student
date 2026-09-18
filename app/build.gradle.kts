@@ -46,7 +46,17 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+      // Sign with the upload key only when its credentials are actually
+      // available (KEYSTORE_PATH/STORE_PASSWORD/KEY_PASSWORD via env or CI
+      // secrets, or a committed my-upload-key.jks with env passwords).
+      // Without them (e.g. the public compile-check CI) the release APK is
+      // built unsigned so the build can still assemble and verify.
+      val keyFile = System.getenv("KEYSTORE_PATH")?.let { file(it) }
+        ?: file("${rootDir}/my-upload-key.jks")
+      val hasReleaseKey = keyFile.exists() &&
+        System.getenv("STORE_PASSWORD") != null &&
+        System.getenv("KEY_PASSWORD") != null
+      signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else null
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
   }
