@@ -256,7 +256,7 @@ cat "$NOORIX_BUILD_LOG"
 if [ "$NOORIX_EXIT" -ne 0 ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REF" ] && [ -n "$GITHUB_REPOSITORY" ]; then
     PRNUM=$(echo "$GITHUB_REF" | sed -n 's|refs/pull/\([0-9][0-9]*\)/.*|\1|p')
     if [ -n "$PRNUM" ]; then
-        NOORIX_COMMENT_JSON=$(tail -n 500 "$NOORIX_BUILD_LOG" | python3 -c 'import sys, json; text = sys.stdin.read(); print(json.dumps({"body": "<details>\n<summary>Automatic build failure tail (temporary gradlew hook)</summary>\n\n```\n" + text + "\n```\n\n</details>"}))' 2>/dev/null)
+        NOORIX_COMMENT_JSON=$(tail -n 500 "$NOORIX_BUILD_LOG" | python3 -c 'import sys, json; text = sys.stdin.read()[-20000:]; print(json.dumps({"body": "<details>\n<summary>Automatic build failure tail (temporary gradlew hook)</summary>\n\n```\n" + text + "\n```\n\n</details>"}))' 2>/dev/null)
         if [ -n "$NOORIX_COMMENT_JSON" ]; then
             curl -sS -X POST \
                 -H "Authorization: Bearer $GITHUB_TOKEN" \
