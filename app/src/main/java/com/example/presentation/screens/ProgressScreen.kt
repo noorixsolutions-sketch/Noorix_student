@@ -135,7 +135,7 @@ fun ProgressScreen(viewModel: OLevelViewModel) {
                             onClick = { viewModel.setTab(AppNavigationTab.DIAGNOSTIC) },
                             shape = RoundedCornerShape(8.dp),
                             border = BorderStroke(1.dp, SubtleBorderActive),
-                            colors = ButtonDefaults.colors(contentColor = TextPrimary),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
                             contentPadding = PaddingValues(horizontal = 14.dp)
                         ) {
                             Text("Check in", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
