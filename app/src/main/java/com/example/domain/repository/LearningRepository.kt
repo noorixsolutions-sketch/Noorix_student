@@ -419,6 +419,26 @@ class LearningRepository(context: Context) {
     // Adaptive Diagnostic Session
     // ==========================================
 
+    /**
+     * Bank override for the adaptive diagnostic. Younger bands (Little Learner /
+     * Explorer) run their baseline check-in from [BuiltInCheckinBank] because the
+     * signed question packages cover O-Level subjects; secondary learners run from
+     * the active course package. The engine, session and student model are the same
+     * either way (docs/two-mode-experience.md §3).
+     */
+    private var diagnosticBankOverride: List<QuestionItem>? = null
+
+    fun setDiagnosticBankOverride(questions: List<QuestionItem>?) {
+        diagnosticBankOverride = questions
+    }
+
+    /** The question bank the current diagnostic session should draw from. */
+    fun currentDiagnosticBank(): List<QuestionItem> {
+        val override = diagnosticBankOverride
+        if (override != null && override.isNotEmpty()) return override
+        return _activePackage.value?.questions.orEmpty()
+    }
+
     fun startDiagnostic() {
         val profile = _studentModel.value.profileCalibration
         _diagnosticSession.value = AdaptiveDiagnosticEngine.initializeSession(profile)
@@ -458,7 +478,7 @@ class LearningRepository(context: Context) {
 
         recordEvent(EventType.DIAGNOSTIC_ITEM_SUBMITTED, payload)
 
-        val bank = _activePackage.value?.questions ?: emptyList()
+        val bank = currentDiagnosticBank()
         val nextAvailable = if (bank.isNotEmpty()) {
             AdaptiveDiagnosticEngine.getNextQuestion(updatedSession, bank)
         } else {

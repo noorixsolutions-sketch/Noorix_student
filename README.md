@@ -1,6 +1,17 @@
 # Noorix Learning
 
-Noorix Learning is an offline-first Android study app for Cambridge O-Level learning. It includes signed curriculum packages, adaptive practice, symbolic math verification, local/remote tutor routing, and a knowledge-graph-linked Learning Hub.
+Noorix Learning is an offline-first Android study app spanning KG → O-Level. It includes signed curriculum packages, adaptive practice, symbolic math verification, local/remote tutor routing, and a curriculum knowledge graph (9 stages, 165 subjects — generated from the `master` branch of `Cambridge_Curriculum_Library`).
+
+## Two-mode experience (see `docs/two-mode-experience.md`)
+
+The product is a **guided learning system with an optional program commitment**, not an AI teacher that asks the learner what they want:
+
+- **Explore** — the learner can ask about anything ("Explain photosynthesis.", "Help me with this question."). No enrollment, no diagnostic, no commitment; evidence is collected quietly from ordinary interaction.
+- **Guided Program** — the learner chooses to commit, and the system progressively takes responsibility: baseline → assessment → diagnosis → plan → teaching → practice → assessment → adaptation → progression.
+
+Age changes the interaction model, not the engine: **Little Learner** (4–7), **Explorer** (8–11) and **O-Level Learner** (12–16) get different language, assessment framing, pacing and fields (`AgeBandProfile` in `domain/onboarding/`). The baseline assessment is embedded in the first learning moment — a number game for a five-year-old, a mark-free check-in for a fifteen-year-old — never an entrance exam. Younger bands run their baseline from `BuiltInCheckinBank` (same adaptive engine, same student model); O-Level learners run the signed course-package question bank.
+
+The app opens conversationally ("Hi, I'm here to help you learn.") with exactly two paths — **Explore something** / **Build my learning plan**. After onboarding (persisted in `LearnerPrefs`, never replayed), Home is the learner's journey (*here's where we are, here's what we're working on, Continue*), alongside **Explore**, **Progress**, **Program** (the Pre-K → O-Level journey map from the knowledge graph) and **Tutors**. No student-facing surface exposes engine machinery (no θ, no "prior", no "calibration step") — see the copy guardrails in the doc.
 
 ## Learning Hub content
 

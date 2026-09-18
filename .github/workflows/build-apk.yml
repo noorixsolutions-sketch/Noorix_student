@@ -21,9 +21,33 @@ jobs:
         cache: gradle
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease
+      run: |
+        set -o pipefail
+        ./gradlew assembleRelease --stacktrace 2>&1 | tee noorix-build.log
+
+    # Surfaces the compiler error lines as check-run annotations on
+    # failure (workflow commands need no write token), so build
+    # problems are visible from the PR page even before opening the
+    # raw run log.
+    - name: Annotate failure
+      if: failure()
+      run: |
+        # First: Kotlin/KSP compiler errors ("e: ..." lines).
+        grep -E '^(e:|w: \[ksp\]|error:)' noorix-build.log | head -n 18 | while IFS= read -r line || [ -n "$line" ]; do
+          printf '::error file=gradlew,line=1,title=Noorix compile error::%s\n' "$line"
+        done
+        # Second: everything from the FAILURE marker onward
+        # ("What went wrong" + "Caused by"), capped at 18 lines.
+        awk '/^FAILURE: Build failed/{f=1} f' noorix-build.log | head -n 18 | while IFS= read -r line || [ -n "$line" ]; do
+          printf '::error file=gradlew,line=2,title=Noorix CI error::%s\n' "$line"
+        done
+        # Third: the last 8 lines (stack trace context).
+        tail -n 8 noorix-build.log | while IFS= read -r line || [ -n "$line" ]; do
+          printf '::error file=gradlew,line=3,title=Noorix CI log tail::%s\n' "$line"
+        done
 
     - name: Upload Release APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-release

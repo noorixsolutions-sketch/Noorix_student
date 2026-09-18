@@ -22,6 +22,9 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Noorix Learning"
+// No spaces: KSP's IntelliJ-platform layer crashes with
+// "ApplicationManager.getApplication() is null" when the root project
+// name contains whitespace.
+rootProject.name = "NoorixLearning"
 
 include(":app")

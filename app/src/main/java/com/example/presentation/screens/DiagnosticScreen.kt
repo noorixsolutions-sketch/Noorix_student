@@ -31,16 +31,19 @@ import com.example.R
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
 import com.example.presentation.components.NoorixSegmentedProgressBar
+import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
 
 @Composable
 fun DiagnosticScreen(viewModel: OLevelViewModel) {
     val session by viewModel.diagnosticSession.collectAsState()
-    val activePackage by viewModel.activePackage.collectAsState()
     val studentModel by viewModel.studentModel.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
 
-    val bankReady = activePackage != null
+    // Bank = active package for secondary learners, the built-in check-in bank
+    // for younger bands (docs/two-mode-experience.md §3).
+    val activePkg by viewModel.activePackage.collectAsState()
+    val bankReady = remember(activePkg) { viewModel.diagnosticBankReady() }
     val nextQuestion = remember(session, bankReady) {
         if (bankReady) viewModel.getNextDiagnosticQuestion() else null
     }
@@ -76,14 +79,14 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "ADAPTIVE CAMBRIDGE QUIZ • EXAM COACH",
+                                text = "CHECK-IN • EXAM COACH",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = CyberGold,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
                             Text(
-                                text = "Smart Diagnostic Check",
+                                text = "A few questions to see where you're strong",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold
@@ -92,8 +95,8 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
-                    
-                    // Profile Calibration Badge
+
+                    // Profile line — stage and target, never ability scores
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = NearBlackSurface,
@@ -106,12 +109,12 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Profile: ${studentModel.profileCalibration.studentGrade} (Age ${studentModel.profileCalibration.studentAge})",
+                                text = "Stage: ${studentModel.profileCalibration.studentGrade} (Age ${studentModel.profileCalibration.studentAge})",
                                 color = TextSecondary,
                                 fontSize = 11.sp
                             )
                             Text(
-                                text = "Prior θ: ${(session.priorTheta * 100).toInt()}% • Target ${studentModel.profileCalibration.targetGrade}",
+                                text = if (studentModel.profileCalibration.targetGrade.isNotBlank()) "Target ${studentModel.profileCalibration.targetGrade}" else "No marks here",
                                 color = TealAccent,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -121,25 +124,25 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Questions dynamically adjust based on your profile. In 4–6 questions, our engine isolates syllabus gaps and synthesizes your personalized adaptive plan.",
+                        text = "Questions adjust as you answer, so I can find the best place to work with you. There are no marks here — I'm figuring out where to start.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Ability & Progress Tracker
+                    // Progress tracker — plain language, no confidence/ability percentages
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Calibration Confidence", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                            Text("Where we are", style = MaterialTheme.typography.labelSmall, color = TextMuted)
                             Text(
-                                text = "${(session.confidence * 100).toInt()}% Calibrated (Ability: ${(session.estimatedAbility * 100).toInt()}%)",
+                                text = "Finding your starting point…",
                                 fontWeight = FontWeight.Bold,
-                                color = if (session.confidence >= 0.85) StepCorrect else TealAccent,
+                                color = if (session.itemsAnswered.size >= 5) StepCorrect else TealAccent,
                                 fontSize = 13.sp
                             )
                         }
@@ -189,13 +192,13 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "Preparing Question Bank…",
+                                text = "I'm preparing your questions…",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Loading verified Cambridge package from secure local store.",
+                                text = "One moment — I want them to fit you.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary
                             )
@@ -231,14 +234,14 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
 
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Diagnostic Complete! 🎉",
+                            text = "Nice work! 🎉",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = StepCorrect
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Your profile is calibrated and your continuous closed-loop study plan has been synthesized.",
+                            text = "Here's where we'll start. I'll keep adjusting as you learn.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary,
                             textAlign = TextAlign.Center
@@ -258,23 +261,16 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Calibrated Ability (θ):", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                    Text("${(session.estimatedAbility * 100).toInt()}% IRT (Prior: ${(session.priorTheta * 100).toInt()}%)", fontWeight = FontWeight.Bold, color = TealAccent)
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Questions Answered:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text("Questions answered:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                     Text("${session.itemsAnswered.size} items", fontWeight = FontWeight.Bold, color = TextPrimary)
                                 }
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Identified Gaps:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text("Where we'll build:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                     Text(
-                                        if (session.identifiedGaps.isEmpty()) "None (Direct Track)" else "${session.identifiedGaps.size} concept(s)",
+                                        if (session.identifiedGaps.isEmpty()) "Straight into new material" else "${session.identifiedGaps.size} small idea${if (session.identifiedGaps.size == 1) "" else "s"}",
                                         fontWeight = FontWeight.Bold,
                                         color = if (session.identifiedGaps.isEmpty()) StepCorrect else CyberGold
                                     )
@@ -283,11 +279,12 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Recommended Strategy:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text("How we'll start:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                     Text(
-                                        activePlan?.interventionType ?: "WORKED_EXAMPLES",
+                                        UiCopy.formatReplan(activePlan?.interventionType),
                                         fontWeight = FontWeight.Bold,
-                                        color = StepCorrect
+                                        color = StepCorrect,
+                                        maxLines = 2
                                     )
                                 }
                             }
@@ -304,7 +301,7 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                             ) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text(
-                                        text = "SYNTHESIZED STUDY STAGES",
+                                        text = "THE NEXT FEW STEPS",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = StepCorrect,
                                         fontWeight = FontWeight.Bold,
@@ -338,16 +335,16 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Retake Quiz", fontWeight = FontWeight.Bold)
+                                Text("Retake check-in", fontWeight = FontWeight.Bold)
                             }
 
                             OutlinedButton(
-                                onClick = { viewModel.setTab(AppNavigationTab.LEARNING_HUB) },
+                                onClick = { viewModel.setTab(AppNavigationTab.PROGRAM) },
                                 shape = RoundedCornerShape(10.dp),
                                 border = BorderStroke(1.dp, SubtleBorderActive),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Study Plan", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                                Text("See my plan", color = TextPrimary, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -383,7 +380,7 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                             }
 
                             Text(
-                                text = "Difficulty: ${(nextQuestion.difficulty * 100).toInt()}%",
+                                text = "No marks here",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextMuted
                             )
