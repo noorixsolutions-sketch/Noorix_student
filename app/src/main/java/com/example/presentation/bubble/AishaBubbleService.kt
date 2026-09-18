@@ -29,7 +29,7 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.ViewTreeLifecycleOwners
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import com.example.R
 import com.example.domain.bubble.BubblePresentation
 import com.example.domain.bubble.BubbleStateMapper
@@ -468,7 +468,7 @@ class AishaBubbleService : Service(), LifecycleOwner {
 
     private fun composeView(): ComposeView =
         ComposeView(this).also { view ->
-            ViewTreeLifecycleOwners.set(view, this)
+            view.setViewTreeLifecycleOwner(this)
             view.setViewCompositionStrategy(
                 ViewCompositionStrategy.DisposeOnDetachedFromWindow
             )

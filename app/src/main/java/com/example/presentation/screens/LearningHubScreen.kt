@@ -555,7 +555,16 @@ private fun HubVideoCard(
                     modifier = Modifier.fillMaxSize(),
                     factory = { context ->
                         WebView(context).apply {
-                            webViewClient = WebViewClient()
+                            webViewClient = object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                                    val url = request?.url?.toString()
+                                    return if (url != null && url.startsWith("https://www.youtube.com/")) {
+                                        false
+                                    } else {
+                                        true
+                                    }
+                                }
+                            }
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
                             settings.mediaPlaybackRequiresUserGesture = true

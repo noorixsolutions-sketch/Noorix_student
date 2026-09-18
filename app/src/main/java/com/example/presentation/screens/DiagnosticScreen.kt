@@ -92,8 +92,8 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
-
-                    // Multi-Factor Profile Calibration Badge
+                    
+                    // Profile Calibration Badge
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = NearBlackSurface,
@@ -121,7 +121,7 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Questions dynamically adjust based on your multi-factor profile. In 4–6 questions, our engine isolates syllabus gaps and synthesizes your personalized adaptive plan.",
+                        text = "Questions dynamically adjust based on your profile. In 4–6 questions, our engine isolates syllabus gaps and synthesizes your personalized adaptive plan.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )

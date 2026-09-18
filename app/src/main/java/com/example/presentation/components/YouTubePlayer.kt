@@ -17,7 +17,17 @@ fun YouTubePlayer(videoId: String, modifier: Modifier = Modifier) {
                 settings.javaScriptEnabled = true
                 settings.loadWithOverviewMode = true
                 settings.useWideViewPort = true
-                webViewClient = WebViewClient()
+                settings.mediaPlaybackRequiresUserGesture = false
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                        val url = request?.url?.toString()
+                        return if (url != null && url.startsWith("https://www.youtube.com/")) {
+                            false // allow
+                        } else {
+                            true // block everything else
+                        }
+                    }
+                }
                 webChromeClient = WebChromeClient()
             }
         },

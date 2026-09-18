@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.ViewTreeLifecycleOwners
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import com.example.core.model.GamificationSnapshot
 import com.example.domain.gamification.GamificationEngine
 import com.example.domain.overlay.OverlayStatsProvider
@@ -53,7 +53,7 @@ class TutorKeyboardService : InputMethodService(), LifecycleOwner {
 
     override fun onCreateInputView(): View {
         return ComposeView(this).also { view ->
-            ViewTreeLifecycleOwners.set(view, this)
+            view.setViewTreeLifecycleOwner(this)
             view.setViewCompositionStrategy(
                 ViewCompositionStrategy.DisposeOnDetachedFromWindow
             )

@@ -36,7 +36,8 @@ class NoorixSyncClient(
      */
     fun uploadBatch(
         studentId: String,
-        items: List<OfflineSyncQueueEntity>
+        items: List<OfflineSyncQueueEntity>,
+        authToken: String? = null
     ): Result<UploadResult> = runCatching {
         val payload = JSONObject().apply {
             put("studentId", studentId)
@@ -52,10 +53,19 @@ class NoorixSyncClient(
                 }
             })
         }
-        val request = Request.Builder()
+        val payloadStr = payload.toString()
+        val signature = computeHmacSha256(payloadStr, studentId) // Simple integrity check
+
+        val requestBuilder = Request.Builder()
             .url(baseUrl.trim().trimEnd('/') + "/v1/sync/batch")
-            .post(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
-            .build()
+            .post(payloadStr.toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .addHeader("X-Sync-Signature", signature)
+            
+        if (!authToken.isNullOrBlank()) {
+            requestBuilder.addHeader("Authorization", "Bearer $authToken")
+        }
+            
+        val request = requestBuilder.build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 throw IOException("sync server answered HTTP ${response.code}")
@@ -68,6 +78,18 @@ class NoorixSyncClient(
                 acceptedEventIds = accepted,
                 serverHlc = body.optString("serverHlc").takeIf { it.isNotEmpty() }
             )
+        }
+    }
+    
+    private fun computeHmacSha256(data: String, key: String): String {
+        try {
+            val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+            val secretKey = javax.crypto.spec.SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA256")
+            mac.init(secretKey)
+            val bytes = mac.doFinal(data.toByteArray(Charsets.UTF_8))
+            return bytes.joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            return ""
         }
     }
 

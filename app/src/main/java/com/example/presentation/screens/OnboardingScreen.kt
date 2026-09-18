@@ -53,8 +53,6 @@ fun OnboardingScreen(viewModel: OLevelViewModel) {
                     viewModel.startOnboardingPhase(OnboardingPhase.PROFILE_SETUP)
                 }
                 OnboardingPhase.PROFILE_SETUP -> ProfileSetupPhase(viewModel)
-                OnboardingPhase.TEST_A_PSYCHOMETRIC -> TestAPhase(viewModel)
-                OnboardingPhase.TEST_B_COGNITIVE -> TestBPhase(viewModel)
                 OnboardingPhase.TEST_C_CURRICULUM -> TestCPhase(viewModel)
                 OnboardingPhase.COMPLETE -> CompletePhase(viewModel) {
                     viewModel.startOnboardingPhase(OnboardingPhase.COMPLETE)
@@ -109,8 +107,7 @@ fun WelcomePhase(onStart: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OnboardingBenefitItem("1. Profile Calibration", "Calibrated baseline by class/grade, age & target", TealAccent)
-                OnboardingBenefitItem("2. Psychometric & Cognitive", "Map working memory, persistence & reasoning priors", StepCorrect)
-                OnboardingBenefitItem("3. Closed-Loop Diagnostic", "Synthesize adaptive plan & continuously recalibrate", CyberGold)
+                OnboardingBenefitItem("2. Closed-Loop Diagnostic", "Synthesize adaptive plan & continuously recalibrate", CyberGold)
             }
         }
 
@@ -149,12 +146,12 @@ fun ProfileSetupPhase(viewModel: OLevelViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("CALIBRATION STEP 1: CANDIDATE PROFILE", color = TealAccent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            Text("Step 1 of 4", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
+            Text("Step 1 of 2", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
         LinearProgressIndicator(
-            progress = { 0.25f },
+            progress = { 0.5f },
             modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
             color = TealAccent,
             trackColor = NearBlackSurface
@@ -309,13 +306,13 @@ fun ProfileSetupPhase(viewModel: OLevelViewModel) {
                     targetExamSession = selectedSession,
                     dailyMinutes = selectedMinutes
                 )
-                viewModel.startOnboardingPhase(OnboardingPhase.TEST_A_PSYCHOMETRIC)
+                viewModel.startOnboardingPhase(OnboardingPhase.TEST_C_CURRICULUM)
             },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
             shape = RoundedCornerShape(10.dp)
         ) {
-            Text("Proceed to Psychometric Baseline", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(vertical = 6.dp))
+            Text("Proceed to Diagnostic Assessment", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(vertical = 6.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
         }
@@ -330,144 +327,6 @@ private fun OnboardingBenefitItem(title: String, desc: String, accentColor: Colo
         Column {
             Text(title, style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
             Text(desc, style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 11.sp)
-        }
-    }
-}
-
-@Composable
-fun TestAPhase(viewModel: OLevelViewModel) {
-    val state by viewModel.onboardingState.collectAsState()
-    val question = OnboardingData.testA[state.testAIndex]
-
-    Column(
-        modifier = Modifier.fillMaxWidth(0.92f)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("STEP 2 OF 4: PSYCHOMETRIC BASELINE", color = TealAccent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            Text("${state.testAIndex + 1} / ${OnboardingData.testA.size}", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-        LinearProgressIndicator(
-            progress = { 0.25f + 0.25f * ((state.testAIndex + 1).toFloat() / OnboardingData.testA.size) },
-            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-            color = TealAccent,
-            trackColor = NearBlackSurface
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-        Text(
-            text = question.text,
-            style = MaterialTheme.typography.headlineSmall,
-            color = TextPrimary,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 30.sp
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        val likertOptions = listOf(
-            1 to "1 • Strongly Disagree",
-            2 to "2 • Disagree",
-            3 to "3 • Neutral",
-            4 to "4 • Agree",
-            5 to "5 • Strongly Agree"
-        )
-
-        likertOptions.forEach { (score, label) ->
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = NearBlackSurface,
-                border = BorderStroke(1.dp, SubtleBorder),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable { viewModel.submitTestAAnswer(score) }
-            ) {
-                Text(
-                    text = label,
-                    color = TextPrimary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(14.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun TestBPhase(viewModel: OLevelViewModel) {
-    val state by viewModel.onboardingState.collectAsState()
-    val question = OnboardingData.testB[state.testBIndex]
-
-    Column(
-        modifier = Modifier.fillMaxWidth(0.92f)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("STEP 3 OF 4: COGNITIVE REASONING", color = StepCorrect, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            Text("${state.testBIndex + 1} / ${OnboardingData.testB.size}", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-        LinearProgressIndicator(
-            progress = { 0.50f + 0.25f * ((state.testBIndex + 1).toFloat() / OnboardingData.testB.size) },
-            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-            color = StepCorrect,
-            trackColor = NearBlackSurface
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-        Text(
-            text = question.text,
-            style = MaterialTheme.typography.headlineSmall,
-            color = TextPrimary,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 30.sp
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        question.options.forEachIndexed { index, option ->
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = NearBlackSurface,
-                border = BorderStroke(1.dp, SubtleBorder),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable { viewModel.submitTestBAnswer(index) }
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = NearBlackElevated,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(('A' + index).toString(), color = StepCorrect, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = option,
-                        color = TextPrimary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
         }
     }
 }
@@ -542,7 +401,7 @@ fun CompletePhase(viewModel: OLevelViewModel, onFinish: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Your multi-factor profile baseline has been benchmarked and synthesized into an adaptive study plan.",
+            text = "Your profile has been benchmarked and synthesized into an adaptive study plan.",
             style = MaterialTheme.typography.bodyMedium,
             color = TextSecondary,
             textAlign = TextAlign.Center
@@ -550,7 +409,7 @@ fun CompletePhase(viewModel: OLevelViewModel, onFinish: () -> Unit) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Multi-Factor Profile Summary Card
+        // Profile Summary Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
@@ -559,7 +418,7 @@ fun CompletePhase(viewModel: OLevelViewModel, onFinish: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "MULTI-FACTOR BASELINE CALIBRATION",
+                    text = "BASELINE CALIBRATION",
                     style = MaterialTheme.typography.labelSmall,
                     color = TealAccent,
                     fontWeight = FontWeight.Bold,

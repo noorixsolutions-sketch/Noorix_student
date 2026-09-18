@@ -21,12 +21,7 @@ class GreetingScreenshotTest {
 
   @get:Rule val composeTestRule = createComposeRule()
 
-  // STALE GOLDEN (ignored): greeting.png was recorded against the old Cyber-Cyan
-  // theme, but the app moved to Calm Teal (e7d6ab8) without re-recording, so the
-  // pixel comparison fails in every environment. Re-enable after regenerating:
-  // run with -Droborazzi.record=true on a stable host, verify the new golden
-  // by eye, then commit it and drop this @Ignore.
-  @Ignore("stale golden predates the Calm Teal rebrand; see comment above")
+  // STALE GOLDEN (fixed): Re-enabled
   @Test
   fun greeting_screenshot() {
     composeTestRule.setContent {

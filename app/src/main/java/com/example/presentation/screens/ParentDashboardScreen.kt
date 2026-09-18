@@ -124,6 +124,10 @@ private fun PinGate(onUnlock: () -> Unit) {
     val context = LocalContext.current
     var pin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    
+    val hasPin = remember { ParentPrefs.hasPinSet(context) }
+    var confirmPin by remember { mutableStateOf("") }
+    var isSettingPin by remember { mutableStateOf(!hasPin) }
 
     Box(
         modifier = Modifier
@@ -150,15 +154,16 @@ private fun PinGate(onUnlock: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(14.dp))
                 Text(
-                    text = "Parents only",
+                    text = if (isSettingPin) "Set Parent PIN" else "Parents only",
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Enter your 4-digit parent PIN to view the weekly report.",
+                    text = if (isSettingPin) "Create a 4-digit PIN to secure the dashboard." else "Enter your 4-digit parent PIN to view the weekly report.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = TextSecondary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
@@ -168,7 +173,7 @@ private fun PinGate(onUnlock: () -> Unit) {
                         error = null
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Parent PIN", color = TextMuted) },
+                    label = { Text(if (isSettingPin) "New PIN" else "Parent PIN", color = TextMuted) },
                     placeholder = { Text("••••", color = TextMuted) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -184,6 +189,34 @@ private fun PinGate(onUnlock: () -> Unit) {
                     ),
                     shape = RoundedCornerShape(10.dp)
                 )
+                
+                if (isSettingPin) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = confirmPin,
+                        onValueChange = {
+                            confirmPin = it.filter { c -> c.isDigit() }.take(6)
+                            error = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Confirm PIN", color = TextMuted) },
+                        placeholder = { Text("••••", color = TextMuted) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        isError = error != null,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = NearBlackBg,
+                            unfocusedContainerColor = NearBlackBg,
+                            focusedBorderColor = CyberGold,
+                            unfocusedBorderColor = SubtleBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
+                
                 if (error != null) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(text = error!!, color = StepIssue, fontSize = 12.sp)
@@ -191,26 +224,31 @@ private fun PinGate(onUnlock: () -> Unit) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = {
-                        if (ParentPrefs.checkPin(context, pin)) {
-                            onUnlock()
+                        if (isSettingPin) {
+                            if (pin.length < 4) {
+                                error = "PIN must be at least 4 digits."
+                            } else if (pin != confirmPin) {
+                                error = "PINs do not match."
+                            } else {
+                                ParentPrefs.setPin(context, pin)
+                                onUnlock()
+                            }
                         } else {
-                            error = "Incorrect PIN — try again."
-                            pin = ""
+                            if (ParentPrefs.checkPin(context, pin)) {
+                                onUnlock()
+                            } else {
+                                error = "Incorrect PIN — try again."
+                                pin = ""
+                            }
                         }
                     },
-                    enabled = pin.length >= 4,
+                    enabled = pin.length >= 4 && (!isSettingPin || confirmPin.length >= 4),
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = CyberGold, contentColor = NearBlackBg),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Unlock Report", fontWeight = FontWeight.Bold)
+                    Text(if (isSettingPin) "Set PIN & Unlock" else "Unlock Report", fontWeight = FontWeight.Bold)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Default PIN is ${ParentPrefs.DEFAULT_PIN} — change it after unlocking.",
-                    color = TextMuted,
-                    fontSize = 10.sp
-                )
             }
         }
     }
@@ -442,6 +480,9 @@ private fun ParentContent(viewModel: OLevelViewModel, onLock: () -> Unit) {
                 ) {
                     TextButton(onClick = { showChangePin = true }) {
                         Text("Change PIN", color = TextSecondary, fontSize = 12.sp)
+                    }
+                    TextButton(onClick = { viewModel.setTab(AppNavigationTab.AUDIT) }) {
+                        Text("System Settings", color = TextSecondary, fontSize = 12.sp)
                     }
                     TextButton(onClick = onLock) {
                         Text("Lock report", color = TextSecondary, fontSize = 12.sp)

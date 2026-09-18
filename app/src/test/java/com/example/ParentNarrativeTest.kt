@@ -49,7 +49,7 @@ class ParentNarrativeTest {
 
     @Test
     fun `quiet week produces a gentle nudge`() {
-        val narrative = ParentNarrativeBuilder.build(stats().copy(weekMinutes = 0, weekEvents = 0))
+        val narrative = ParentNarrativeBuilder.build(stats().copy(weekMinutes = 0, weekEvents = 0, previousWeekMinutes = 0))
         assertTrue(narrative.note.contains("hasn't logged study time"))
         assertTrue(narrative.attention.any { it.contains("10-minute") })
         assertEquals("Next focus: a 10-minute daily habit to start the streak.", narrative.nextFocus)

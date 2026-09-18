@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -49,14 +50,11 @@ fun MainScreen(viewModel: OLevelViewModel) {
     val hudGamification by viewModel.gamificationSnapshot.collectAsState()
     val hudAnalytics by viewModel.analyticsSnapshot.collectAsState()
 
-    // Reduced nav: Home, Tutors, Courses, Practice, Media, Settings (Audit)
+    // Reduced nav: strictly student-facing. One primary learning journey.
     val navDestinations = listOf(
         NoorixNavDestination(AppNavigationTab.DASHBOARD, "Home", Icons.Default.Home),
-        NoorixNavDestination(AppNavigationTab.AI_AGENTS, "Tutors", Icons.Default.Chat),
-        NoorixNavDestination(AppNavigationTab.PACKAGES, "Courses", Icons.Default.LibraryBooks),
         NoorixNavDestination(AppNavigationTab.LEARNING_HUB, "Learn", Icons.Default.School),
-        NoorixNavDestination(AppNavigationTab.DIAGNOSTIC, "Practice", Icons.Default.Psychology),
-        NoorixNavDestination(AppNavigationTab.SYMBOLIC_TUTOR, "Math Lab", Icons.Default.Calculate)
+        NoorixNavDestination(AppNavigationTab.AI_AGENTS, "Tutors", Icons.AutoMirrored.Filled.Chat)
     )
 
     Scaffold(
@@ -65,8 +63,8 @@ fun MainScreen(viewModel: OLevelViewModel) {
             if (currentTab != AppNavigationTab.ONBOARDING) {
                 Column {
                     NoorixTopBar(
-                        onSystemHudClick = { viewModel.setTab(AppNavigationTab.AUDIT) },
-                        onProfileClick = { viewModel.setTab(AppNavigationTab.AUDIT) }
+                        onSystemHudClick = { viewModel.setTab(AppNavigationTab.PARENT) },
+                        onProfileClick = { viewModel.setTab(AppNavigationTab.PARENT) }
                     )
                     // Ambient HUD glyph strip (§8): today bar + streak + subject dots.
                     HudGlyphStrip(

@@ -199,7 +199,7 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
             DailyGoalCard(snapshot = gamification, analytics = analytics)
         }
 
-        // 2. Continuous Closed-Loop Calibration Engine HUD Card
+        // 2. Up Next / Primary Learning Journey
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -214,97 +214,41 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(StepCorrect))
+                            Icon(Icons.Default.PlayCircleOutline, contentDescription = null, tint = StepCorrect, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "CONTINUOUS CALIBRATION ENGINE",
+                                text = "UP NEXT",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = StepCorrect,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
                         }
-
-                        Text(
-                            text = if (showRecalibrationHistory) "Hide Logs" else "View History (${studentModel.recalibrationHistory.size})",
-                            color = TealAccent,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable { showRecalibrationHistory = !showRecalibrationHistory }
-                        )
                     }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    val latestRecal = studentModel.recalibrationHistory.lastOrNull()
-                    val attributionText = when (latestRecal?.attribution) {
-                        RecalibrationAttribution.CONTENT_DEFICIENCY -> "Strategy Adapted: Content Scaffolding (Plan Error)"
-                        RecalibrationAttribution.DIAGNOSTIC_STATE_MISESTIMATION -> "Prerequisite Repair Scheduled (Assessment Error)"
-                        RecalibrationAttribution.ACCELERATED_MASTERY -> "Accelerated: Progression Boosted"
-                        RecalibrationAttribution.PACING_FATIGUE -> "Pacing Notice: Micro-learning Active"
-                        else -> "Benchmark: Learning Tracking Diagnostic Baseline"
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = NearBlackElevated,
-                        border = BorderStroke(1.dp, SubtleBorder),
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Master $targetConceptName",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Continue where you left off. Review the latest concepts and tackle a few practice questions to build your streak.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        lineHeight = 18.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.setTab(AppNavigationTab.LEARNING_HUB) },
+                        colors = ButtonDefaults.buttonColors(containerColor = StepCorrect, contentColor = NearBlackBg),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Closed-Loop Status:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                Text("ACTIVE & SYNCHRONIZED", color = StepCorrect, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Baseline Velocity Prior:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                Text("+${String.format("%.2f", studentModel.profileCalibration.baselineVelocity)} mastery/session", color = TealAccent, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Active Intervention:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                Text("${activePlan?.interventionType ?: "WORKED_EXAMPLES"}", color = CyberGold, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                            }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = attributionText,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextPrimary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-
-                    AnimatedVisibility(visible = showRecalibrationHistory) {
-                        Column(modifier = Modifier.padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (studentModel.recalibrationHistory.isEmpty()) {
-                                Text(
-                                    text = "No divergence detected yet. Closed-loop calibration benchmark is running continuously.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextMuted,
-                                    fontSize = 11.sp
-                                )
-                            } else {
-                                studentModel.recalibrationHistory.takeLast(3).reversed().forEach { item ->
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = NearBlackBg,
-                                        border = BorderStroke(1.dp, SubtleBorder),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Column(modifier = Modifier.padding(8.dp)) {
-                                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                                Text(item.triggerSource, color = TealAccent, fontWeight = FontWeight.Bold, fontSize = 10.sp)
-                                                Text(item.attribution.name, color = if (item.attribution == RecalibrationAttribution.ON_TRACK) StepCorrect else CyberGold, fontWeight = FontWeight.Bold, fontSize = 9.sp)
-                                            }
-                                            Text(item.diagnosisNote, color = TextSecondary, fontSize = 10.sp, lineHeight = 14.sp)
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        Text("Resume Learning", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             }
@@ -412,121 +356,12 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 4. Study Hub Grid Navigation
-        item {
-            Text(
-                text = "STUDY MODULES",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = TextSecondary,
-                letterSpacing = 1.2.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-
-            val hubItems = listOf(
-                HubCardItem("Math Lab", "Step verifier & OCR scanner", Icons.Default.Calculate, TealAccent, AppNavigationTab.SYMBOLIC_TUTOR),
-                HubCardItem("Adaptive Practice", "IRT Diagnostic check", Icons.Default.Psychology, CyberGold, AppNavigationTab.DIAGNOSTIC),
-                HubCardItem("Knowledge Hub", "Explainers, flashcards, quiz", Icons.Default.School, StepCorrect, AppNavigationTab.LEARNING_HUB),
-                HubCardItem("Revision Bites", "Audio briefings & transfer", Icons.Default.Headphones, CyanAccent, AppNavigationTab.MEDIA_TRANSFER),
-                HubCardItem("Memory Retention", "Decay curve & time travel", Icons.Default.Timeline, Color(0xFFA78BFA), AppNavigationTab.DECAY_SYNC),
-                HubCardItem("Curriculum Library", "Signed Cambridge packages", Icons.Default.LibraryBooks, Color(0xFF38BDF8), AppNavigationTab.PACKAGES)
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                for (chunk in hubItems.chunked(2)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        for (item in chunk) {
-                            Card(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { viewModel.setTab(item.tab) },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                                border = BorderStroke(1.dp, SubtleBorder)
-                            ) {
-                                Column(modifier = Modifier.padding(14.dp)) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = item.accentColor.copy(alpha = 0.15f),
-                                        modifier = Modifier.size(34.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                item.icon,
-                                                contentDescription = null,
-                                                tint = item.accentColor,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height(10.dp))
-                                    Text(
-                                        text = item.title,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = TextPrimary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = item.subtitle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary,
-                                        fontSize = 11.sp,
-                                        maxLines = 1
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 5. Learning Telemetry Overview
-        item {
-            Text(
-                text = "LEARNING TELEMETRY",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = TextSecondary,
-                letterSpacing = 1.2.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                StatCard(
-                    title = "Events Logged",
-                    value = "${events.size}",
-                    subtitle = "Immutable store",
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    title = "Concepts",
-                    value = "${studentModel.academicStates.size}",
-                    subtitle = "Calibrated",
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    title = "Misconceptions",
-                    value = "${studentModel.activeMisconceptions.size}",
-                    subtitle = if (studentModel.activeMisconceptions.isEmpty()) "Clear" else "To resolve",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        // 6. Weekly Activity Chart (ADDITIVE)
+        // 3. Weekly Activity Chart (ADDITIVE)
         item {
             WeeklyActivityCard(snapshot = analytics)
         }
 
-        // 7. Per-Concept Mastery Breakdown (ADDITIVE)
+        // 4. Per-Concept Mastery Breakdown (ADDITIVE)
         item {
             ConceptMasteryCard(
                 rows = analytics.conceptRows,

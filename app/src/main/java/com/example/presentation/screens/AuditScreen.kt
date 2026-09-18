@@ -291,8 +291,12 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                             ) {
                                 openRouterModels.forEach { model ->
                                     DropdownMenuItem(
-                                        text = { Text(model.displayName, fontSize = 12.sp) },
-                                        supportingText = { Text(model.id, fontSize = 10.sp, color = TextSecondary) },
+                                        text = { 
+                                            Column {
+                                                Text(model.displayName, fontSize = 12.sp)
+                                                Text(model.id, fontSize = 10.sp, color = TextSecondary)
+                                            }
+                                        },
                                         onClick = {
                                             viewModel.selectOpenRouterModel(model.id)
                                             expandedModelDropdown = false
@@ -561,7 +565,63 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
         }
 
         // ============================================================
-        // 4. Sovereign Data Management (Right to be Forgotten)
+        // 4. Advanced Engineering Modules
+        // ============================================================
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "ADVANCED ENGINEERING MODULES",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealAccent,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    
+                    OutlinedButton(
+                        onClick = { viewModel.setTab(AppNavigationTab.PACKAGES) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, SubtleBorderActive)
+                    ) {
+                        Icon(Icons.Default.LibraryBooks, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Curriculum Library (Packages)", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { viewModel.setTab(AppNavigationTab.MEDIA_TRANSFER) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, SubtleBorderActive)
+                    ) {
+                        Icon(Icons.Default.Headphones, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Revision Bites (Media Transfer)", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { viewModel.setTab(AppNavigationTab.DECAY_SYNC) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, SubtleBorderActive)
+                    ) {
+                        Icon(Icons.Default.Timeline, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Memory Retention (Decay Sync)", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // 5. Sovereign Data Management (Right to be Forgotten)
         // ============================================================
         item {
             Card(

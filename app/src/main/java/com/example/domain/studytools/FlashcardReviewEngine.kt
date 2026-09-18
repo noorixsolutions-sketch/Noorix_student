@@ -82,7 +82,7 @@ object FlashcardReviewEngine {
         }
         val overdueFirst = due.sortedWith(
             compareBy(
-                { progressByCardId[it.id]?.nextDueMs ?: Long.MIN_VALUE },
+                { progressByCardId[it.id]?.nextDueMs ?: Long.MAX_VALUE },
                 { it.id }
             )
         )

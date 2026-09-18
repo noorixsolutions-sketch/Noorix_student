@@ -136,7 +136,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     init {
         // Restore persisted cloud config, then load the free-models catalogue
         // (the /models endpoint is public, so this works with no key).
-        val (savedKey, savedModel) = OpenRouterPrefs.load(application.applicationContext)
+        val (savedKey, savedModel) = OpenRouterPrefs.load(getApplication())
         _openRouterApiKey.value = savedKey
         _selectedOpenRouterModel.value = savedModel.ifBlank { null }
         agentManager.setOpenRouterConfig(savedKey, savedModel.ifBlank { null })
@@ -145,7 +145,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun updateOpenRouterApiKey(key: String) {
         _openRouterApiKey.value = key
-        OpenRouterPrefs.saveApiKey(application.applicationContext, key)
+        OpenRouterPrefs.saveApiKey(getApplication(), key)
         agentManager.setOpenRouterConfig(key, _selectedOpenRouterModel.value)
     }
 
@@ -186,7 +186,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun selectOpenRouterModel(modelId: String) {
         _selectedOpenRouterModel.value = modelId
-        OpenRouterPrefs.saveModelId(application.applicationContext, modelId)
+        OpenRouterPrefs.saveModelId(getApplication(), modelId)
         agentManager.setOpenRouterConfig(_openRouterApiKey.value, modelId)
     }
 
@@ -240,7 +240,19 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                         _statusBanner.value = "Failed to parse the Google ID token."
                         return@launch
                     }
-                val rawEmail = if (googleCredential.id.contains("@")) googleCredential.id else ""
+                
+                var rawEmail = ""
+                try {
+                    val parts = googleCredential.idToken.split(".")
+                    if (parts.size == 3) {
+                        val payload = String(android.util.Base64.decode(parts[1], android.util.Base64.URL_SAFE))
+                        val json = org.json.JSONObject(payload)
+                        rawEmail = json.optString("email", "")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
                 val account = UserProfile(
                     userId = googleCredential.id,
                     displayName = googleCredential.displayName ?: (if (rawEmail.isNotEmpty()) rawEmail.substringBefore("@") else "Cambridge Candidate"),
@@ -284,6 +296,22 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
             targetExamSession = targetExamSession,
             dailyTargetMinutes = dailyMinutes
         )
+
+        viewModelScope.launch {
+            val payload = org.json.JSONObject().apply {
+                put("studentName", name)
+                put("candidateGrade", grade)
+                put("candidateAge", age)
+                put("targetGrade", targetGrade)
+                put("targetExamSession", targetExamSession)
+                put("dailyTargetMinutes", dailyMinutes)
+            }.toString()
+
+            repository.recordEvent(
+                com.example.core.model.EventType.STUDENT_ONBOARDED,
+                payload
+            )
+        }
     }
 
     fun startOnboardingPhase(phase: OnboardingPhase) {
@@ -293,79 +321,6 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         }
         if (phase == OnboardingPhase.COMPLETE) {
             setTab(AppNavigationTab.DASHBOARD)
-        }
-    }
-
-    fun submitTestAAnswer(value: Int) {
-        val state = _onboardingState.value
-        val newResponses = state.testAResponses + value
-        if (state.testAIndex + 1 < OnboardingData.testA.size) {
-            _onboardingState.value = state.copy(testAIndex = state.testAIndex + 1, testAResponses = newResponses)
-        } else {
-            val signals = mapOf(
-                "persistence" to (newResponses[0] / 5f),
-                "confidence" to (newResponses[1] / 5f),
-                "frustration_response" to (newResponses[2] / 5f),
-                "metacognition" to (newResponses[3] / 5f)
-            )
-            _onboardingState.value = state.copy(
-                testAResponses = newResponses,
-                psychometricSignals = signals,
-                phase = OnboardingPhase.TEST_B_COGNITIVE
-            )
-        }
-    }
-
-    fun submitTestBAnswer(selectedIndex: Int) {
-        val state = _onboardingState.value
-        val q = OnboardingData.testB[state.testBIndex]
-        val isCorrect = selectedIndex == q.correctIndex
-        val newResponses = state.testBResponses + isCorrect
-        
-        if (state.testBIndex + 1 < OnboardingData.testB.size) {
-            _onboardingState.value = state.copy(testBIndex = state.testBIndex + 1, testBResponses = newResponses)
-        } else {
-            val cogSignals = mapOf(
-                "pattern_reasoning" to if (newResponses[0]) 1f else 0.5f,
-                "logical_reasoning" to if (newResponses[1]) 1f else 0.5f,
-                "working_memory" to if (newResponses[2]) 1f else 0.5f,
-                "spatial_reasoning" to if (newResponses[3]) 1f else 0.5f
-            )
-            val psySignals = state.psychometricSignals ?: mapOf(
-                "persistence" to 0.7f,
-                "confidence" to 0.65f,
-                "frustration_response" to 0.6f,
-                "metacognition" to 0.75f
-            )
-
-            viewModelScope.launch {
-                val payload = org.json.JSONObject().apply {
-                    put("studentName", state.candidateName)
-                    put("candidateGrade", state.candidateGrade)
-                    put("candidateAge", state.candidateAge)
-                    put("targetGrade", state.targetGrade)
-                    put("targetExamSession", state.targetExamSession)
-                    put("dailyTargetMinutes", state.dailyTargetMinutes)
-                    put("psychometricSignals", org.json.JSONObject().apply {
-                        psySignals.forEach { (k, v) -> put(k, v) }
-                    })
-                    put("cognitiveSignals", org.json.JSONObject().apply {
-                        cogSignals.forEach { (k, v) -> put(k, v) }
-                    })
-                }.toString()
-
-                repository.recordEvent(
-                    com.example.core.model.EventType.STUDENT_ONBOARDED,
-                    payload
-                )
-            }
-
-            _onboardingState.value = state.copy(
-                testBResponses = newResponses,
-                cognitiveSignals = cogSignals,
-                phase = OnboardingPhase.TEST_C_CURRICULUM
-            )
-            startDiagnostic()
         }
     }
 
