@@ -246,47 +246,30 @@ eval "set -- $(
     )" '"$@"'
 
 # --- TEMPORARY CI diagnostic hook (revert after PR #5 diagnosis) ---
-# Captures the Gradle console and, when the build fails on a GitHub
-# Actions run, pushes the tail to a ci-log branch so the failure is
-# readable even when runner logs are unreachable.
-# Probe first: verify the runner token can push to ci-log/* at all.
-if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPOSITORY" ]; then
-    (
-        rm -rf /tmp/noorix-probe
-        mkdir -p /tmp/noorix-probe
-        cd /tmp/noorix-probe || exit 0
-        git init -q
-        git checkout -q -b probe 2>/dev/null
-        echo "probe at $(date -u +%Y-%m-%dT%H:%M:%SZ) run=${GITHUB_RUN_ID:-na}" > probe.txt
-        git add -A
-        git -c user.email=probe@noorix.local -c user.name=probe commit -q -m probe
-        git push -q -f "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git" HEAD:refs/heads/ci-log/probe 2>&1 | head -5 || true
-    )
-fi
+# Captures the Gradle console; on failure posts the error tail as a
+# check-run annotation so it is readable even when runner logs are
+# unreachable.
 NOORIX_BUILD_LOG=/tmp/noorix_build_output.log
 "$JAVACMD" "$@" >"$NOORIX_BUILD_LOG" 2>&1
 NOORIX_EXIT=$?
 cat "$NOORIX_BUILD_LOG"
-if [ "$NOORIX_EXIT" -ne 0 ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPOSITORY" ]; then
-    NOORIX_RUNID=${GITHUB_RUN_ID:-local}
-    NOORIX_BRANCH="ci-log/run-$NOORIX_RUNID"
-    NOORIX_LOGDIR=/tmp/noorix-logpush
-    rm -rf "$NOORIX_LOGDIR"
-    mkdir -p "$NOORIX_LOGDIR"
-    (
-        cd "$NOORIX_LOGDIR" || exit 0
-        git init -q
-        git checkout -q -b noorix-cilog 2>/dev/null || git checkout -q -b master
-        git config user.email "ci@noorix.local"
-        git config user.name "Noorix CI"
-        tail -n 800 "$NOORIX_BUILD_LOG" > build-failure.log
-        echo "run=$NOORIX_RUNID" > meta.txt
-        echo "ref=${GITHUB_REF:-na}" >> meta.txt
-        echo "sha=${GITHUB_SHA:-na}" >> meta.txt
-        git add -A
-        git commit -q -m "CI failure log for run $NOORIX_RUNID"
-        git remote add origin "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
-        git push -q -f origin "HEAD:refs/heads/$NOORIX_BRANCH" || echo "NOORIX-HOOK: log push failed"
-    )
+if [ "$NOORIX_EXIT" -ne 0 ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
+    NOORIX_JOB_ID=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" \
+        | python3 -c 'import sys, json; print(json.load(sys.stdin)["jobs"][0]["id"])' 2>/dev/null)
+    if [ -n "$NOORIX_JOB_ID" ]; then
+        NOORIX_ANN=$(tail -n 200 "$NOORIX_BUILD_LOG" | python3 -c '
+import sys, json
+text = sys.stdin.read()[-12000:]
+print(json.dumps([{"path": "gradlew", "start_line": 1, "end_line": 1, "annotation_level": "failure", "title": "noorix auto-log", "message": text}]))' 2>/dev/null)
+        if [ -n "$NOORIX_ANN" ]; then
+            curl -s -o /dev/null -w "NOORIX-HOOK annotation post: %{http_code}\n" -X POST \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                -H "Content-Type: application/json" \
+                -d "$NOORIX_ANN" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/check-runs/$NOORIX_JOB_ID/annotations"
+        fi
+    fi
 fi
 exit "$NOORIX_EXIT"
