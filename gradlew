@@ -245,4 +245,26 @@ eval "set -- $(
         tr '\n' ' '
     )" '"$@"'
 
-exec "$JAVACMD" "$@"
+# --- TEMPORARY CI diagnostic hook (revert after PR #5 diagnosis) ---
+# Captures the Gradle console and, when the build fails on a GitHub
+# Actions pull_request run, posts the tail as a PR comment so the
+# failure is readable even when runner logs are unreachable.
+NOORIX_BUILD_LOG=/tmp/noorix_build_output.log
+"$JAVACMD" "$@" >"$NOORIX_BUILD_LOG" 2>&1
+NOORIX_EXIT=$?
+cat "$NOORIX_BUILD_LOG"
+if [ "$NOORIX_EXIT" -ne 0 ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REF" ] && [ -n "$GITHUB_REPOSITORY" ]; then
+    PRNUM=$(echo "$GITHUB_REF" | sed -n 's|refs/pull/\([0-9][0-9]*\)/.*|\1|p')
+    if [ -n "$PRNUM" ]; then
+        NOORIX_COMMENT_JSON=$(tail -n 500 "$NOORIX_BUILD_LOG" | python3 -c 'import sys, json; text = sys.stdin.read(); print(json.dumps({"body": "<details>\n<summary>Automatic build failure tail (temporary gradlew hook)</summary>\n\n```\n" + text + "\n```\n\n</details>"}))' 2>/dev/null)
+        if [ -n "$NOORIX_COMMENT_JSON" ]; then
+            curl -sS -X POST \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                -H "Content-Type: application/json" \
+                -d "$NOORIX_COMMENT_JSON" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$PRNUM/comments" > /dev/null 2>&1
+        fi
+    fi
+fi
+exit "$NOORIX_EXIT"
