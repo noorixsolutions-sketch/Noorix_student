@@ -1,6 +1,5 @@
 package com.example.presentation.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,329 +24,318 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.core.model.RecalibrationAttribution
+import com.example.domain.onboarding.AgeBand
+import com.example.domain.onboarding.LearnerMode
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
-import com.example.presentation.components.BadgesCard
-import com.example.presentation.components.ConceptMasteryCard
-import com.example.presentation.components.DailyGoalCard
-import com.example.presentation.components.NoorixSegmentedProgressBar
-import com.example.presentation.components.WeeklyActivityCard
-import com.example.presentation.components.XpLevelCard
-import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
 
+/**
+ * Home — "Your learning journey" (docs/two-mode-experience.md §5).
+ *
+ * One place that says: here's where we are, here's what we're working on,
+ * **Continue** — plus the three companion destinations (Explore / Progress /
+ * Program) and the learning crew. The home never interrogates
+ * ("what do you want to study?") and never commands ("you must study X"):
+ * the Continue button is always one, and it comes from the plan, not a menu.
+ */
 @Composable
 fun DashboardScreen(viewModel: OLevelViewModel) {
-    val activePkg by viewModel.activePackage.collectAsState()
-    val studentModel by viewModel.studentModel.collectAsState()
-    val events by viewModel.eventsList.collectAsState()
-    val userAccount by viewModel.userAccount.collectAsState()
+    val onboarding by viewModel.onboardingState.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
+    val userAccount by viewModel.userAccount.collectAsState()
     val gamification by viewModel.gamificationSnapshot.collectAsState()
-    val analytics by viewModel.analyticsSnapshot.collectAsState()
 
-    val courseTitle = activePkg?.manifest?.subjectName ?: "Cambridge O-Level"
-    val latestConcept = studentModel.academicStates.values.maxByOrNull { it.lastAssessedPhysicalMs }
-    val targetConceptName = latestConcept?.conceptName?.ifEmpty { "Algebraic Factorisation" } ?: "Algebraic Factorisation"
-    val averageMastery = if (studentModel.academicStates.isNotEmpty()) {
-        studentModel.academicStates.values.map { it.effectiveMastery }.average()
-    } else 0.68
-    val candidateName = userAccount?.displayName ?: studentModel.studentName
-
-    var showRecalibrationHistory by remember { mutableStateOf(false) }
+    val mode = onboarding.mode ?: LearnerMode.EXPLORE
+    val band = onboarding.band
+    val profile = onboarding.profile
+    val displayName = (userAccount?.displayName ?: onboarding.learnerName.trim()).ifBlank { null }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(NearBlackBg)
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Candidate Hero & Course Progress Card (Noorix Cyberpunk Style)
+        // 1. Greeting — age-adaptive line, no "WELCOME BACK, CANDIDATE!"
         item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (displayName != null) "Hi, $displayName" else "Hi there",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = profile.greeting,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (mode == LearnerMode.GUIDED) TealAccentSubtle else NearBlackSurface,
+                    border = BorderStroke(1.dp, if (mode == LearnerMode.GUIDED) TealAccent.copy(alpha = 0.4f) else SubtleBorder)
+                ) {
+                    Text(
+                        text = if (mode == LearnerMode.GUIDED) " Guided" else " Explore",
+                        color = if (mode == LearnerMode.GUIDED) TealAccent else TextSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+
+        // 2. The journey card — where we are / what we're working on / Continue
+        item {
+            val plan = activePlan
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("dashboard_continue_card"),
+                    .testTag("dashboard_journey_card"),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
                 border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.35f))
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(id = R.drawable.img_noorix_circuit_emblem),
-                                contentDescription = "Noorix Emblem",
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(CircleShape)
-                                    .border(1.5.dp, TealAccent, CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "WELCOME BACK, ${candidateName.uppercase()}! 👋",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TealAccent,
-                                    letterSpacing = 1.2.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Continue your learning journey",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = NearBlackSurface,
-                            border = BorderStroke(1.dp, SubtleBorder)
-                        ) {
-                            Text(
-                                text = "${studentModel.profileCalibration.studentGrade}",
-                                color = TextSecondary,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "\"The expert in anything was once a beginner.\"",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        fontSize = 12.sp
+                        text = when (mode) {
+                            LearnerMode.GUIDED -> "YOUR LEARNING JOURNEY"
+                            LearnerMode.EXPLORE -> "EXPLORE MODE"
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealAccent,
+                        letterSpacing = 1.2.sp,
+                        fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // 4-Pillar Quick Telemetry
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MiniStatBadge("Focus", targetConceptName.take(12), TealAccent, Modifier.weight(1f))
-                        MiniStatBadge("Target", "${studentModel.profileCalibration.targetGrade}", CyberGold, Modifier.weight(1f))
-                        MiniStatBadge("Readiness", "${(averageMastery * 100).toInt()}%", StepCorrect, Modifier.weight(1f))
-                        MiniStatBadge("Streak", "${gamification.streakDays} Days", CyanAccent, Modifier.weight(1f))
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    NoorixSegmentedProgressBar(
-                        progress = averageMastery.toFloat(),
-                        totalSegments = 16,
-                        activeColor = TealAccent,
-                        inactiveColor = SubtleBorder
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Button(
-                            onClick = { viewModel.setTab(AppNavigationTab.SYMBOLIC_TUTOR) },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Open Math Lab", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-
-                        OutlinedButton(
-                            onClick = { viewModel.setTab(AppNavigationTab.DIAGNOSTIC) },
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, SubtleBorderActive),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.Psychology, contentDescription = null, modifier = Modifier.size(16.dp), tint = TealAccent)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Take Quiz", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-                }
-            }
-        }
-
-        // 1b. XP + Level and Daily Goal (ADDITIVE progress layer)
-        item {
-            XpLevelCard(snapshot = gamification)
-        }
-
-        item {
-            DailyGoalCard(snapshot = gamification, analytics = analytics)
-        }
-
-        // 2. Up Next / Primary Learning Journey
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                border = BorderStroke(1.dp, SubtleBorder)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.PlayCircleOutline, contentDescription = null, tint = StepCorrect, modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "UP NEXT",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = StepCorrect,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Master $targetConceptName",
+                        text = when {
+                            mode == LearnerMode.GUIDED && plan != null -> "Here's where we are."
+                            mode == LearnerMode.GUIDED -> "Your journey starts here."
+                            else -> "Learn anything you like."
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         color = TextPrimary,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Continue where you left off. Review the latest concepts and tackle a few practice questions to build your streak.",
+                        text = when {
+                            mode == LearnerMode.GUIDED && plan != null -> {
+                                val stages = plan.planStages
+                                val done = stages.count { it.isCompleted }
+                                if (stages.isNotEmpty()) {
+                                    "We're working on ${plan.targetConceptName}. $done of ${stages.size} steps done — one at a time."
+                                } else {
+                                    "We're working on ${plan.targetConceptName}."
+                                }
+                            }
+                            mode == LearnerMode.GUIDED ->
+                                "Take a quick check-in and I'll shape your first plan. No marks — I'm just finding the best place to start."
+                            else ->
+                                "No plan, no pressure — ask a question, watch an explainer, or practice a skill."
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
-                        lineHeight = 18.sp
+                        lineHeight = 19.sp
                     )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (gamification.streakDays > 0) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(shape = RoundedCornerShape(8.dp), color = NearBlackBg) {
+                            Text(
+                                text = "🌟 You're on a ${gamification.streakDays}-day learning streak",
+                                color = CyberGold,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     Button(
-                        onClick = { viewModel.setTab(AppNavigationTab.LEARNING_HUB) },
-                        colors = ButtonDefaults.buttonColors(containerColor = StepCorrect, contentColor = NearBlackBg),
+                        onClick = {
+                            when {
+                                mode == LearnerMode.GUIDED && plan != null ->
+                                    viewModel.setTab(AppNavigationTab.LEARNING_HUB)
+                                mode == LearnerMode.GUIDED -> viewModel.beginGuidedOnboarding()
+                                else -> viewModel.setTab(AppNavigationTab.LEARNING_HUB)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Resume Learning", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(
+                            text = when {
+                                mode == LearnerMode.GUIDED && plan != null -> "Continue"
+                                mode == LearnerMode.GUIDED -> "Start my journey"
+                                else -> "Explore"
+                            },
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(vertical = 6.dp)
+                        )
                     }
                 }
             }
         }
 
-        // 3. AI Learning Agents (Full Noorix Roster)
+        // 3. Explore mode → invitation to be guided (one tap, skippable forever)
+        if (mode == LearnerMode.EXPLORE) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.beginGuidedOnboarding() },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.35f))
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = CircleShape, color = CyberGold.copy(alpha = 0.12f), modifier = Modifier.size(42.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Route, contentDescription = null, tint = CyberGold, modifier = Modifier.size(22.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Want me to guide you?", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                            Text("I'll build a learning plan with you and keep track of your progress.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                        Text("Build my learning plan →", color = CyberGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        // 4. The three companion destinations
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "AI LEARNING AGENTS",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextSecondary,
-                    letterSpacing = 1.2.sp
-                )
-                Text(
-                    text = "View all agents →",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TealAccent,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { viewModel.setTab(AppNavigationTab.AI_AGENTS) }
-                )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-
-            val agentList = listOf(
-                AgentCardData("danish", "DANISH", "Mathematics", "Specializes in algebra & step proofs", R.drawable.img_danish_math, AppNavigationTab.SYMBOLIC_TUTOR, TealAccent, "Algebra"),
-                AgentCardData("zoya", "ZOYA", "Sciences", "Expert in Physics & concept models", R.drawable.img_zoya_science, AppNavigationTab.MEDIA_TRANSFER, StepCorrect, "Physics"),
-                AgentCardData("ayesha", "AYESHA", "Language", "Reading, summary & English essays", R.drawable.img_ayesha_language, AppNavigationTab.LEARNING_HUB, Color(0xFF38BDF8), "English"),
-                AgentCardData("bilal", "BILAL", "Aptitude", "Logical thinking & sequences", R.drawable.img_bilal_aptitude, AppNavigationTab.LEARNING_HUB, Color(0xFFA78BFA), "Reasoning"),
-                AgentCardData("exam_coach", "EXAM COACH", "Exam Prep", "Past papers & exam strategies", R.drawable.img_exam_coach, AppNavigationTab.DIAGNOSTIC, CyberGold, "Mock Tests"),
-                AgentCardData("career_guide", "CAREER GUIDE", "Advisor", "A-Level & university pathways", R.drawable.img_career_guide, AppNavigationTab.DASHBOARD, Color(0xFFF472B6), "Career Paths")
-            )
-
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(agentList) { agent ->
-                    Card(
-                        modifier = Modifier
-                            .width(160.dp)
-                            .clickable {
-                                viewModel.selectAgent(agent.id)
-                                viewModel.setTab(agent.targetTab)
-                            },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                        border = BorderStroke(1.dp, SubtleBorder)
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Image(
-                                painter = painterResource(id = agent.imageResId),
-                                contentDescription = agent.name,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape)
-                                    .border(1.5.dp, agent.accentColor, CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = agent.name,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
-                            )
-                            Text(
-                                text = agent.role,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = agent.accentColor,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = agent.specialty,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary,
-                                fontSize = 10.sp,
-                                maxLines = 2,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = agent.accentColor.copy(alpha = 0.15f)
-                            ) {
+                DestinationTile(
+                    icon = Icons.Default.Explore,
+                    title = "Explore",
+                    subtitle = "Learn anything",
+                    accent = TealAccent,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setTab(AppNavigationTab.LEARNING_HUB) }
+                )
+                DestinationTile(
+                    icon = Icons.Default.Insights,
+                    title = "Progress",
+                    subtitle = "How you're growing",
+                    accent = StepCorrect,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setTab(AppNavigationTab.PROGRESS) }
+                )
+                DestinationTile(
+                    icon = Icons.Default.Route,
+                    title = "Program",
+                    subtitle = "The bigger journey",
+                    accent = CyberGold,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setTab(AppNavigationTab.PROGRAM) }
+                )
+            }
+        }
+
+        // 5. The learning crew (tutors stay one tap away; full roster in Tutors)
+        item {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "ASK A TUTOR ANYTHING",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextSecondary,
+                        letterSpacing = 1.2.sp
+                    )
+                    Text(
+                        text = "All tutors →",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealAccent,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { viewModel.setTab(AppNavigationTab.AI_AGENTS) }
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // The exam coach deep-links to the O-Level check-in only for
+                // secondary learners; younger bands go to chat instead.
+                val examCoachTab = if (band == AgeBand.SECONDARY) AppNavigationTab.DIAGNOSTIC else AppNavigationTab.AI_AGENTS
+                val agentList = listOf(
+                    AgentStripData("danish", "DANISH", "Math", R.drawable.img_danish_math, AppNavigationTab.SYMBOLIC_TUTOR, TealAccent),
+                    AgentStripData("zoya", "ZOYA", "Physics", R.drawable.img_zoya_science, AppNavigationTab.MEDIA_TRANSFER, StepCorrect),
+                    AgentStripData("ayesha", "AYESHA", "English", R.drawable.img_ayesha_language, AppNavigationTab.LEARNING_HUB, Color(0xFF38BDF8)),
+                    AgentStripData("bilal", "BILAL", "Reasoning", R.drawable.img_bilal_aptitude, AppNavigationTab.LEARNING_HUB, Color(0xFFA78BFA)),
+                    AgentStripData("exam_coach", "EXAM COACH", "Exam Prep", R.drawable.img_exam_coach, examCoachTab, CyberGold),
+                    AgentStripData("career_guide", "CAREER GUIDE", "Pathways", R.drawable.img_career_guide, AppNavigationTab.PROGRAM, Color(0xFFF472B6))
+                )
+
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(agentList) { agent ->
+                        Card(
+                            modifier = Modifier
+                                .width(104.dp)
+                                .clickable {
+                                    viewModel.selectAgent(agent.id)
+                                    viewModel.setTab(agent.targetTab)
+                                },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                            border = BorderStroke(1.dp, SubtleBorder)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Image(
+                                    painter = painterResource(id = agent.imageResId),
+                                    contentDescription = agent.name,
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .border(1.5.dp, agent.accentColor, CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = agent.tag,
+                                    text = agent.name,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                )
+                                Text(
+                                    text = agent.role,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = agent.accentColor,
                                     fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
@@ -356,83 +344,97 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 3. Weekly Activity Chart (ADDITIVE)
-        item {
-            WeeklyActivityCard(snapshot = analytics)
-        }
-
-        // 4. Per-Concept Mastery Breakdown (ADDITIVE)
-        item {
-            ConceptMasteryCard(
-                rows = analytics.conceptRows,
-                averageMastery = analytics.averageMastery
-            )
-        }
-
-        // 8. Achievements / Badges (ADDITIVE)
-        item {
-            BadgesCard(earned = gamification.earnedBadges)
+        // 6. O-Level learners: a quiet check-in entry (never a command)
+        if (band == AgeBand.SECONDARY) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.dp, SubtleBorder)
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = CircleShape, color = TealAccentSubtle, modifier = Modifier.size(42.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Psychology, contentDescription = null, tint = TealAccent, modifier = Modifier.size(22.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Check-in", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "A few questions to see how your learning is holding up. No marks — I'm just keeping my map of you up to date.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = { viewModel.setTab(AppNavigationTab.DIAGNOSTIC) },
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, SubtleBorderActive),
+                            colors = OutlinedButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                            contentPadding = PaddingValues(horizontal = 14.dp)
+                        ) {
+                            Text("Check in", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun MiniStatBadge(
-    label: String,
-    value: String,
-    accentColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = NearBlackBg,
-        border = BorderStroke(1.dp, SubtleBorder),
-        modifier = modifier
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(label, color = TextMuted, fontSize = 9.sp)
-            Text(value, color = accentColor, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-        }
-    }
-}
-
-@Composable
-private fun StatCard(
+private fun DestinationTile(
+    icon: ImageVector,
     title: String,
-    value: String,
     subtitle: String,
-    modifier: Modifier = Modifier
+    accent: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
         border = BorderStroke(1.dp, SubtleBorder)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(title, style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontSize = 10.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(value, style = MaterialTheme.typography.titleMedium, color = TealAccent, fontWeight = FontWeight.Bold)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextMuted, fontSize = 10.sp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp, horizontal = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Surface(shape = CircleShape, color = accent.copy(alpha = 0.12f), modifier = Modifier.size(38.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = title, tint = accent, modifier = Modifier.size(20.dp))
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
+                fontSize = 9.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
         }
     }
 }
 
-private data class HubCardItem(
-    val title: String,
-    val subtitle: String,
-    val icon: ImageVector,
-    val accentColor: Color,
-    val tab: AppNavigationTab
-)
-
-private data class AgentCardData(
+private data class AgentStripData(
     val id: String,
     val name: String,
     val role: String,
-    val specialty: String,
     val imageResId: Int,
     val targetTab: AppNavigationTab,
-    val accentColor: Color,
-    val tag: String
+    val accentColor: Color
 )

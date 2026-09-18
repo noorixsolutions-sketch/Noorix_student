@@ -115,7 +115,7 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Header Card
+        // 1. Explore Header (docs/two-mode-experience.md §5)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -131,20 +131,20 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
                             modifier = Modifier.size(36.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.School, contentDescription = null, tint = TealAccent, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Explore, contentDescription = null, tint = TealAccent, modifier = Modifier.size(20.dp))
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "KNOWLEDGE LEARNING HUB",
+                                text = "EXPLORE",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TealAccent,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.2.sp
                             )
                             Text(
-                                text = "Cambridge Concept Mastery",
+                                text = "Learn anything — no program needed",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold
@@ -153,12 +153,23 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Explore syllabus-linked video explainers, practice active recall with interactive flashcards, and verify your comprehension with diagnostic quizzes.",
+                        text = "Ask a tutor anything, browse the curriculum by stage, or dive into the concept hub: explainers, flashcards and quizzes.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
                 }
             }
+        }
+
+        // 1a. Ask a tutor (Explore's conversational entry — "explain photosynthesis")
+        item {
+            AskTutorCard(viewModel)
+        }
+
+        // 1b. Browse the curriculum knowledge graph by stage (Pre-K → O-Level
+        // material from the master-branch Cambridge_Curriculum_Library)
+        item {
+            KgBrowseCard(viewModel)
         }
 
         // 2. Concept Selector Carousel
@@ -864,6 +875,210 @@ private fun HubQuizCard(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Try Again", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Explore additions (docs/two-mode-experience.md §5)
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun AskTutorCard(viewModel: OLevelViewModel) {
+    var question by remember { mutableStateOf("") }
+    var agentId by remember { mutableStateOf("danish") }
+
+    val tutors = listOf(
+        "danish" to "Danish · Math",
+        "zoya" to "Zoya · Physics",
+        "ayesha" to "Ayesha · English",
+        "bilal" to "Bilal · Reasoning",
+        "exam_coach" to "Exam Coach",
+        "career_guide" to "Career Guide"
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+        border = BorderStroke(1.dp, SubtleBorder)
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "ASK A TUTOR ANYTHING",
+                style = MaterialTheme.typography.labelSmall,
+                color = TealAccent,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                tutors.forEach { (id, label) ->
+                    val isSelected = agentId == id
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (isSelected) TealAccentSubtle else NearBlackBg,
+                        border = BorderStroke(1.dp, if (isSelected) TealAccent else SubtleBorder),
+                        modifier = Modifier.clickable { agentId = id }
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (isSelected) TealAccent else TextSecondary,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = question,
+                    onValueChange = { question = it },
+                    placeholder = { Text("e.g. Explain photosynthesis…", color = TextMuted, fontSize = 12.sp) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = NearBlackBg,
+                        unfocusedContainerColor = NearBlackBg,
+                        focusedBorderColor = TealAccent,
+                        unfocusedBorderColor = SubtleBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        cursorColor = TealAccent
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                )
+                Button(
+                    onClick = {
+                        val q = question.trim()
+                        if (q.isNotBlank()) {
+                            viewModel.askTutor(agentId, q)
+                            question = ""
+                        }
+                    },
+                    enabled = question.isNotBlank(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg)
+                ) {
+                    Text("Ask", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun KgBrowseCard(viewModel: OLevelViewModel) {
+    val kgStages by viewModel.kgStages.collectAsState()
+    val onboarding by viewModel.onboardingState.collectAsState()
+    var stageOrder by remember(onboarding.kgStageOrder) {
+        mutableIntStateOf(onboarding.kgStageOrder)
+    }
+    val stage = kgStages.firstOrNull { it.order == stageOrder }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+        border = BorderStroke(1.dp, SubtleBorder)
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "BROWSE THE CURRICULUM",
+                style = MaterialTheme.typography.labelSmall,
+                color = CyberGold,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Text(
+                text = "From Early Years to O-Level — the subjects on the map for each stage.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+            if (kgStages.isEmpty()) {
+                Text(
+                    text = "Curriculum map is still loading…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted
+                )
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    kgStages.forEach { s ->
+                        val isSelected = s.order == stageOrder
+                        val isCurrent = s.order == onboarding.kgStageOrder
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isSelected) CyberGold.copy(alpha = 0.15f) else NearBlackBg,
+                            border = BorderStroke(1.dp, if (isSelected) CyberGold else SubtleBorder),
+                            modifier = Modifier.clickable { stageOrder = s.order }
+                        ) {
+                            Text(
+                                text = "${s.order} · ${s.name.substringAfter(" ")}",
+                                color = when {
+                                    isSelected -> CyberGold
+                                    isCurrent -> TealAccent
+                                    else -> TextSecondary
+                                },
+                                fontSize = 10.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                }
+
+                stage?.let { selectedStage ->
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        selectedStage.subjects.take(6).forEach { subject ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = NearBlackBg,
+                                border = BorderStroke(1.dp, SubtleBorder),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = subject.name,
+                                        color = TextPrimary,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (!subject.syllabusCode.isNullOrEmpty()) {
+                                        Text(
+                                            text = subject.syllabusCode,
+                                            color = TextMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        if (selectedStage.subjects.size > 6) {
+                            Text(
+                                text = "+${selectedStage.subjects.size - 6} more subjects — see Program for the full map",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMuted,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
                 }
             }
         }

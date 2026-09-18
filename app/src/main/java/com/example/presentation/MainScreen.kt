@@ -50,10 +50,14 @@ fun MainScreen(viewModel: OLevelViewModel) {
     val hudGamification by viewModel.gamificationSnapshot.collectAsState()
     val hudAnalytics by viewModel.analyticsSnapshot.collectAsState()
 
-    // Reduced nav: strictly student-facing. One primary learning journey.
+    // Two-mode nav (docs/two-mode-experience.md §5): the learner's journey plus
+    // its companions. Everything else (Math Lab, check-in, packages, audit,
+    // parent) lives one level deeper inside these screens / Settings.
     val navDestinations = listOf(
         NoorixNavDestination(AppNavigationTab.DASHBOARD, "Home", Icons.Default.Home),
-        NoorixNavDestination(AppNavigationTab.LEARNING_HUB, "Learn", Icons.Default.School),
+        NoorixNavDestination(AppNavigationTab.LEARNING_HUB, "Explore", Icons.Default.Explore),
+        NoorixNavDestination(AppNavigationTab.PROGRESS, "Progress", Icons.Default.Insights),
+        NoorixNavDestination(AppNavigationTab.PROGRAM, "Program", Icons.Default.Route),
         NoorixNavDestination(AppNavigationTab.AI_AGENTS, "Tutors", Icons.AutoMirrored.Filled.Chat)
     )
 
@@ -135,6 +139,8 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 AppNavigationTab.DECAY_SYNC -> DecaySyncScreen(viewModel)
                 AppNavigationTab.PACKAGES -> PackagesScreen(viewModel)
                 AppNavigationTab.LEARNING_HUB -> LearningHubScreen(viewModel)
+                AppNavigationTab.PROGRESS -> ProgressScreen(viewModel)
+                AppNavigationTab.PROGRAM -> ProgramScreen(viewModel)
                 AppNavigationTab.AUDIT -> AuditScreen(viewModel, activity)
                 AppNavigationTab.PARENT -> ParentDashboardScreen(viewModel)
             }

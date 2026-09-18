@@ -16,6 +16,7 @@ import com.example.core.model.CoursePackage
 import com.example.core.model.CurriculumGraph
 import com.example.core.model.Flashcard
 import com.example.core.model.FlashcardReview
+import com.example.core.model.GraphStage
 import com.example.core.model.GamificationSnapshot
 import com.example.core.model.LearningEvent
 import com.example.core.model.LearningPlan
@@ -54,14 +55,18 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.domain.onboarding.AgeBand
+import com.example.domain.onboarding.LearnerMode
+import com.example.domain.onboarding.LearnerPrefs
 import com.example.domain.onboarding.OnboardingState
 import com.example.domain.onboarding.OnboardingPhase
-import com.example.domain.onboarding.OnboardingData
+import com.example.domain.diagnostic.BuiltInCheckinBank
 import com.example.domain.parent.ParentPrefs
 
 
@@ -84,14 +89,23 @@ enum class AppNavigationTab {
     DECAY_SYNC,
     AUDIT,
     // ADDITIVE (§9 Goal Architecture): PIN-gated parent report.
-    PARENT
+    PARENT,
+    // Two-mode experience (docs/two-mode-experience.md §5): primary destinations.
+    PROGRESS,
+    PROGRAM
 }
 
 class OLevelViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = LearningRepository(application.applicationContext)
 
-    val currentTab = MutableStateFlow(AppNavigationTab.ONBOARDING)
+    // Two-mode model (docs/two-mode-experience.md): a returning learner goes
+    // straight to Home in the mode they chose; onboarding never replays.
+    private val persistedLearner = runCatching { LearnerPrefs.load(application.applicationContext) }.getOrNull()
+
+    val currentTab = MutableStateFlow(
+        if (persistedLearner != null) AppNavigationTab.DASHBOARD else AppNavigationTab.ONBOARDING
+    )
     val simulatedWallTimeMs: StateFlow<Long> = repository.simulatedWallTimeMs
     val activePackage: StateFlow<CoursePackage?> = repository.activePackage
     val studentModel: StateFlow<StudentModel> = repository.studentModel
@@ -276,37 +290,75 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Onboarding State
-    private val _onboardingState = MutableStateFlow(OnboardingState())
+    // ==========================================
+    // Two-mode onboarding (docs/two-mode-experience.md)
+    // The learner chooses whether to be guided. Once guided, the system
+    // determines the direction. The learner stays free to explore at any time.
+    // Assessment is continuous and embedded in learning, never an entrance exam.
+    // ==========================================
+
+    private val _onboardingState = MutableStateFlow(persistedLearner ?: OnboardingState())
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
 
-    fun updateOnboardingProfile(
+    /** The learner's band (defaults to SECONDARY until an age is chosen). */
+    fun learnerBand(): AgeBand = _onboardingState.value.band
+
+    /** Explore path: zero friction — no name, no age, no questions. */
+    fun chooseExploreMode() {
+        val state = _onboardingState.value.copy(
+            mode = LearnerMode.EXPLORE,
+            isComplete = true,
+            phase = OnboardingPhase.COMPLETE
+        )
+        _onboardingState.value = state
+        saveLearnerPrefs()
+        repository.setDiagnosticBankOverride(null)
+        viewModelScope.launch {
+            // Quiet evidence start: the event log records the learner's entry so
+            // exploration can feed the same student model as the guided program.
+            repository.recordEvent(
+                com.example.core.model.EventType.STUDENT_ONBOARDED,
+                org.json.JSONObject().apply {
+                    put("studentName", state.learnerName.ifBlank { "Learner" })
+                    put("learnerMode", "EXPLORE")
+                }.toString()
+            )
+        }
+        setTab(AppNavigationTab.DASHBOARD)
+    }
+
+    /**
+     * Tiny, age-adaptive profile (guided path). Records the STUDENT_ONBOARDED
+     * event with the payload contract ProjectionEngine reads, so the student
+     * model — and the diagnostic prior — are calibrated before the first check.
+     */
+    fun updateGuidedProfile(
         name: String,
-        grade: String,
         age: Int,
+        stage: String,
         targetGrade: String,
         targetExamSession: String,
         dailyMinutes: Int
     ) {
         _onboardingState.value = _onboardingState.value.copy(
-            candidateName = name,
-            candidateGrade = grade,
-            candidateAge = age,
+            mode = LearnerMode.GUIDED,
+            learnerName = name,
+            age = age,
+            stage = stage,
             targetGrade = targetGrade,
             targetExamSession = targetExamSession,
             dailyTargetMinutes = dailyMinutes
         )
-
         viewModelScope.launch {
             val payload = org.json.JSONObject().apply {
-                put("studentName", name)
-                put("candidateGrade", grade)
+                put("studentName", name.ifBlank { "Learner" })
+                put("candidateGrade", stage)
                 put("candidateAge", age)
                 put("targetGrade", targetGrade)
                 put("targetExamSession", targetExamSession)
                 put("dailyTargetMinutes", dailyMinutes)
+                put("learnerMode", "GUIDED")
             }.toString()
-
             repository.recordEvent(
                 com.example.core.model.EventType.STUDENT_ONBOARDED,
                 payload
@@ -314,13 +366,51 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    /**
+     * Enter the guided path from the welcome screen or a later
+     * "Build my learning plan" tap. A learner with a saved profile skips the
+     * profile step and goes straight to the first check.
+     */
+    fun beginGuidedOnboarding() {
+        val state = _onboardingState.value
+        val phase = if (state.hasProfile) OnboardingPhase.GUIDED_FIRST_CHECK else OnboardingPhase.GUIDED_PROFILE
+        _onboardingState.value = state.copy(mode = LearnerMode.GUIDED, phase = phase)
+        setTab(AppNavigationTab.ONBOARDING)
+        if (phase == OnboardingPhase.GUIDED_FIRST_CHECK) startGuidedFirstCheck()
+    }
+
+    /**
+     * The embedded first check. Younger bands run their built-in number game /
+     * quick check; secondary learners run the adaptive questions of the active
+     * signed course package. Same engine, same student model.
+     */
+    fun startGuidedFirstCheck() {
+        val bank = when (learnerBand()) {
+            AgeBand.EARLY, AgeBand.PRIMARY -> BuiltInCheckinBank.forBand(learnerBand())
+            AgeBand.SECONDARY -> null // use the active package bank
+        }
+        repository.setDiagnosticBankOverride(bank)
+        startDiagnostic()
+    }
+
+    /** Finish: persist the choice, then enter the app in the chosen mode. */
+    fun finishOnboarding() {
+        _onboardingState.value = _onboardingState.value.copy(
+            phase = OnboardingPhase.COMPLETE,
+            isComplete = true
+        )
+        saveLearnerPrefs()
+        setTab(AppNavigationTab.DASHBOARD)
+    }
+
+    private fun saveLearnerPrefs() {
+        runCatching { LearnerPrefs.save(getApplication(), _onboardingState.value) }
+    }
+
     fun startOnboardingPhase(phase: OnboardingPhase) {
         _onboardingState.value = _onboardingState.value.copy(phase = phase)
-        if (phase == OnboardingPhase.TEST_C_CURRICULUM) {
-            startDiagnostic()
-        }
-        if (phase == OnboardingPhase.COMPLETE) {
-            setTab(AppNavigationTab.DASHBOARD)
+        if (phase == OnboardingPhase.GUIDED_FIRST_CHECK) {
+            startGuidedFirstCheck()
         }
     }
 
@@ -356,6 +446,19 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     /** Knowledge graph built from the Cambridge_Curriculum_Library (master branch). */
     val curriculumGraph: StateFlow<CurriculumGraph?> = repository.curriculumGraph
 
+    // ==========================================
+    // Curriculum knowledge graph — the journey map (Pre-K → IB)
+    // The master-branch material (9 stages, 165 subjects) drives the stage
+    // selection in onboarding, the Explore browse and the Program screen.
+    // ==========================================
+
+    val kgStages: StateFlow<List<GraphStage>> = curriculumGraph
+        .map { graph -> graph?.stages.orEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun kgStageFor(order: Int): GraphStage? =
+        curriculumGraph.value?.stages?.firstOrNull { it.order == order }
+
     // Symbolic verifier state
     private val _verificationResult = MutableStateFlow<VerificationResult?>(null)
     val verificationResult: StateFlow<VerificationResult?> = _verificationResult.asStateFlow()
@@ -379,6 +482,18 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun selectAgent(agentId: String) {
         _selectedAgentId.value = agentId
+    }
+
+    /**
+     * Explore's conversational entry (docs/two-mode-experience.md §2.1):
+     * "Explain photosynthesis." — always delivers the question to the tutor,
+     * then opens the chat so the learner sees the answer stream in.
+     */
+    fun askTutor(agentId: String, question: String) {
+        if (question.isBlank()) return
+        _selectedAgentId.value = agentId
+        sendAgentMessage(agentId, question)
+        setTab(AppNavigationTab.AI_AGENTS)
     }
 
     fun onAgentOpened(agentId: String, promptStarter: String) {
@@ -497,10 +612,11 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     // ==========================================
 
     fun startDiagnostic() {
-        // Onboarding gate: Test C must not run the diagnostic before the
-        // signed course package (question bank) has loaded — that race is
-        // what used to leave onboarding stuck. The UI (TestCPhase and
-        // DiagnosticScreen) gates rendering on `activePackage != null`.
+        // Bank readiness gate: the first check renders "preparing your
+        // questions" (with a skip) until a bank exists for the learner's band —
+        // the built-in bank for younger bands is instant; secondary learners
+        // wait on the signed course package. The UI gates rendering on
+        // `diagnosticBankReady()` (DiagnosticScreen + onboarding first check).
         repository.startDiagnostic()
     }
 
@@ -512,9 +628,12 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
 
     fun getNextDiagnosticQuestion(): QuestionItem? {
         val session = diagnosticSession.value
-        val questions = repository.activePackage.value?.questions ?: emptyList()
+        val questions = repository.currentDiagnosticBank()
         return com.example.domain.diagnostic.AdaptiveDiagnosticEngine.getNextQuestion(session, questions)
     }
+
+    /** True when the current band has a question bank for the check-in. */
+    fun diagnosticBankReady(): Boolean = repository.currentDiagnosticBank().isNotEmpty()
 
     // ==========================================
     // Planner & Plan Evaluation
