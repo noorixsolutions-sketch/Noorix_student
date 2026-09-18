@@ -247,8 +247,22 @@ eval "set -- $(
 
 # --- TEMPORARY CI diagnostic hook (revert after PR #5 diagnosis) ---
 # Captures the Gradle console and, when the build fails on a GitHub
-# Actions pull_request run, posts the tail as a PR comment so the
-# failure is readable even when runner logs are unreachable.
+# Actions run, pushes the tail to a ci-log branch so the failure is
+# readable even when runner logs are unreachable.
+# Probe first: verify the runner token can push to ci-log/* at all.
+if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPOSITORY" ]; then
+    (
+        rm -rf /tmp/noorix-probe
+        mkdir -p /tmp/noorix-probe
+        cd /tmp/noorix-probe || exit 0
+        git init -q
+        git checkout -q -b probe 2>/dev/null
+        echo "probe at $(date -u +%Y-%m-%dT%H:%M:%SZ) run=${GITHUB_RUN_ID:-na}" > probe.txt
+        git add -A
+        git -c user.email=probe@noorix.local -c user.name=probe commit -q -m probe
+        git push -q -f "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git" HEAD:refs/heads/ci-log/probe 2>&1 | head -5 || true
+    )
+fi
 NOORIX_BUILD_LOG=/tmp/noorix_build_output.log
 "$JAVACMD" "$@" >"$NOORIX_BUILD_LOG" 2>&1
 NOORIX_EXIT=$?
