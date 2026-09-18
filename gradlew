@@ -245,31 +245,4 @@ eval "set -- $(
         tr '\n' ' '
     )" '"$@"'
 
-# --- TEMPORARY CI diagnostic hook (revert after PR #5 diagnosis) ---
-# Captures the Gradle console; on failure posts the error tail as a
-# check-run annotation so it is readable even when runner logs are
-# unreachable.
-NOORIX_BUILD_LOG=/tmp/noorix_build_output.log
-"$JAVACMD" "$@" >"$NOORIX_BUILD_LOG" 2>&1
-NOORIX_EXIT=$?
-cat "$NOORIX_BUILD_LOG"
-if [ "$NOORIX_EXIT" -ne 0 ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
-    NOORIX_JOB_ID=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" \
-        | python3 -c 'import sys, json; print(json.load(sys.stdin)["jobs"][0]["id"])' 2>/dev/null)
-    if [ -n "$NOORIX_JOB_ID" ]; then
-        NOORIX_ANN=$(tail -n 200 "$NOORIX_BUILD_LOG" | python3 -c '
-import sys, json
-text = sys.stdin.read()[-12000:]
-print(json.dumps([{"path": "gradlew", "start_line": 1, "end_line": 1, "annotation_level": "failure", "title": "noorix auto-log", "message": text}]))' 2>/dev/null)
-        if [ -n "$NOORIX_ANN" ]; then
-            curl -s -o /dev/null -w "NOORIX-HOOK annotation post: %{http_code}\n" -X POST \
-                -H "Authorization: Bearer $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github+json" \
-                -H "Content-Type: application/json" \
-                -d "$NOORIX_ANN" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/check-runs/$NOORIX_JOB_ID/annotations"
-        fi
-    fi
-fi
-exit "$NOORIX_EXIT"
+exec "$JAVACMD" "$@"
