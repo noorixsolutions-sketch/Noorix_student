@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalLayoutApi::class)
+
 package com.example.presentation.screens
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut

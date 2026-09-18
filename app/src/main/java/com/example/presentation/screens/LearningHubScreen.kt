@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalLayoutApi::class)
+
 package com.example.presentation.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.animation.AnimatedVisibility
