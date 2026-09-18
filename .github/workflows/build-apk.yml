@@ -25,6 +25,15 @@ jobs:
         set -o pipefail
         ./gradlew assembleRelease --stacktrace 2>&1 | tee noorix-build.log
 
+    - name: Annotate failure tail (temporary diagnostic)
+      if: failure()
+      run: |
+        # Workflow commands do not need a write token: each line below
+        # becomes a check-run annotation on this job.
+        tail -n 40 noorix-build.log | while IFS= read -r line || [ -n "$line" ]; do
+          printf '::error file=gradlew,line=1,title=Noorix CI log tail::%s\n' "$line"
+        done
+
     - name: Push failure log (temporary diagnostic)
       if: failure()
       env:
@@ -45,7 +54,7 @@ jobs:
         echo "ref=${GITHUB_REF}" >> "$LOG_DIR/meta.txt"
         git -C "$LOG_DIR" add -A
         git -C "$LOG_DIR" commit -qm "CI failure log for run ${GITHUB_RUN_ID}"
-        git -C "$LOG_DIR" push -q -f "https://x-access-token:${LOG_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${LOG_BRANCH}" || echo "::warning::failed to push CI failure log"
+        git -C "$LOG_DIR" push -q -f "https://x-access-token:${LOG_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${LOG_BRANCH}" || echo "NOORIX-HOOK: push of CI failure log failed (token lacks write)"
 
     - name: Upload Release APK
       if: success()
