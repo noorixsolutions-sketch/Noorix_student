@@ -223,14 +223,14 @@ private fun GuidedProfilePhase(viewModel: OLevelViewModel) {
 
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = if (band != null) "${profile.emoji} ${profile.profileTitle}" else "👋 Let's set up your learning journey",
+            text = if (profile != null) "${profile.emoji} ${profile.profileTitle}" else "👋 Let's set up your learning journey",
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = if (band != null) profile.profileSub else "A couple of questions so I know how to help you.",
+            text = if (profile != null) profile.profileSub else "A couple of questions so I know how to help you.",
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary
         )
