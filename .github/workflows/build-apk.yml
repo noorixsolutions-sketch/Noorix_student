@@ -5,6 +5,10 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  # On-demand builds: lets a build be triggered from the Actions tab or
+  # with `gh workflow run build-apk.yml --ref main`, without needing a new
+  # commit. Useful for producing a fresh APK from the current main.
+  workflow_dispatch:
 
 jobs:
   build:
@@ -46,9 +50,26 @@ jobs:
           printf '::error file=gradlew,line=3,title=Noorix CI log tail::%s\n' "$line"
         done
 
+    - name: Report APK details
+      if: success()
+      run: |
+        ls -lh app/build/outputs/apk/release/*.apk
+        for f in app/build/outputs/apk/release/*.apk; do
+          echo "--- $f"
+          if unzip -l "$f" | grep -qE 'META-INF/.*\.(RSA|DSA|EC|SF)$'; then
+            echo "signed: yes"
+          else
+            echo "signed: no - installable only after signing (apksigner / Android Studio)"
+          fi
+        done
+
     - name: Upload Release APK
       if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-release
-        path: app/build/outputs/apk/release/app-release-unsigned.apk
+        # Matches both app-release.apk (signed: keystore + env passwords
+        # present) and app-release-unsigned.apk (no keystore configured,
+        # e.g. public CI), so enabling signing never breaks the upload.
+        path: app/build/outputs/apk/release/*.apk
+        if-no-files-found: error
