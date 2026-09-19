@@ -56,7 +56,7 @@ android {
       val hasReleaseKey = keyFile.exists() &&
         System.getenv("STORE_PASSWORD") != null &&
         System.getenv("KEY_PASSWORD") != null
-      signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else null
+      signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else signingConfigs.getByName("debugConfig")
     }
     debug { signingConfig = signingConfigs.getByName("debugConfig") }
   }
