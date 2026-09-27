@@ -59,7 +59,7 @@ class CoursePackageRoundTripTest {
     }
 
     @Test
-    fun `asset JSON nulls parse as real nulls, not "null" strings`() {
+    fun `asset JSON nulls parse as real nulls not literal strings`() {
         for (pkg in packages()) {
             assertNull(pkg.manifest.parentVersion)
             assertNull(pkg.manifest.deltaBase)
