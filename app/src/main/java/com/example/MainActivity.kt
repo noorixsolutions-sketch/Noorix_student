@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.domain.parent.ParentPrefs
+import com.example.domain.sync.LearningEventSyncScheduler
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.MainScreen
 import com.example.presentation.OLevelViewModel
@@ -18,6 +19,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (LearningEventSyncScheduler.loadStatusSnapshot(applicationContext).isPeriodicEnabled) {
+            LearningEventSyncScheduler.schedulePeriodicSync(applicationContext)
+        }
         // Deep links from the bubble / fan-out / Tutor Keyboard (§3 + §3.5).
         applyDeepLink(ViewModelProvider(this)[OLevelViewModel::class.java], intent)
         setContent {

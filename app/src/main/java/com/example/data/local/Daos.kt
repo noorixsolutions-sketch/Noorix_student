@@ -71,6 +71,12 @@ interface SyncQueueDao {
     @Query("UPDATE offline_sync_queue SET status = 'SYNCED' WHERE eventId IN (:eventIds)")
     suspend fun markSynced(eventIds: List<String>)
 
+    @Query("UPDATE offline_sync_queue SET retryCount = retryCount + 1 WHERE eventId IN (:eventIds)")
+    suspend fun incrementRetryCount(eventIds: List<String>)
+
+    @Query("SELECT COUNT(*) FROM offline_sync_queue WHERE status = 'PENDING'")
+    fun getPendingCountFlow(): Flow<Int>
+
     @Query("DELETE FROM offline_sync_queue WHERE status = 'SYNCED'")
     suspend fun clearSynced()
 }

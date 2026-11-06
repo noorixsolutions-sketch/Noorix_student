@@ -1,0 +1,747 @@
+{
+  "bandId": "band:k-5",
+  "bandName": "Elementary School (Kindergarten \u2013 Grade 5)",
+  "grades": [
+    {
+      "gradeId": "grade:k",
+      "gradeName": "Kindergarten",
+      "ageRange": "5-6",
+      "subjects": [
+        {
+          "subjectId": "subj:k:math",
+          "subjectName": "Mathematics",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:k:math:counting-number-sense",
+              "title": "Counting & Cardinality (1 to 20)",
+              "summary": "Understanding numbers 1\u201320, one-to-one correspondence, and comparing quantities.",
+              "keyFormulas": [
+                "Count sequence: 1, 2, 3 ... 20",
+                "More (>), Less (<), Same (=)"
+              ],
+              "sourceNotes": [
+                "When counting objects, say the number names in standard order, pairing each object with one and only one number name.",
+                "The last number name said tells the number of objects counted (cardinality principle).",
+                "Each successive number name refers to a quantity that is one larger (n + 1)."
+              ],
+              "workedExample": "Count 5 red apples on a tray: touch each apple one by one saying '1, 2, 3, 4, 5'. If we add 1 green apple, we now have 5 + 1 = 6 apples.",
+              "commonMisconception": "Skipping an object or double-counting the same object when items are arranged in a circle instead of a line.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Kindergarten",
+              "learningObjectives": [
+                "Understanding numbers 1\u201320, one-to-one correspondence, and comparing quantities."
+              ]
+            },
+            {
+              "topicId": "topic:k:math:shapes-spatial",
+              "title": "2D & 3D Shapes in Our World",
+              "summary": "Identifying circles, squares, triangles, rectangles, spheres, and cubes by their attributes.",
+              "keyFormulas": [
+                "Triangle = 3 sides, 3 corners",
+                "Square = 4 equal sides, 4 corners",
+                "Circle = 0 corners, curved boundary"
+              ],
+              "sourceNotes": [
+                "Flat shapes are two-dimensional (2D): circles, triangles, squares, and rectangles.",
+                "Solid shapes are three-dimensional (3D): spheres (like a ball), cubes (like a dice), cylinders (like a can), and cones.",
+                "Shapes remain the same regardless of their size or orientation (a rotated triangle is still a triangle)."
+              ],
+              "workedExample": "Look at a classroom clock and a sandwich cut diagonally: the clock is a circle (round, 0 corners) and the half-sandwich is a triangle (3 straight sides).",
+              "commonMisconception": "Thinking an upside-down triangle is no longer a triangle because the point is facing down.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Kindergarten",
+              "learningObjectives": [
+                "Identifying circles, squares, triangles, rectangles, spheres, and cubes by their attributes."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:k:english",
+          "subjectName": "English Language Arts",
+          "iconName": "MenuBook",
+          "topics": [
+            {
+              "topicId": "topic:k:eng:phonics-alphabet",
+              "title": "Phonics, Letter Sounds & CVC Words",
+              "summary": "Connecting uppercase/lowercase letters to phoneme sounds and blending consonant-vowel-consonant words.",
+              "keyFormulas": [
+                "C-V-C Blending: /c/ + /a/ + /t/ -> 'cat'",
+                "Short Vowels: a, e, i, o, u"
+              ],
+              "sourceNotes": [
+                "Phonemic awareness is the ability to hear, identify, and manipulate individual sounds (phonemes) in spoken words.",
+                "Consonant-Vowel-Consonant (CVC) words like 'cat', 'dog', 'sun', and 'hat' are decoded by sounding out each letter and blending smoothly from left to right."
+              ],
+              "workedExample": "To read 'map': say /m/, then short /a/, then /p/. Blend slowly 'mmmaaaap' -> 'map'.",
+              "commonMisconception": "Confusing the letter name (e.g., 'see' for C) with its phonetic sound (/k/).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Kindergarten",
+              "learningObjectives": [
+                "Connecting uppercase/lowercase letters to phoneme sounds and blending consonant-vowel-consonant words."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:k:science",
+          "subjectName": "General Science",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:k:sci:five-senses-living",
+              "title": "Living Things & The Five Senses",
+              "summary": "Distinguishing living from non-living things and exploring sight, hearing, touch, taste, and smell.",
+              "keyFormulas": [
+                "Living things: Grow, Breathe, Need Food & Water",
+                "5 Senses: Eyes, Ears, Skin, Tongue, Nose"
+              ],
+              "sourceNotes": [
+                "Living things (plants and animals) grow, take in nutrients and water, respond to their environment, and reproduce.",
+                "Non-living things (rocks, toys, water) do not grow or need food.",
+                "Humans observe the world using five senses: sight (eyes), hearing (ears), smell (nose), taste (tongue), and touch (skin)."
+              ],
+              "workedExample": "Compare a puppy and a plush toy dog: the puppy eats, breathes, and grows (living), while the plush toy stays the same and needs no food (non-living).",
+              "commonMisconception": "Believing clouds or cars are alive because they move.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Kindergarten",
+              "learningObjectives": [
+                "Distinguishing living from non-living things and exploring sight, hearing, touch, taste, and smell."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gradeId": "grade:1",
+      "gradeName": "Grade 1",
+      "ageRange": "6-7",
+      "subjects": [
+        {
+          "subjectId": "subj:1:math",
+          "subjectName": "Mathematics",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:1:math:addition-subtraction-20",
+              "title": "Addition & Subtraction Within 20",
+              "summary": "Using number bonds, making ten strategy, and fact families to add and subtract within 20.",
+              "keyFormulas": [
+                "Make 10 Strategy: 8 + 5 = 8 + (2 + 3) = 10 + 3 = 13",
+                "Fact Family: a + b = c, b + a = c, c - a = b, c - b = a"
+              ],
+              "sourceNotes": [
+                "Addition combines two parts into a whole; subtraction finds a missing part when the whole and one part are known.",
+                "The 'Make Ten' strategy decomposes one addend to complete 10 with the other addend, simplifying mental calculation.",
+                "Addition and subtraction are inverse operations connected through fact families."
+              ],
+              "workedExample": "Solve 9 + 6: Take 1 from 6 to give to 9, making 10. Now add the remaining 5: 10 + 5 = 15.",
+              "commonMisconception": "Subtracting the smaller digit from the larger digit regardless of order (e.g., thinking 12 - 5 is the same as 15 - 2).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 1",
+              "learningObjectives": [
+                "Using number bonds, making ten strategy, and fact families to add and subtract within 20."
+              ]
+            },
+            {
+              "topicId": "topic:1:math:place-value-tens-ones",
+              "title": "Place Value: Tens and Ones",
+              "summary": "Understanding two-digit numbers as bundles of ten and leftover ones up to 100.",
+              "keyFormulas": [
+                "47 = 4 Tens + 7 Ones = 40 + 7",
+                "1 Ten = 10 Ones"
+              ],
+              "sourceNotes": [
+                "In a two-digit number, the left digit represents the number of tens (groups of 10), and the right digit represents the ones.",
+                "Comparing two-digit numbers starts with the tens place: 52 > 39 because 5 tens is greater than 3 tens."
+              ],
+              "workedExample": "Decompose 64: the digit 6 is in the tens place (60) and 4 is in the ones place (4), so 64 = 60 + 4.",
+              "commonMisconception": "Thinking the '6' in 64 just means 6 instead of 60.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 1",
+              "learningObjectives": [
+                "Understanding two-digit numbers as bundles of ten and leftover ones up to 100."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:1:science",
+          "subjectName": "General Science",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:1:sci:plants-light-sound",
+              "title": "Plant Parts, Light & Sound Waves",
+              "summary": "How roots, stems, and leaves help plants survive, and how vibrations create sound and light enables sight.",
+              "keyFormulas": [
+                "Sound = Vibrating Matter",
+                "Plant System: Roots -> Stem -> Leaves -> Flower"
+              ],
+              "sourceNotes": [
+                "Roots anchor the plant and absorb water and minerals from soil; stems transport water upward; leaves capture sunlight to make food.",
+                "Sound is produced when objects vibrate (move rapidly back and forth), sending waves through the air to our ears.",
+                "Objects can only be seen when light illuminates them or when they give off their own light."
+              ],
+              "workedExample": "Pluck a stretched rubber band: you see it moving back and forth (vibrating) and hear a hum. Stop the vibration with your finger and the sound stops immediately.",
+              "commonMisconception": "Thinking our eyes send out rays to see in total darkness without a light source.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 1",
+              "learningObjectives": [
+                "How roots, stems, and leaves help plants survive, and how vibrations create sound and light enables sight."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:1:english",
+          "subjectName": "English Language Arts",
+          "iconName": "MenuBook",
+          "topics": [
+            {
+              "topicId": "topic:1:eng:sentences-punctuation",
+              "title": "Complete Sentences, Nouns & Verbs",
+              "summary": "Building complete sentences with capital letters, end punctuation, naming words (nouns), and action words (verbs).",
+              "keyFormulas": [
+                "Sentence = Who/What (Noun) + Action (Verb)",
+                "End Marks: Period (.), Question (?), Exclamation (!)"
+              ],
+              "sourceNotes": [
+                "Every complete sentence starts with a capital letter and ends with a punctuation mark (. ? !).",
+                "Nouns name a person, place, animal, or thing. Verbs describe an action or state of being."
+              ],
+              "workedExample": "'The happy frog jumps into the pond.' -> Noun (subject): 'frog', Verb (action): 'jumps'.",
+              "commonMisconception": "Forgetting to capitalize the first word or using a period at the end of a question.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 1",
+              "learningObjectives": [
+                "Building complete sentences with capital letters, end punctuation, naming words (nouns), and action words (verbs)."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gradeId": "grade:2",
+      "gradeName": "Grade 2",
+      "ageRange": "7-8",
+      "subjects": [
+        {
+          "subjectId": "subj:2:math",
+          "subjectName": "Mathematics",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:2:math:regrouping-1000",
+              "title": "Place Value to 1,000 & Addition/Subtraction with Regrouping",
+              "summary": "Hundreds, tens, and ones; carrying and borrowing across place values.",
+              "keyFormulas": [
+                "348 = 300 + 40 + 8",
+                "Regrouping: 10 Ones = 1 Ten; 10 Tens = 1 Hundred"
+              ],
+              "sourceNotes": [
+                "When adding two-digit numbers and the ones sum to 10 or more, regroup 10 ones into 1 ten and carry it to the tens column.",
+                "When subtracting and the top ones digit is smaller than the bottom ones digit, decompose 1 ten into 10 ones."
+              ],
+              "workedExample": "Calculate 47 + 36: Ones: 7 + 6 = 13 (write 3, carry 1 ten). Tens: 4 + 3 + 1 = 8 tens. Total = 83.",
+              "commonMisconception": "Forgetting to add the carried ten or forgetting to reduce the tens digit after borrowing.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 2",
+              "learningObjectives": [
+                "Hundreds, tens, and ones; carrying and borrowing across place values."
+              ]
+            },
+            {
+              "topicId": "topic:2:math:measurement-time-money",
+              "title": "Measuring Length, Telling Time & Counting Money",
+              "summary": "Using centimeters and meters, reading analog/digital clocks to 5 minutes, and counting coins.",
+              "keyFormulas": [
+                "1 meter (m) = 100 centimeters (cm)",
+                "1 hour = 60 minutes; each clock number = 5 minutes"
+              ],
+              "sourceNotes": [
+                "On an analog clock, the short hand points to the hour and the long hand points to the minutes (count by 5s around the dial).",
+                "Length must be measured by aligning the object's edge with the 0 mark on the ruler, not the physical edge of the plastic."
+              ],
+              "workedExample": "If the short hand is just past 4 and the long hand points to 6, count by fives to 6 (6 \u00d7 5 = 30): the time is 4:30.",
+              "commonMisconception": "Reading the minute hand by the face number directly (e.g., saying 4:06 instead of 4:30).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 2",
+              "learningObjectives": [
+                "Using centimeters and meters, reading analog/digital clocks to 5 minutes, and counting coins."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:2:science",
+          "subjectName": "General Science",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:2:sci:states-of-matter-habitats",
+              "title": "States of Matter (Solid, Liquid, Gas) & Animal Habitats",
+              "summary": "Properties of solids, liquids, and gases, reversible heating/cooling changes, and biodiversity in habitats.",
+              "keyFormulas": [
+                "Melting: Solid -> Liquid",
+                "Freezing: Liquid -> Solid",
+                "Evaporation: Liquid -> Gas"
+              ],
+              "sourceNotes": [
+                "Solids keep their own shape; liquids flow and take the shape of their container; gases spread out to fill all available space.",
+                "Heating ice melts it into liquid water (reversible change); baking batter into cake is an irreversible change.",
+                "Habitats (desert, rainforest, ocean, tundra) provide food, water, and shelter suited to specific adaptations."
+              ],
+              "workedExample": "An ice cube left in a warm bowl melts into liquid water. Putting that bowl back in the freezer turns it back into solid ice.",
+              "commonMisconception": "Thinking sand or flour is a liquid because it can be poured from a cup.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 2",
+              "learningObjectives": [
+                "Properties of solids, liquids, and gases, reversible heating/cooling changes, and biodiversity in habitats."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:2:eng",
+          "subjectName": "English Language Arts & Reading",
+          "iconName": "Book",
+          "topics": [
+            {
+              "topicId": "topic:2:eng:phonics-reading-comprehension",
+              "title": "Reading Comprehension, Main Idea & Compound Words",
+              "summary": "Identifying key details, central message, character motivations, and combining base words into compound words.",
+              "syllabusCode": "CCSS.ELA-LITERACY.RL.2.1 / Cambridge Stage 2",
+              "prerequisites": [
+                "topic:1:eng:sentences-punctuation"
+              ],
+              "successors": [
+                "topic:3:eng:narrative-informational-text"
+              ],
+              "learningObjectives": [
+                "Ask and answer who, what, where, when, why, and how to demonstrate understanding of key details in text",
+                "Identify the main topic of a multi-paragraph text as well as the focus of specific paragraphs"
+              ],
+              "keyFormulas": [
+                "Compound Word = Base Word 1 + Base Word 2 (e.g., sun + flower = sunflower)",
+                "Story Structure = Beginning (Setting/Characters) -> Middle (Conflict) -> End (Resolution)"
+              ],
+              "sourceNotes": [
+                "Good readers look for clues in both the illustrations and the text to infer character feelings and settings.",
+                "When encountering an unfamiliar compound word, break it down into the two individual words you already know.",
+                "Identify the main idea by asking: 'What is this paragraph mostly teaching me about?'"
+              ],
+              "workedExample": "Read: 'Leo packed his umbrella and stepped outside. Dark clouds covered the blue sky.' Question: What will the weather be like? Clues: Dark clouds + umbrella -> Inference: It is about to rain.",
+              "commonMisconception": "Confusing a supporting detail with the overall main idea of the story."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gradeId": "grade:3",
+      "gradeName": "Grade 3",
+      "ageRange": "8-9",
+      "subjects": [
+        {
+          "subjectId": "subj:3:math",
+          "subjectName": "Mathematics",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:3:math:multiplication-division",
+              "title": "Multiplication & Division Foundations",
+              "summary": "Equal groups, arrays, area models, and inverse relationship between multiplication and division.",
+              "keyFormulas": [
+                "a \u00d7 b = a groups of b",
+                "Area of Rectangle = Length \u00d7 Width",
+                "If 6 \u00d7 7 = 42, then 42 \u00f7 6 = 7"
+              ],
+              "sourceNotes": [
+                "Multiplication represents repeated addition of equal groups: 4 \u00d7 6 means 6 + 6 + 6 + 6 = 24.",
+                "The Commutative Property states that changing factor order does not change the product (4 \u00d7 6 = 6 \u00d7 4).",
+                "The Distributive Property breaks apart tough facts: 7 \u00d7 8 = 7 \u00d7 (5 + 3) = 35 + 21 = 56."
+              ],
+              "workedExample": "A garden has 4 rows of 8 tomato plants. Total plants = 4 \u00d7 8 = 32 plants. If shared equally into 4 baskets, each basket gets 32 \u00f7 4 = 8.",
+              "commonMisconception": "Confusing perimeter (distance around: 2L + 2W) with area (space inside: L \u00d7 W).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 3",
+              "learningObjectives": [
+                "Equal groups, arrays, area models, and inverse relationship between multiplication and division."
+              ]
+            },
+            {
+              "topicId": "topic:3:math:unit-fractions",
+              "title": "Understanding Fractions on a Number Line",
+              "summary": "Partitioning wholes into equal parts, numerator vs. denominator, and equivalent fractions.",
+              "keyFormulas": [
+                "Fraction = Numerator (parts selected) / Denominator (total equal parts)",
+                "1/2 = 2/4 = 3/6 = 4/8"
+              ],
+              "sourceNotes": [
+                "A fraction represents equal parts of a whole or a precise location on a number line between 0 and 1.",
+                "When comparing fractions with the same numerator, the fraction with the smaller denominator is larger (1/3 > 1/6 because each third is a bigger piece)."
+              ],
+              "workedExample": "Divide a number line from 0 to 1 into 4 equal jumps. Each jump is 1/4. Two jumps land at 2/4, which is the exact midpoint 1/2.",
+              "commonMisconception": "Thinking 1/8 is bigger than 1/4 because 8 is bigger than 4.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 3",
+              "learningObjectives": [
+                "Partitioning wholes into equal parts, numerator vs. denominator, and equivalent fractions."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:3:science",
+          "subjectName": "General Science",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:3:sci:forces-magnets-weather",
+              "title": "Forces, Magnetism & Weather Patterns",
+              "summary": "Balanced and unbalanced forces, friction, magnetic poles, and the water cycle.",
+              "keyFormulas": [
+                "Like Poles Repel (N-N, S-S)",
+                "Opposite Poles Attract (N-S)",
+                "Net Force = Push/Pull difference"
+              ],
+              "sourceNotes": [
+                "A force is a push or a pull that can start motion, stop motion, or change an object's direction.",
+                "Magnets exert non-contact force on ferromagnetic metals (iron, nickel, cobalt). North and South poles attract; identical poles repel.",
+                "Friction opposes motion between two surfaces sliding past each other."
+              ],
+              "workedExample": "Two students pull a rope with 50 N left and 50 N right: forces are balanced, so the rope stays still. If the right side pulls with 70 N, the rope accelerates right.",
+              "commonMisconception": "Thinking all shiny metals (like aluminum foil or copper coins) stick to magnets.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 3",
+              "learningObjectives": [
+                "Balanced and unbalanced forces, friction, magnetic poles, and the water cycle."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:3:eng",
+          "subjectName": "English Language Arts & Reading",
+          "iconName": "Book",
+          "topics": [
+            {
+              "topicId": "topic:3:eng:narrative-informational-text",
+              "title": "Text Structure, Cause & Effect and Prefixes/Suffixes",
+              "summary": "Analyzing cause-and-effect relationships in informational texts and decoding vocabulary with prefixes (un-, re-, pre-) and suffixes (-ful, -less).",
+              "syllabusCode": "CCSS.ELA-LITERACY.RI.3.8 / Cambridge Stage 3",
+              "prerequisites": [
+                "topic:2:eng:phonics-reading-comprehension"
+              ],
+              "successors": [
+                "topic:4:eng:summarizing-evidence-grammar"
+              ],
+              "learningObjectives": [
+                "Describe the logical connection between particular sentences and paragraphs in a text (e.g., comparison, cause/effect)",
+                "Determine the meaning of the new word formed when a known affix is added to a known word"
+              ],
+              "keyFormulas": [
+                "Prefix 'un-' = not (unhappy = not happy); 're-' = again (rewrite = write again)",
+                "Cause (Why it happened) -> Effect (What happened)"
+              ],
+              "sourceNotes": [
+                "Signal words like 'because', 'therefore', 'as a result', and 'since' indicate cause and effect relationships.",
+                "Affixes modify root words: removing the prefix or suffix reveals the base word's root meaning.",
+                "Text features like headings, captions, and glossaries guide navigation through non-fiction text."
+              ],
+              "workedExample": "Sentence: 'Because the temperatures dropped below freezing overnight, the puddle turned into a sheet of ice.' Cause: Temperatures dropped below freezing. Effect: Puddle turned into ice.",
+              "commonMisconception": "Reversing cause and effect: thinking the effect caused the original event."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gradeId": "grade:4",
+      "gradeName": "Grade 4",
+      "ageRange": "9-10",
+      "subjects": [
+        {
+          "subjectId": "subj:4:math",
+          "subjectName": "Mathematics",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:4:math:multi-digit-ops-fractions",
+              "title": "Multi-Digit Multiplication, Long Division & Decimals",
+              "summary": "Area model multiplication, division with remainders, fraction equivalence, and tenths/hundredths.",
+              "keyFormulas": [
+                "24 \u00d7 15 = (20+4)(10+5) = 200 + 100 + 40 + 20 = 360",
+                "0.7 = 7/10 = 70/100 = 0.70"
+              ],
+              "sourceNotes": [
+                "Multi-digit multiplication uses partial products based on place value before summing the results.",
+                "Decimals extend the base-10 place value system to the right of the decimal point: tenths (1/10) and hundredths (1/100)."
+              ],
+              "workedExample": "Convert 3/4 to a decimal: multiply numerator and denominator by 25 to get 75/100, which is written as 0.75.",
+              "commonMisconception": "Thinking 0.35 is greater than 0.4 because 35 > 4 (ignoring that 0.4 = 0.40).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 4",
+              "learningObjectives": [
+                "Area model multiplication, division with remainders, fraction equivalence, and tenths/hundredths."
+              ]
+            },
+            {
+              "topicId": "topic:4:math:angles-geometry",
+              "title": "Lines, Angles & Symmetry",
+              "summary": "Measuring acute, right, obtuse, and straight angles with a protractor; parallel and perpendicular lines.",
+              "keyFormulas": [
+                "Right Angle = 90\u00b0",
+                "Acute < 90\u00b0",
+                "90\u00b0 < Obtuse < 180\u00b0",
+                "Straight Line = 180\u00b0"
+              ],
+              "sourceNotes": [
+                "Parallel lines never intersect and stay the same distance apart; perpendicular lines intersect at a 90\u00b0 right angle.",
+                "Two angles that form a straight line add up to 180\u00b0 (supplementary); two angles forming a right corner add up to 90\u00b0 (complementary)."
+              ],
+              "workedExample": "If a right angle (90\u00b0) is split into two angles and one measures 35\u00b0, the other angle is 90\u00b0 - 35\u00b0 = 55\u00b0.",
+              "commonMisconception": "Reading the wrong scale (inner vs. outer) on a protractor, claiming an acute angle is 140\u00b0 instead of 40\u00b0.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 4",
+              "learningObjectives": [
+                "Measuring acute, right, obtuse, and straight angles with a protractor; parallel and perpendicular lines."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:4:science",
+          "subjectName": "General Science",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:4:sci:energy-waves-earth",
+              "title": "Energy Transfer, Simple Circuits & Earth's Rock Cycle",
+              "summary": "Forms of energy (kinetic, thermal, electrical), closed loops in circuits, and weathering/erosion.",
+              "keyFormulas": [
+                "Closed Circuit = Continuous Conducting Loop",
+                "Rock Cycle: Igneous <-> Sedimentary <-> Metamorphic"
+              ],
+              "sourceNotes": [
+                "Energy cannot be created or destroyed; it transforms from one form to another (e.g., chemical energy in a battery -> electrical energy -> light and heat in a bulb).",
+                "Weathering breaks down rocks in place through wind, water, or ice; erosion transports those sediment particles to new locations."
+              ],
+              "workedExample": "When water freezes inside a rock crack, it expands and splits the rock (ice wedging / physical weathering), and river flow carries the pebbles downstream (erosion).",
+              "commonMisconception": "Confusing weathering (breaking down rock) with erosion (moving the broken rock).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 4",
+              "learningObjectives": [
+                "Forms of energy (kinetic, thermal, electrical), closed loops in circuits, and weathering/erosion."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:4:eng",
+          "subjectName": "English Language Arts & Reading",
+          "iconName": "Book",
+          "topics": [
+            {
+              "topicId": "topic:4:eng:summarizing-evidence-grammar",
+              "title": "Textual Evidence, Theme Identification & Prepositions",
+              "summary": "Citing evidence to support inferences, identifying the author's theme or moral, and mastering prepositional phrases.",
+              "syllabusCode": "CCSS.ELA-LITERACY.RL.4.1 / Cambridge Stage 4",
+              "prerequisites": [
+                "topic:3:eng:narrative-informational-text"
+              ],
+              "successors": [
+                "topic:5:eng:analytical-writing-conventions"
+              ],
+              "learningObjectives": [
+                "Refer to details and examples in a text when explaining what the text says explicitly and when drawing inferences",
+                "Determine a theme of a story, drama, or poem from details in the text"
+              ],
+              "keyFormulas": [
+                "Theme = Universal message about life (not just a one-word topic)",
+                "Claim + Textual Evidence ('In paragraph 3, the author states...') = Grounded Answer"
+              ],
+              "sourceNotes": [
+                "A theme must apply beyond the specific characters to real human experiences (e.g., 'True friendship requires honesty', not just 'frogs').",
+                "Direct quotations must be bounded by quotation marks and accurately mirror the source text.",
+                "Prepositional phrases add detail answering where, when, or how (e.g., 'under the bridge', 'after sunset')."
+              ],
+              "workedExample": "Prompt: What is the theme of 'The Boy Who Cried Wolf'? Answer: Honesty is essential because if you frequently lie, people will not believe you even when you tell the truth.",
+              "commonMisconception": "Confusing the plot summary ('A wolf ate the sheep') with the moral/theme of the passage."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gradeId": "grade:5",
+      "gradeName": "Grade 5",
+      "ageRange": "10-11",
+      "subjects": [
+        {
+          "subjectId": "subj:5:math",
+          "subjectName": "Mathematics",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:5:math:fractions-unlike-denominators",
+              "title": "Operations with Fractions & Mixed Numbers",
+              "summary": "Adding, subtracting, multiplying, and dividing fractions with unlike denominators.",
+              "keyFormulas": [
+                "a/b + c/d = (ad + bc) / bd",
+                "a/b \u00d7 c/d = (a\u00d7c) / (b\u00d7d)",
+                "a/b \u00f7 c/d = a/b \u00d7 d/c"
+              ],
+              "sourceNotes": [
+                "To add or subtract fractions with unlike denominators, first find the Least Common Multiple (LCM) of the denominators to create equivalent fractions.",
+                "Multiplying fractions multiplies numerators together and denominators together \u2014 no common denominator is needed."
+              ],
+              "workedExample": "Add 2/3 + 1/4: LCM of 3 and 4 is 12. Convert to 8/12 + 3/12 = 11/12.",
+              "commonMisconception": "Adding both numerators and denominators directly (writing 2/3 + 1/4 = 3/7).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 5",
+              "learningObjectives": [
+                "Adding, subtracting, multiplying, and dividing fractions with unlike denominators."
+              ]
+            },
+            {
+              "topicId": "topic:5:math:volume-coordinate-plane",
+              "title": "3D Volume, Order of Operations (PEMDAS) & Coordinate Plane",
+              "summary": "Calculating volume of rectangular prisms, evaluating parentheses/exponents, and plotting (x, y) pairs.",
+              "keyFormulas": [
+                "Volume = Length \u00d7 Width \u00d7 Height (V = l \u00d7 w \u00d7 h)",
+                "Order: Parentheses, Exponents, Multiply/Divide, Add/Subtract"
+              ],
+              "sourceNotes": [
+                "Volume measures the 3D space inside a solid in cubic units (cm\u00b3, m\u00b3). For a rectangular prism, V = Base Area \u00d7 Height.",
+                "On the coordinate plane, an ordered pair (x, y) locates a point by moving horizontally along the x-axis first, then vertically along the y-axis."
+              ],
+              "workedExample": "Evaluate 20 - 3 \u00d7 (2 + 4): First parentheses (2 + 4 = 6), then multiplication (3 \u00d7 6 = 18), finally subtraction (20 - 18 = 2).",
+              "commonMisconception": "Performing subtraction before multiplication in 20 - 3 \u00d7 6 (getting 17 \u00d7 6 = 102 instead of 2).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 5",
+              "learningObjectives": [
+                "Calculating volume of rectangular prisms, evaluating parentheses/exponents, and plotting (x, y) pairs."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:5:science",
+          "subjectName": "General Science",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:5:sci:ecosystems-matter-space",
+              "title": "Conservation of Matter, Food Webs & Solar System",
+              "summary": "Producers, consumers, decomposers, conservation of mass in mixtures, and Earth's rotation vs. orbit.",
+              "keyFormulas": [
+                "Photosynthesis: Sunlight + CO\u2082 + H\u2082O -> Glucose + O\u2082",
+                "Earth Rotation = 24 hrs (Day/Night); Orbit = 365.25 days (Seasons/Year)"
+              ],
+              "sourceNotes": [
+                "In any physical or chemical change, the total weight (mass) of matter is conserved \u2014 dissolving 10 g of salt in 100 g of water yields 110 g of salt water.",
+                "Energy in an ecosystem flows from the Sun to producers (plants), then to herbivores, carnivores, and decomposers.",
+                "Earth's 24-hour rotation on its axis causes day and night and the apparent movement of shadows."
+              ],
+              "workedExample": "When 5 g of sugar dissolves completely in 200 g of tea, the sugar particles spread out invisibly, but the scale reads exactly 205 g.",
+              "commonMisconception": "Thinking dissolved sugar disappears and loses its mass because it is no longer visible.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 5",
+              "learningObjectives": [
+                "Producers, consumers, decomposers, conservation of mass in mixtures, and Earth's rotation vs. orbit."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:5:cs",
+          "subjectName": "Computer Science & Digital Literacy",
+          "iconName": "Computer",
+          "topics": [
+            {
+              "topicId": "topic:5:cs:algorithms-loops-conditionals",
+              "title": "Algorithms, Loops & Conditional Logic",
+              "summary": "Step-by-step instructions, repeat loops, if/else decisions, and debugging sequences.",
+              "keyFormulas": [
+                "Algorithm = Finite step-by-step sequence",
+                "If <Condition> Then <Action A> Else <Action B>"
+              ],
+              "sourceNotes": [
+                "An algorithm is an unambiguous, ordered list of steps designed to solve a problem or complete a task.",
+                "Loops repeat a block of instructions multiple times to avoid redundant code; conditionals (if/else) make decisions based on boolean conditions."
+              ],
+              "workedExample": "To draw a square with a robot turtle: Repeat 4 times: [Move Forward 100 steps, Turn Right 90 degrees].",
+              "commonMisconception": "Assuming a computer can infer missing steps that weren't explicitly written in the algorithm.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge Primary / Common Core Grade 5",
+              "learningObjectives": [
+                "Step-by-step instructions, repeat loops, if/else decisions, and debugging sequences."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:5:eng",
+          "subjectName": "English Language Arts & Writing",
+          "iconName": "Book",
+          "topics": [
+            {
+              "topicId": "topic:5:eng:analytical-writing-conventions",
+              "title": "Point of View, Figurative Language & Argumentative Essays",
+              "summary": "Analyzing first vs. third person perspectives, metaphors, similes, and constructing 5-paragraph thesis-driven essays.",
+              "syllabusCode": "CCSS.ELA-LITERACY.W.5.1 / Cambridge Stage 5",
+              "prerequisites": [
+                "topic:4:eng:summarizing-evidence-grammar"
+              ],
+              "successors": [
+                "topic:6:eng:narrative-structure-figurative"
+              ],
+              "learningObjectives": [
+                "Write opinion pieces on topics or texts, supporting a point of view with reasons and information",
+                "Explain how an author's point of view or purpose shapes the content and style of a text"
+              ],
+              "keyFormulas": [
+                "Simile: Comparison using 'like' or 'as' (e.g., brave as a lion)",
+                "Metaphor: Direct comparison stating one thing IS another (e.g., time is a thief)",
+                "Essay Structure = Hook + Thesis -> 3 Evidence Paragraphs -> Restated Conclusion"
+              ],
+              "sourceNotes": [
+                "First-person narrator uses 'I/we' and offers subjective emotional access; third-person omniscient knows all characters' thoughts.",
+                "Every body paragraph in an argument essay must begin with a clear topic sentence directly linked to the thesis statement.",
+                "Transition words (furthermore, however, in contrast, consequently) build logical progression."
+              ],
+              "workedExample": "Thesis: 'School recess should be extended because it enhances physical health, boosts concentration, and builds social skills.' Body paragraph 1 expands physical health with research statistics.",
+              "commonMisconception": "Asserting an opinion without providing supporting evidence or citations from the text."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

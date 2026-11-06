@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import com.example.data.cloud.CatalogSyncState
+import com.example.data.cloud.CloudContentConfig
+import com.example.data.cloud.ContentSourceMode
+import com.example.data.cloud.ContentSyncPolicy
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
 import com.example.presentation.bubble.AishaBubbleService
@@ -615,6 +620,350 @@ fun AuditScreen(viewModel: OLevelViewModel, activity: Activity? = null) {
                         Icon(Icons.Default.Timeline, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Memory Retention (Decay Sync)", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // 4b. Noorix Cloud Content & YouTube Integration Configuration (Sections 1, 4, 8, 11)
+        // ============================================================
+        item {
+            val cloudConfig by viewModel.cloudContentConfig.collectAsState()
+            val cloudSyncState by viewModel.cloudCatalogSyncState.collectAsState()
+            val activeCatalog by viewModel.activeCloudCatalog.collectAsState()
+
+            var indexUrlInput by remember(cloudConfig.contentIndexUrl) { mutableStateOf(cloudConfig.contentIndexUrl) }
+            var driveFolderInput by remember(cloudConfig.driveRootFolderId) { mutableStateOf(cloudConfig.driveRootFolderId) }
+            var ytChannelInput by remember(cloudConfig.youtubeChannelId) { mutableStateOf(cloudConfig.youtubeChannelId) }
+            var ytApiKeyInput by remember(cloudConfig.youtubeApiKey) { mutableStateOf(cloudConfig.youtubeApiKey) }
+            var offlineCacheEnabled by remember(cloudConfig.allowOfflineCache) { mutableStateOf(cloudConfig.allowOfflineCache) }
+            var syncPolicyInput by remember(cloudConfig.contentSyncPolicy) { mutableStateOf(cloudConfig.contentSyncPolicy) }
+            var notifyNewInput by remember(cloudConfig.notifyOnNewContent) { mutableStateOf(cloudConfig.notifyOnNewContent) }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "CLOUD CONTENT & YOUTUBE INTEGRATION",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TealAccent,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Text(
+                                text = "Dynamic Learning Content Supply",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = when (cloudSyncState) {
+                                is CatalogSyncState.Success -> TealAccentSubtle
+                                is CatalogSyncState.Refreshing -> CyberGold.copy(alpha = 0.2f)
+                                is CatalogSyncState.Outage -> CyberGold.copy(alpha = 0.2f)
+                                is CatalogSyncState.AccessDenied -> StepIssue.copy(alpha = 0.2f)
+                                else -> NearBlackElevated
+                            }
+                        ) {
+                            Text(
+                                text = when (cloudSyncState) {
+                                    is CatalogSyncState.Success -> "Online"
+                                    is CatalogSyncState.Refreshing -> "Refreshing…"
+                                    is CatalogSyncState.Outage -> "Offline Cache"
+                                    is CatalogSyncState.AccessDenied -> "Access Denied"
+                                    else -> "Idle"
+                                },
+                                color = when (cloudSyncState) {
+                                    is CatalogSyncState.Success -> TealAccent
+                                    is CatalogSyncState.AccessDenied -> StepIssue
+                                    else -> CyberGold
+                                },
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Configures the Google Drive published index URL and Noorix YouTube Channel ID for on-demand learning content delivery.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedTextField(
+                        value = indexUrlInput,
+                        onValueChange = { indexUrlInput = it },
+                        label = { Text("Content Index URL (Google Drive / HTTPS)", fontSize = 11.sp, color = TextMuted) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TealAccent,
+                            unfocusedBorderColor = SubtleBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = driveFolderInput,
+                        onValueChange = { driveFolderInput = it },
+                        label = { Text("Optional Drive Root Folder ID", fontSize = 11.sp, color = TextMuted) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TealAccent,
+                            unfocusedBorderColor = SubtleBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = ytChannelInput,
+                        onValueChange = { ytChannelInput = it },
+                        label = { Text("Noorix YouTube Channel ID", fontSize = 11.sp, color = TextMuted) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TealAccent,
+                            unfocusedBorderColor = SubtleBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = ytApiKeyInput,
+                        onValueChange = { ytApiKeyInput = it },
+                        label = { Text("Optional YouTube Data API Key", fontSize = 11.sp, color = TextMuted) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TealAccent,
+                            unfocusedBorderColor = SubtleBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Live YouTube notice
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = NearBlackBg,
+                        border = BorderStroke(1.dp, SubtleBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.PlayCircle, contentDescription = null, tint = StepIssue, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "YouTube videos update instantly via official embedded IFrame and are never blocked behind bulk downloads.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Sync Policy selector
+                    Text(
+                        text = "Content Sync Preference",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealAccent,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(
+                            Triple(
+                                ContentSyncPolicy.NOTIFY_FIRST,
+                                "Notify First (User Preference)",
+                                "Alert me when new study packs, notes, or quizzes arrive for my class, then let me decide to sync."
+                            ),
+                            Triple(
+                                ContentSyncPolicy.AUTOMATIC,
+                                "Automatic Sync",
+                                "Automatically download and cache new class learning assets on app start."
+                            ),
+                            Triple(
+                                ContentSyncPolicy.MANUAL_ONLY,
+                                "Manual Download Only",
+                                "Never alert or auto-download; download materials individually while browsing topics."
+                            )
+                        ).forEach { (policy, label, desc) ->
+                            val isSelected = (syncPolicyInput == policy)
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) TealAccentSubtle else NearBlackBg,
+                                border = BorderStroke(1.dp, if (isSelected) TealAccent else SubtleBorder),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { syncPolicyInput = policy }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = isSelected,
+                                        onClick = { syncPolicyInput = policy },
+                                        colors = RadioButtonDefaults.colors(selectedColor = TealAccent, unselectedColor = TextMuted)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                                        Text(text = desc, style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 11.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Notify on New Class Content",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Show in-app banner on app startup when new curriculum materials match your registered class.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                        Switch(
+                            checked = notifyNewInput,
+                            onCheckedChange = { notifyNewInput = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = NearBlackBg,
+                                checkedTrackColor = TealAccent
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Enable Local Offline Cache",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary
+                        )
+                        Switch(
+                            checked = offlineCacheEnabled,
+                            onCheckedChange = { offlineCacheEnabled = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = NearBlackBg,
+                                checkedTrackColor = TealAccent
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
+                            onClick = {
+                                val updated = cloudConfig.copy(
+                                    contentIndexUrl = indexUrlInput.trim(),
+                                    driveRootFolderId = driveFolderInput.trim(),
+                                    youtubeChannelId = ytChannelInput.trim(),
+                                    youtubeApiKey = ytApiKeyInput.trim(),
+                                    allowOfflineCache = offlineCacheEnabled,
+                                    contentSyncPolicy = syncPolicyInput,
+                                    notifyOnNewContent = notifyNewInput
+                                )
+                                viewModel.updateCloudContentConfig(updated)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Save Configuration", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { viewModel.refreshCloudCatalog(force = true) },
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, SubtleBorderActive)
+                        ) {
+                            Icon(Icons.Default.Sync, contentDescription = "Refresh", tint = TextSecondary, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Refresh Now", color = TextPrimary, fontSize = 12.sp)
+                        }
+                    }
+
+                    activeCatalog?.let { cat ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = NearBlackBg,
+                            border = BorderStroke(1.dp, SubtleBorder),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text(
+                                    text = "Active Catalog Version: ${cat.catalogVersion} (${cat.curriculumId})",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TealAccent,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Indexed Subjects: ${cat.subjects.size} • Total Topics: ${cat.subjects.sumOf { it.topics.size }}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
                     }
                 }
             }

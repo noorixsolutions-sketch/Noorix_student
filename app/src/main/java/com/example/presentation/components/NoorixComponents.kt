@@ -123,11 +123,12 @@ fun NoorixTopBar(
                 // Noorix Brand Logo & Title
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = R.drawable.img_noorix_logo),
-                        contentDescription = "Noorix Logo",
+                        painter = painterResource(id = R.drawable.img_noorix_emblem_core),
+                        contentDescription = "Noorix Solutions Logo",
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape),
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .border(1.dp, TealAccent.copy(alpha = 0.5f), CircleShape),
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(10.dp))

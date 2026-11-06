@@ -1,0 +1,478 @@
+{
+  "bandId": "band:9-10",
+  "bandName": "High School / Cambridge O-Level & IGCSE (Grades 9 \u2013 10)",
+  "grades": [
+    {
+      "gradeId": "grade:9",
+      "gradeName": "Grade 9 (O-Level Year 1)",
+      "ageRange": "14-15",
+      "subjects": [
+        {
+          "subjectId": "subj:9:math-4024",
+          "subjectName": "Mathematics (Cambridge 4024)",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "concept:4024:factorisation",
+              "title": "Quadratic Trinomial Factorisation & Difference of Two Squares",
+              "summary": "Factorising ax\u00b2 + bx + c by splitting the middle term, grouping in pairs, and a\u00b2 - b\u00b2 = (a - b)(a + b).",
+              "keyFormulas": [
+                "x\u00b2 + (p+q)x + pq = (x + p)(x + q)",
+                "a\u00b2 - b\u00b2 = (a - b)(a + b)",
+                "ax\u00b2 + bx + c: find p, q such that p+q = b and pq = ac"
+              ],
+              "sourceNotes": [
+                "Always check for a common factor across all terms before attempting quadratic trinomial or difference-of-squares factorisation.",
+                "For ax\u00b2 + bx + c where a \u2260 1, find two integers whose product is a\u00d7c and whose sum is b, split bx into those two terms, and factorise by grouping.",
+                "When extracting a negative factor from the second pair in grouping, flip the sign inside the parentheses: -3x + 6 = -3(x - 2)."
+              ],
+              "workedExample": "Factorise 2x\u00b2 + 7x + 3: Product ac = 6, sum b = 7 -> numbers are 6 and 1. Rewrite as 2x\u00b2 + 6x + x + 3 = 2x(x + 3) + 1(x + 3) = (2x + 1)(x + 3).",
+              "commonMisconception": "Sign distribution error when factoring out a negative common factor: writing 2x(x - 3) - 5(x + 3) instead of 2x(x - 3) - 5(x - 3).",
+              "prerequisites": [
+                "concept:4024:common-factors",
+                "concept:4024:algebraic-expressions"
+              ],
+              "successors": [
+                "concept:4024:quadratic-equations"
+              ],
+              "syllabusCode": "Cambridge 4024 \u00a73.1",
+              "learningObjectives": [
+                "Factorising ax\u00b2 + bx + c by splitting the middle term, grouping in pairs, and a\u00b2 - b\u00b2 = (a - b)(a + b)."
+              ]
+            },
+            {
+              "topicId": "concept:4024:simultaneous-equations",
+              "title": "Simultaneous Linear Equations (Elimination & Substitution)",
+              "summary": "Solving systems of two linear equations algebraically and interpreting the intersection point graphically.",
+              "keyFormulas": [
+                "Elimination: Match coefficients of x or y, then add/subtract",
+                "Substitution: Isolate one variable and substitute into the other equation"
+              ],
+              "sourceNotes": [
+                "In the elimination method, if the matching coefficients have opposite signs (+2y and -2y), ADD the equations; if they have the same sign (+2y and +2y), SUBTRACT one from the other.",
+                "Always verify your solution by substituting both (x, y) back into BOTH original equations."
+              ],
+              "workedExample": "Solve 2x + y = 11 and x - y = 1: Add the two equations to eliminate y -> 3x = 12 -> x = 4. Substitute x = 4 into 2(4) + y = 11 -> y = 3.",
+              "commonMisconception": "Adding equations when the variable to eliminate has identical signs instead of subtracting.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Mathematics (Cambridge 4024)",
+              "learningObjectives": [
+                "Solving systems of two linear equations algebraically and interpreting the intersection point graphically."
+              ]
+            },
+            {
+              "topicId": "topic:9:math:indices-surds-standard-form",
+              "title": "Fractional/Negative Indices & Standard Form (A \u00d7 10\u207f)",
+              "summary": "Evaluating negative and fractional powers a^(-n) = 1/a^n, a^(m/n) = (\u207f\u221aa)^m, and scientific notation.",
+              "keyFormulas": [
+                "a^(-n) = 1 / a^n",
+                "a^(1/n) = \u207f\u221aa",
+                "a^(m/n) = (\u207f\u221aa)^m",
+                "Standard Form: A \u00d7 10\u207f where 1 \u2264 A < 10"
+              ],
+              "sourceNotes": [
+                "A negative exponent indicates the reciprocal of the base raised to the positive exponent \u2014 it never makes the result negative.",
+                "In a^(m/n), the denominator n is the root and the numerator m is the power. Take the root first to keep numbers small!"
+              ],
+              "workedExample": "Evaluate 27^(-2/3): Reciprocal gives 1 / 27^(2/3). Cube root of 27 is 3, then square it: 3\u00b2 = 9. Result = 1/9.",
+              "commonMisconception": "Writing 27^(-2/3) as a negative number (-9) instead of the reciprocal 1/9.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Mathematics (Cambridge 4024)",
+              "learningObjectives": [
+                "Evaluating negative and fractional powers a^(-n) = 1/a^n, a^(m/n) = (\u207f\u221aa)^m, and scientific notation."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:9:physics-5054",
+          "subjectName": "Physics (Cambridge 5054)",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "concept:5054:kinematics",
+              "title": "Kinematics: Velocity-Time Graphs, Acceleration & Free Fall",
+              "summary": "Displacement vs. distance, velocity vs. speed, gradient and area under v-t graphs, and g = 9.8 m/s\u00b2.",
+              "keyFormulas": [
+                "a = (v - u) / t",
+                "Distance = Area under v-t graph",
+                "v\u00b2 = u\u00b2 + 2as",
+                "s = ut + \u00bdat\u00b2"
+              ],
+              "sourceNotes": [
+                "On a velocity-time (v-t) graph, the gradient (slope) equals acceleration, and the area enclosed under the graph equals total distance traveled.",
+                "Near Earth's surface in the absence of air resistance, all objects fall with constant acceleration g \u2248 9.8 m/s\u00b2 (or 10 m/s\u00b2)."
+              ],
+              "workedExample": "A car accelerates uniformly from 10 m/s to 26 m/s in 4 s. Acceleration a = (26 - 10)/4 = 4 m/s\u00b2. Distance = \u00bd(10 + 26) \u00d7 4 = 72 m.",
+              "commonMisconception": "Using d = v \u00d7 t when velocity is changing instead of calculating the trapezium/triangle area under the v-t graph.",
+              "prerequisites": [
+                "concept:5054:speed-motion"
+              ],
+              "successors": [
+                "concept:5054:forces",
+                "concept:5054:energy"
+              ],
+              "syllabusCode": "Cambridge 5054 \u00a71.2",
+              "learningObjectives": [
+                "Displacement vs. distance, velocity vs. speed, gradient and area under v-t graphs, and g = 9.8 m/s\u00b2."
+              ]
+            },
+            {
+              "topicId": "concept:5054:forces",
+              "title": "Newton's Laws of Motion, Resultant Force & Moments",
+              "summary": "Balanced vs. unbalanced forces, F = ma, terminal velocity, and the principle of moments (\u03c4 = F \u00d7 d).",
+              "keyFormulas": [
+                "Resultant Force: F_net = m \u00d7 a",
+                "Weight: W = m \u00d7 g",
+                "Moment of a Force: M = F \u00d7 d_perp",
+                "Clockwise Moments = Anticlockwise Moments"
+              ],
+              "sourceNotes": [
+                "Newton's First Law: if resultant force is zero, a stationary object stays at rest AND a moving object continues at constant velocity in a straight line.",
+                "For rotational equilibrium, both the net force AND the net moment about any pivot must equal zero."
+              ],
+              "workedExample": "A 1,200 kg car experiences a forward engine thrust of 3,500 N and resistive drag of 1,100 N. F_net = 3,500 - 1,100 = 2,400 N. Acceleration a = 2,400 / 1,200 = 2.0 m/s\u00b2.",
+              "commonMisconception": "Believing a constant forward resultant force is needed to maintain constant velocity (zero resultant force maintains constant velocity).",
+              "prerequisites": [
+                "concept:5054:kinematics"
+              ],
+              "successors": [
+                "concept:5054:energy",
+                "topic:11:phys:momentum-projectiles-waves"
+              ],
+              "syllabusCode": "Cambridge 5054 \u00a71.3",
+              "learningObjectives": [
+                "Balanced vs. unbalanced forces, F = ma, terminal velocity, and the principle of moments (\u03c4 = F \u00d7 d)."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:9:chemistry-5070",
+          "subjectName": "Chemistry (Cambridge 5070)",
+          "iconName": "Biotech",
+          "topics": [
+            {
+              "topicId": "topic:9:chem:atomic-structure-bonding",
+              "title": "Atomic Structure, Isotopes, Ionic & Covalent Bonding",
+              "summary": "Protons, neutrons, electrons, electronic configurations, dot-and-cross diagrams, and lattice structures.",
+              "keyFormulas": [
+                "Mass Number (A) = Protons (Z) + Neutrons (N)",
+                "Ionic Bond = Electron Transfer (Metal + Non-metal)",
+                "Covalent Bond = Electron Sharing (Non-metals)"
+              ],
+              "sourceNotes": [
+                "Isotopes are atoms of the same element with the same number of protons (atomic number) but different numbers of neutrons.",
+                "Ionic compounds (like NaCl, MgO) form giant ionic lattices with strong electrostatic attraction, giving them high melting points and electrical conductivity only when molten or aqueous."
+              ],
+              "workedExample": "Chlorine has two main isotopes: 75% Cl-35 and 25% Cl-37. Relative atomic mass Ar = (0.75 \u00d7 35) + (0.25 \u00d7 37) = 26.25 + 9.25 = 35.5.",
+              "commonMisconception": "Saying ionic compounds conduct electricity via free electrons when molten (they conduct via mobile ions, not free electrons!).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Chemistry (Cambridge 5070)",
+              "learningObjectives": [
+                "Protons, neutrons, electrons, electronic configurations, dot-and-cross diagrams, and lattice structures."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:9:biology-5090",
+          "subjectName": "Biology (Cambridge 5090)",
+          "iconName": "Spa",
+          "topics": [
+            {
+              "topicId": "topic:9:bio:enzymes-osmosis-nutrition",
+              "title": "Enzymes (Lock-and-Key), Osmosis & Active Transport",
+              "summary": "Biological catalysts, denaturation by temperature/pH, water potential gradients, and active uptake.",
+              "keyFormulas": [
+                "Osmosis: Net movement of H\u2082O from higher to lower water potential across a partially permeable membrane"
+              ],
+              "sourceNotes": [
+                "Enzymes are biological protein catalysts with a specific 3D active site complementary to their substrate (lock-and-key / induced fit).",
+                "Above optimum temperature, thermal agitation breaks intramolecular bonds, permanently denaturing the active site shape."
+              ],
+              "workedExample": "A potato cylinder placed in concentrated sucrose solution loses mass because water molecules move out of the cells by osmosis down the water potential gradient, causing plasmolysis.",
+              "commonMisconception": "Saying enzymes are 'killed' at high temperatures (enzymes are proteins, not living organisms \u2014 they are denatured).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Biology (Cambridge 5090)",
+              "learningObjectives": [
+                "Biological catalysts, denaturation by temperature/pH, water potential gradients, and active uptake."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:9:cs",
+          "subjectName": "Computer Science (Cambridge 2210)",
+          "iconName": "Terminal",
+          "topics": [
+            {
+              "topicId": "topic:9:cs:data-representation-logic-gates",
+              "title": "Binary, Hexadecimal, ASCII & Logic Gates (AND, OR, NOT, XOR)",
+              "summary": "Binary conversion, two's complement, hexadecimal addressing, truth tables, and combined Boolean logic gate circuits.",
+              "syllabusCode": "Cambridge O-Level 2210 / IGCSE 0478 Section 1",
+              "prerequisites": [
+                "topic:8:cs:python-data-structures-binary"
+              ],
+              "successors": [
+                "topic:10:cs:architecture-algorithms-sql"
+              ],
+              "learningObjectives": [
+                "Convert positive and negative integers between denary, binary (8-bit two's complement) and hexadecimal",
+                "Construct and evaluate truth tables for complex logic circuits incorporating NOT, AND, OR, NAND, NOR, and XOR gates"
+              ],
+              "keyFormulas": [
+                "Hexadecimal Nibble: 4 binary bits = 1 hex digit (0-9, A-F where A=10, F=15)",
+                "Two's Complement: Invert all bits (0<->1) and add 1 to the least significant bit",
+                "XOR Gate: Output 1 when inputs are strictly different (A\u2295B = A\u00b7B\u0304 + \u0100\u00b7B)"
+              ],
+              "sourceNotes": [
+                "Hexadecimal is widely used in computer science because it is human-readable shorthand for long binary sequences (e.g., MAC addresses, HTML hex colors).",
+                "Two's complement ensures that addition and subtraction circuitry in the ALU use the identical hardware adder.",
+                "Truth tables list all 2\u207f possible input combinations systematically in standard binary counting order (00, 01, 10, 11)."
+              ],
+              "workedExample": "Convert -42 to 8-bit two's complement: +42 in binary = 00101010. One's complement (invert) = 11010101. Add 1 = 11010110.",
+              "commonMisconception": "Forgetting that the most significant bit (MSB) in signed two's complement represents negative place value (-128 in 8-bit)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gradeId": "grade:10",
+      "gradeName": "Grade 10 (O-Level Year 2 / Final Exam)",
+      "ageRange": "15-16",
+      "subjects": [
+        {
+          "subjectId": "subj:10:math-4024",
+          "subjectName": "Mathematics (Cambridge 4024)",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "concept:4024:quadratic-equations",
+              "title": "Quadratic Equations, Completing the Square & Quadratic Formula",
+              "summary": "Solving ax\u00b2 + bx + c = 0 by factorisation, completing the square a(x + p)\u00b2 + q, and the quadratic formula.",
+              "keyFormulas": [
+                "x = [-b \u00b1 \u221a(b\u00b2 - 4ac)] / (2a)",
+                "Discriminant: \u0394 = b\u00b2 - 4ac",
+                "Turning Point of a(x - h)\u00b2 + k is (h, k)"
+              ],
+              "sourceNotes": [
+                "Always rearrange a quadratic equation into standard form ax\u00b2 + bx + c = 0 before applying the zero-product property or quadratic formula.",
+                "The discriminant \u0394 = b\u00b2 - 4ac determines root nature: \u0394 > 0 gives 2 distinct real roots; \u0394 = 0 gives 1 repeated real root; \u0394 < 0 gives no real roots."
+              ],
+              "workedExample": "Solve 2x\u00b2 - 5x - 3 = 0: Using formula with a=2, b=-5, c=-3: x = [5 \u00b1 \u221a(25 - 4(2)(-3))] / 4 = (5 \u00b1 \u221a49)/4 = (5 \u00b1 7)/4 -> x = 3 or x = -0.5.",
+              "commonMisconception": "Writing -b\u00b2 instead of (-b)\u00b2 when b is negative (e.g., evaluating (-5)\u00b2 as -25 instead of +25 inside the square root).",
+              "prerequisites": [
+                "concept:4024:factorisation"
+              ],
+              "successors": [
+                "topic:11:math:differentiation-integration"
+              ],
+              "syllabusCode": "Cambridge 4024 \u00a73.4",
+              "learningObjectives": [
+                "Solving ax\u00b2 + bx + c = 0 by factorisation, completing the square a(x + p)\u00b2 + q, and the quadratic formula."
+              ]
+            },
+            {
+              "topicId": "concept:4024:trigonometry",
+              "title": "Trigonometry: SOH CAH TOA, Sine/Cosine Rules & Bearings",
+              "summary": "Right-triangle ratios, non-right triangles (Sine Rule, Cosine Rule, Area = \u00bdab sin C), and 3-figure bearings.",
+              "keyFormulas": [
+                "Sine Rule: a/sin A = b/sin B",
+                "Cosine Rule: a\u00b2 = b\u00b2 + c\u00b2 - 2bc cos A",
+                "Triangle Area = \u00bdab sin C"
+              ],
+              "sourceNotes": [
+                "Use SOH CAH TOA only for right-angled triangles. For general triangles, use the Sine Rule when given a matching side-angle pair, and the Cosine Rule when given SAS or SSS.",
+                "Three-figure bearings are always measured clockwise from North (000\u00b0 to 360\u00b0)."
+              ],
+              "workedExample": "In triangle ABC, b = 8 cm, c = 10 cm, and included angle A = 60\u00b0. Area = \u00bd \u00d7 8 \u00d7 10 \u00d7 sin(60\u00b0) = 40 \u00d7 0.866 = 34.6 cm\u00b2.",
+              "commonMisconception": "Applying SOH CAH TOA to a non-right-angled triangle or forgetting leading zeros in bearings (writing 45\u00b0 instead of 045\u00b0).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Mathematics (Cambridge 4024)",
+              "learningObjectives": [
+                "Right-triangle ratios, non-right triangles (Sine Rule, Cosine Rule, Area = \u00bdab sin C), and 3-figure bearings."
+              ]
+            },
+            {
+              "topicId": "topic:10:math:circle-theorems-vectors-matrices",
+              "title": "Circle Theorems, Vectors in 2D & Matrices",
+              "summary": "Angle at center vs. circumference, cyclic quadrilaterals, tangent-radius, position vectors, and 2\u00d72 matrix inverse.",
+              "keyFormulas": [
+                "Angle at Center = 2 \u00d7 Angle at Circumference",
+                "Opposite angles in Cyclic Quad sum to 180\u00b0",
+                "det(A) = ad - bc"
+              ],
+              "sourceNotes": [
+                "The angle subtended by an arc at the center of a circle is twice the angle subtended at any point on the remaining circumference.",
+                "A 2\u00d72 matrix [a b; c d] has inverse (1/(ad - bc)) \u00d7 [d -b; -c a], provided the determinant ad - bc \u2260 0."
+              ],
+              "workedExample": "For matrix M = [4 1; 2 3], det(M) = (4)(3) - (1)(2) = 10. Inverse M\u207b\u00b9 = (1/10) \u00d7 [3 -1; -2 4].",
+              "commonMisconception": "Swapping the wrong diagonal elements or forgetting to negate b and c when finding a 2\u00d72 matrix inverse.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Mathematics (Cambridge 4024)",
+              "learningObjectives": [
+                "Angle at center vs. circumference, cyclic quadrilaterals, tangent-radius, position vectors, and 2\u00d72 matrix inverse."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:10:physics-5054",
+          "subjectName": "Physics (Cambridge 5054)",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "concept:5054:energy",
+              "title": "Work, Energy, Power & Efficiency",
+              "summary": "Conservation of energy, kinetic energy KE = \u00bdmv\u00b2, gravitational potential energy \u0394Ep = mgh, and mechanical power.",
+              "keyFormulas": [
+                "Work Done: W = F \u00d7 d",
+                "KE = \u00bdmv\u00b2",
+                "GPE = mgh",
+                "Power: P = W / t = \u0394E / t",
+                "Efficiency = (Useful Output / Total Input) \u00d7 100%"
+              ],
+              "sourceNotes": [
+                "Because KE is proportional to v\u00b2, doubling an object's speed quadruples its kinetic energy (and quadruples braking distance for a constant braking force).",
+                "When a pendulum or roller coaster descends without friction, gravitational potential energy converts directly into kinetic energy: mgh = \u00bdmv\u00b2 -> v = \u221a(2gh)."
+              ],
+              "workedExample": "A 2 kg ball is dropped from a height of 5 m (g = 10 m/s\u00b2). Initial GPE = 2 \u00d7 10 \u00d7 5 = 100 J. Just before impact, KE = 100 J -> \u00bd(2)v\u00b2 = 100 -> v = 10 m/s.",
+              "commonMisconception": "Thinking doubling speed only doubles kinetic energy (it increases KE by a factor of 2\u00b2 = 4).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Physics (Cambridge 5054)",
+              "learningObjectives": [
+                "Conservation of energy, kinetic energy KE = \u00bdmv\u00b2, gravitational potential energy \u0394Ep = mgh, and mechanical power."
+              ]
+            },
+            {
+              "topicId": "concept:5054:electricity",
+              "title": "DC Circuits, Ohm's Law, Electrical Power & Electromagnetism",
+              "summary": "Current I = Q/t, EMF/potential difference, V = IR, series vs. parallel resistors, and transformers.",
+              "keyFormulas": [
+                "Ohm's Law: V = I \u00d7 R",
+                "Power: P = V \u00d7 I = I\u00b2R = V\u00b2/R",
+                "Series: R_total = R\u2081 + R\u2082",
+                "Parallel: 1/R_total = 1/R\u2081 + 1/R\u2082",
+                "Transformer: Vp/Vs = Np/Ns"
+              ],
+              "sourceNotes": [
+                "In a series circuit, current I is the same everywhere and voltage divides across components; in a parallel circuit, voltage V is the same across branches and current splits.",
+                "Adding a resistor in parallel always REDUCES the total combined resistance because it opens an additional conducting path."
+              ],
+              "workedExample": "Two resistors of 6 \u03a9 and 3 \u03a9 are connected in parallel across a 12 V battery. 1/R_eq = 1/6 + 1/3 = 3/6 -> R_eq = 2 \u03a9. Total current I = 12 V / 2 \u03a9 = 6 A.",
+              "commonMisconception": "Forgetting to take the reciprocal at the end when calculating parallel resistance (leaving R_eq as 3/6 = 0.5 \u03a9 instead of 6/3 = 2 \u03a9).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Physics (Cambridge 5054)",
+              "learningObjectives": [
+                "Current I = Q/t, EMF/potential difference, V = IR, series vs. parallel resistors, and transformers."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:10:chemistry-5070",
+          "subjectName": "Chemistry (Cambridge 5070)",
+          "iconName": "Biotech",
+          "topics": [
+            {
+              "topicId": "topic:10:chem:stoichiometry-moles-electrolysis",
+              "title": "The Mole Concept, Stoichiometry & Electrolysis",
+              "summary": "Avogadro's constant, molar mass, molar gas volume (24 dm\u00b3 at r.t.p.), limiting reactants, and redox at electrodes.",
+              "keyFormulas": [
+                "Moles: n = mass / Mr",
+                "Gas Moles (r.t.p.): n = V_dm3 / 24",
+                "Solution Moles: n = C \u00d7 V_dm3",
+                "OIL RIG: Oxidation Is Loss, Reduction Is Gain"
+              ],
+              "sourceNotes": [
+                "At room temperature and pressure (r.t.p.), 1 mole of any ideal gas occupies 24 dm\u00b3 (24,000 cm\u00b3).",
+                "In electrolysis, cations (positive ions) migrate to the negative cathode where they are reduced; anions migrate to the positive anode where they are oxidized."
+              ],
+              "workedExample": "Calculate the volume of H\u2082 gas at r.t.p. produced when 2.4 g of Magnesium (Ar = 24) reacts with excess HCl (Mg + 2HCl -> MgCl\u2082 + H\u2082): Moles Mg = 2.4/24 = 0.1 mol. Mole ratio 1:1 -> 0.1 mol H\u2082 \u00d7 24 dm\u00b3/mol = 2.4 dm\u00b3.",
+              "commonMisconception": "Forgetting to convert cm\u00b3 to dm\u00b3 (dividing by 1,000) before using n = C \u00d7 V in titration problems.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Chemistry (Cambridge 5070)",
+              "learningObjectives": [
+                "Avogadro's constant, molar mass, molar gas volume (24 dm\u00b3 at r.t.p.), limiting reactants, and redox at electrodes."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:10:cs-2210",
+          "subjectName": "Computer Science (Cambridge 2210)",
+          "iconName": "Computer",
+          "topics": [
+            {
+              "topicId": "topic:10:cs:architecture-algorithms-sql",
+              "title": "Von Neumann Architecture, Searching/Sorting & SQL Databases",
+              "summary": "Fetch-Decode-Execute cycle, registers (PC, MAR, MDR, CIR, ACC), Linear/Binary search, Bubble sort, and SQL SELECT.",
+              "keyFormulas": [
+                "FDE Cycle: PC -> MAR -> Memory -> MDR -> CIR -> Control Unit -> ACC",
+                "SQL: SELECT fields FROM table WHERE condition ORDER BY field"
+              ],
+              "sourceNotes": [
+                "In the Fetch-Decode-Execute cycle, the Program Counter (PC) holds the address of the next instruction, copies it to MAR, fetches the instruction into MDR and CIR, and increments PC.",
+                "Binary search divides the search space in half each step (O(log n)), but requires the array to be sorted first."
+              ],
+              "workedExample": "To retrieve names of students in Grade 10 scoring above 85 sorted highest first: SELECT StudentName, Score FROM Students WHERE Grade = 10 AND Score > 85 ORDER BY Score DESC;",
+              "commonMisconception": "Applying binary search to an unsorted array without sorting it first.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge O-Level Computer Science (Cambridge 2210)",
+              "learningObjectives": [
+                "Fetch-Decode-Execute cycle, registers (PC, MAR, MDR, CIR, ACC), Linear/Binary search, Bubble sort, and SQL SELECT."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:10:bio",
+          "subjectName": "Biology (Cambridge 5090)",
+          "iconName": "Biotech",
+          "topics": [
+            {
+              "topicId": "topic:10:bio:genetics-inheritance-ecology",
+              "title": "Monohybrid Inheritance, DNA Structure & Ecosystem Energy Flow",
+              "summary": "Punnett squares, codominance, sex-linked inheritance, DNA double helix base pairing (A-T, G-C), and trophic energy pyramids.",
+              "syllabusCode": "Cambridge O-Level 5090 Chapters 16 & 18",
+              "prerequisites": [
+                "topic:9:bio:enzymes-osmosis-nutrition"
+              ],
+              "successors": [
+                "topic:11:bio:cell-biology-molecular-genetics"
+              ],
+              "learningObjectives": [
+                "Predict the phenotypic and genotypic ratios of monohybrid crosses using genetic diagrams and Punnett squares",
+                "Explain energy losses between trophic levels and construct pyramids of biomass and energy"
+              ],
+              "keyFormulas": [
+                "Trophic Efficiency: Only ~10% of energy transfers to the next trophic level (90% lost as heat, respiration, unconsumed matter)",
+                "DNA Base Pairing Rule: Adenine (A) = Thymine (T), Guanine (G) \u2261 Cytosine (C)",
+                "Heterozygous Cross: Tt \u00d7 Tt -> 1 TT : 2 Tt : 1 tt (3:1 dominant to recessive phenotype ratio)"
+              ],
+              "sourceNotes": [
+                "Phenotype is the physical expression of a trait; genotype is the genetic makeup of alleles.",
+                "Energy flow in ecosystems is unidirectional and non-cyclic, unlike nutrient cycles (carbon, nitrogen) which are continuously recycled.",
+                "A test cross involves breeding an organism of dominant phenotype with a homozygous recessive individual to determine its genotype."
+              ],
+              "workedExample": "Cross two heterozygous tall pea plants (Tt \u00d7 Tt). Gametes: T, t. Punnett Square results: TT (tall), Tt (tall), Tt (tall), tt (short). Phenotypic ratio: 3 tall : 1 short.",
+              "commonMisconception": "Assuming that dominant alleles are always more common or 'stronger' in an ecosystem than recessive alleles."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -35,6 +35,7 @@ import com.example.data.local.AppDatabase
 import com.example.data.local.AuditLogEntity
 import com.example.data.local.CoursePackageEntity
 import com.example.data.local.EventEntity
+import com.example.data.local.OfflineSyncQueueEntity
 import com.example.data.local.UserAccountEntity
 import androidx.room.withTransaction
 import com.example.core.model.CurriculumGraph
@@ -152,11 +153,17 @@ class LearningRepository(context: Context) {
             val defaultMath = packageProvider.createMath4024Package()
             installAndActivatePackage(defaultMath)
         } else {
-            val pkg = deserializePackage(existing)
-            val status = PackageVerifier.verifyPackage(pkg)
-            if (status is VerificationStatus.Valid) {
-                _activePackage.value = pkg
-            } else {
+            try {
+                val pkg = deserializePackage(existing)
+                val status = PackageVerifier.verifyPackage(pkg)
+                if (status is VerificationStatus.Valid) {
+                    _activePackage.value = pkg
+                } else {
+                    val fallback = packageProvider.createMath4024Package()
+                    installAndActivatePackage(fallback)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("LearningRepository", "Failed to deserialize existing package, reinstalling default: ${e.message}")
                 val fallback = packageProvider.createMath4024Package()
                 installAndActivatePackage(fallback)
             }
@@ -757,11 +764,16 @@ class LearningRepository(context: Context) {
     // ==========================================
 
 
+    val syncQueueFlow: Flow<List<OfflineSyncQueueEntity>> = syncQueueDao.getAllQueueFlow()
+    val pendingSyncCountFlow: Flow<Int> = syncQueueDao.getPendingCountFlow()
+
+    suspend fun getPendingSyncCount(): Int = syncQueueDao.getPendingItems().size
+
     /**
-     * Attempts a real upload of the pending sync queue. Events are marked
-     * SYNCED only after the server acknowledges them; any failure leaves the
-     * queue untouched for a later retry. No sync server exists yet, so this
-     * currently fails (honestly) until the endpoint ships.
+     * Attempts a real upload of the pending sync queue via the Retrofit
+     * [com.example.core.network.NoorixSyncApiService]. Events are marked
+     * SYNCED only after the server acknowledges them; any failure increments
+     * retryCount and leaves the queue untouched for a later WorkManager retry.
      */
     suspend fun syncNow(): Result<SyncBatchResult> {
         val pending = syncQueueDao.getPendingItems()
@@ -770,7 +782,7 @@ class LearningRepository(context: Context) {
             return Result.success(SyncBatchResult(emptyList(), emptyList(), emptyList(), hlc, "queue empty"))
         }
         return runCatching {
-            val upload = syncClient.uploadBatch(_studentModel.value.studentId, pending).getOrThrow()
+            val upload = syncClient.uploadBatchSuspend(_studentModel.value.studentId, pending).getOrThrow()
             syncEngine.acknowledgeUploadedEvents(upload.acceptedEventIds)
             val result = SyncBatchResult(
                 acceptedEvents = upload.acceptedEventIds,
@@ -782,6 +794,7 @@ class LearningRepository(context: Context) {
             logAudit("SYNC_UPLOADED", result.summary)
             result
         }.onFailure { e ->
+            runCatching { syncQueueDao.incrementRetryCount(pending.map { it.eventId }) }
             logAudit("SYNC_FAILED", e.message ?: "unknown sync error")
         }
     }

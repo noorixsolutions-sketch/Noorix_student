@@ -1,0 +1,321 @@
+{
+  "bandId": "band:11-12",
+  "bandName": "Senior High / Cambridge AS & A-Level (Grades 11 \u2013 12)",
+  "grades": [
+    {
+      "gradeId": "grade:11",
+      "gradeName": "Grade 11 (AS-Level / Junior Year)",
+      "ageRange": "16-17",
+      "subjects": [
+        {
+          "subjectId": "subj:11:math-9709",
+          "subjectName": "Pure Mathematics & Calculus (9709)",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:11:math:differentiation-integration",
+              "title": "Differential & Integral Calculus (Power Rule, Chain Rule & Area)",
+              "summary": "First principles, derivatives dy/dx, stationary points, tangents/normals, and definite integrals.",
+              "keyFormulas": [
+                "d/dx(x\u207f) = n\u00b7x^(n-1)",
+                "Chain Rule: dy/dx = (dy/du)\u00b7(du/dx)",
+                "\u222b x\u207f dx = x^(n+1)/(n+1) + C (n \u2260 -1)",
+                "Stationary Point: dy/dx = 0"
+              ],
+              "sourceNotes": [
+                "The derivative dy/dx gives the instantaneous gradient of the tangent to the curve y = f(x) at any point.",
+                "At a stationary point, dy/dx = 0. If d\u00b2y/dx\u00b2 > 0, it is a local minimum; if d\u00b2y/dx\u00b2 < 0, it is a local maximum.",
+                "By the Fundamental Theorem of Calculus, the definite integral \u222b[a to b] f(x) dx equals F(b) - F(a) and represents signed area under the curve."
+              ],
+              "workedExample": "Find stationary points of y = x\u00b3 - 6x\u00b2 + 9x + 1: dy/dx = 3x\u00b2 - 12x + 9 = 3(x - 1)(x - 3) = 0 -> x = 1, 3. At x = 1, d\u00b2y/dx\u00b2 = 6(1) - 12 = -6 < 0 (Max); at x = 3, d\u00b2y/dx\u00b2 = +6 > 0 (Min).",
+              "commonMisconception": "Forgetting the constant of integration '+ C' in indefinite integrals or forgetting the inner derivative when applying the Chain Rule.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Pure Mathematics & Calculus (9709)",
+              "learningObjectives": [
+                "First principles, derivatives dy/dx, stationary points, tangents/normals, and definite integrals."
+              ]
+            },
+            {
+              "topicId": "topic:11:math:sequences-binomial-trig",
+              "title": "Arithmetic/Geometric Series, Binomial Expansion & Circular Measure",
+              "summary": "AP and GP nth term and sum formulas, sum to infinity S_\u221e = a/(1 - r), radians, and (a + b)\u207f.",
+              "keyFormulas": [
+                "AP: u_n = a + (n-1)d, S_n = (n/2)[2a + (n-1)d]",
+                "GP: u_n = a\u00b7r^(n-1), S_\u221e = a / (1 - r) for |r| < 1",
+                "Arc Length: s = r\u03b8, Sector Area: A = \u00bdr\u00b2\u03b8 (\u03b8 in radians)"
+              ],
+              "sourceNotes": [
+                "An infinite geometric progression converges to a finite sum S_\u221e = a/(1 - r) if and only if the common ratio satisfies |r| < 1.",
+                "Arc length s = r\u03b8 and sector area A = \u00bdr\u00b2\u03b8 are valid ONLY when angle \u03b8 is measured in radians (\u03c0 rad = 180\u00b0)."
+              ],
+              "workedExample": "Find the sum to infinity of 18 + 6 + 2 + ...: First term a = 18, common ratio r = 6/18 = 1/3 (|r| < 1). S_\u221e = 18 / (1 - 1/3) = 18 / (2/3) = 27.",
+              "commonMisconception": "Using degrees instead of radians in s = r\u03b8 or applying S_\u221e = a/(1 - r) when |r| \u2265 1.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Pure Mathematics & Calculus (9709)",
+              "learningObjectives": [
+                "AP and GP nth term and sum formulas, sum to infinity S_\u221e = a/(1 - r), radians, and (a + b)\u207f."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:11:physics-9702",
+          "subjectName": "Advanced Physics (9702)",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:11:phys:momentum-projectiles-waves",
+              "title": "2D Projectile Motion, Linear Momentum & Wave Superposition",
+              "summary": "Independence of horizontal/vertical motion, elastic vs. inelastic collisions, stationary waves, and double-slit interference.",
+              "keyFormulas": [
+                "Momentum: p = mv",
+                "Impulse: F\u0394t = \u0394p",
+                "Elastic Collision: Relative speed of approach = Relative speed of separation",
+                "Young's Double Slit: \u03bb = ax / D"
+              ],
+              "sourceNotes": [
+                "Total linear momentum is conserved in ALL collisions (both elastic and inelastic) provided no external resultant force acts on the system.",
+                "Kinetic energy is conserved ONLY in perfectly elastic collisions.",
+                "In projectile motion (ignoring air drag), horizontal velocity v_x = u cos \u03b8 remains constant while vertical motion has constant downward acceleration g."
+              ],
+              "workedExample": "A 2 kg trolley moving at 4 m/s collides and sticks to a stationary 2 kg trolley. By conservation of momentum: (2)(4) + 0 = (2 + 2)v -> v = 2 m/s.",
+              "commonMisconception": "Assuming kinetic energy is conserved in every collision just because momentum is conserved.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Advanced Physics (9702)",
+              "learningObjectives": [
+                "Independence of horizontal/vertical motion, elastic vs. inelastic collisions, stationary waves, and double-slit interference."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:11:chemistry-9701",
+          "subjectName": "Advanced Chemistry (9701)",
+          "iconName": "Biotech",
+          "topics": [
+            {
+              "topicId": "topic:11:chem:enthalpy-equilibrium-organic",
+              "title": "Hess's Law, Chemical Equilibrium (Le Chatelier) & Organic Mechanisms",
+              "summary": "Enthalpy cycles, Kc and Kp expressions, Le Chatelier's principle, and nucleophilic/electrophilic mechanisms.",
+              "keyFormulas": [
+                "Hess's Law: \u0394H_rxn = \u03a3\u0394H_f(products) - \u03a3\u0394H_f(reactants)",
+                "Ideal Gas: PV = nRT",
+                "Equilibrium Constant: Kc = [C]^c[D]^d / ([A]^a[B]^b)"
+              ],
+              "sourceNotes": [
+                "Hess's Law states that the total enthalpy change of a chemical reaction is independent of the pathway taken, provided initial and final conditions are identical.",
+                "Only temperature changes the numerical value of the equilibrium constant Kc; catalysts speed up both forward and reverse rates equally without shifting equilibrium position."
+              ],
+              "workedExample": "For N\u2082(g) + 3H\u2082(g) \u21cc 2NH\u2083(g) (\u0394H = -92 kJ/mol, exothermic): Increasing pressure shifts equilibrium to the right (fewer gas moles: 2 vs 4); increasing temperature shifts it left.",
+              "commonMisconception": "Thinking adding a catalyst increases the equilibrium yield of products or alters Kc.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Advanced Chemistry (9701)",
+              "learningObjectives": [
+                "Enthalpy cycles, Kc and Kp expressions, Le Chatelier's principle, and nucleophilic/electrophilic mechanisms."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:11:bio",
+          "subjectName": "Advanced Biology (Cambridge 9700)",
+          "iconName": "Biotech",
+          "topics": [
+            {
+              "topicId": "topic:11:bio:cell-biology-molecular-genetics",
+              "title": "Cell Structure, Protein Synthesis & Enzyme Kinetics (Km & Vmax)",
+              "summary": "Ultrastructure of eukaryotic organelles, transcription, translation (ribosomal codons), and Michaelis-Menten enzyme kinetics.",
+              "syllabusCode": "Cambridge AS-Level 9700 Chapters 1-4",
+              "prerequisites": [
+                "topic:10:bio:genetics-inheritance-ecology",
+                "topic:9:bio:enzymes-osmosis-nutrition"
+              ],
+              "successors": [
+                "topic:12:bio:gene-technology-photosynthesis-respiration"
+              ],
+              "learningObjectives": [
+                "Explain the fluid mosaic model of membrane structure and calculate actual sizes using magnification formulas",
+                "Describe transcription and translation, and determine Michaelis-Menten constant (Km) from Lineweaver-Burk plots"
+              ],
+              "keyFormulas": [
+                "Magnification Formula: M = I / A (Magnification = Image Size / Actual Size)",
+                "Michaelis-Menten: Lower Km indicates higher enzyme affinity for the substrate",
+                "Non-competitive Inhibition: Vmax decreases, Km remains unchanged; Competitive Inhibition: Vmax unchanged, Km increases"
+              ],
+              "sourceNotes": [
+                "Transmission electron microscopy (TEM) provides high resolution for organelle ultrastructure; scanning electron microscopy (SEM) yields 3D surface topographies.",
+                "Enzymes lower the activation energy barrier without altering the overall free energy change (\u0394G) of the reaction.",
+                "Transfer RNA (tRNA) anticodons bind antiparallel to messenger RNA (mRNA) codons on the ribosome."
+              ],
+              "workedExample": "An organelle measures 12 mm on a micrograph with magnification \u00d720,000. Calculate actual diameter in micrometers: A = I / M = 12 mm / 20,000 = 0.0006 mm = 0.6 \u03bcm.",
+              "commonMisconception": "Forgetting to convert image measurement units (mm) into micrometers (\u03bcm) before dividing by magnification."
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:11:cs",
+          "subjectName": "Advanced Computer Science (Cambridge 9618)",
+          "iconName": "Terminal",
+          "topics": [
+            {
+              "topicId": "topic:11:cs:abstract-data-types-recursion",
+              "title": "Stacks, Queues, Linked Lists, Binary Trees & Recursion",
+              "summary": "Dynamic data structures (pointers, nodes), LIFO vs. FIFO queues, binary search tree traversal (in-order, pre-order, post-order), and call stack recursion.",
+              "syllabusCode": "Cambridge AS-Level 9618 Paper 1 & 2",
+              "prerequisites": [
+                "topic:10:cs:architecture-algorithms-sql"
+              ],
+              "successors": [
+                "topic:12:cs:graphs-dijkstra-neural-networks"
+              ],
+              "learningObjectives": [
+                "Write algorithms to implement operations on linear abstract data types: stacks, queues, and singly linked lists",
+                "Trace and write recursive subroutines, evaluating the call stack overhead and base case termination"
+              ],
+              "keyFormulas": [
+                "Binary Search Tree In-Order Traversal: Left Subtree -> Root -> Right Subtree (yields sorted output)",
+                "Stack (LIFO): push(x), pop(), peek() in O(1) time complexity",
+                "Queue (FIFO): enqueue(x) at tail, dequeue() from head"
+              ],
+              "sourceNotes": [
+                "Dynamic data structures grow and shrink at runtime in heap memory, avoiding fixed array size limits.",
+                "A recursive algorithm must have at least one base case that returns without recursion, preventing stack overflow errors.",
+                "Linked list deletion involves updating the previous node's next pointer to bypass the target node."
+              ],
+              "workedExample": "Recursive Factorial: fact(3) -> 3 * fact(2) -> 3 * (2 * fact(1)) -> 3 * (2 * 1) = 6. Call stack pushes stack frames for each call until base case n <= 1 is met, then unwinds.",
+              "commonMisconception": "Omitting the base case in recursive functions, causing an infinite recursion and a StackOverflowException."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gradeId": "grade:12",
+      "gradeName": "Grade 12 (A-Level / Senior Year)",
+      "ageRange": "17-18",
+      "subjects": [
+        {
+          "subjectId": "subj:12:math-9709",
+          "subjectName": "Advanced Calculus, Differential Equations & Complex Numbers",
+          "iconName": "Calculate",
+          "topics": [
+            {
+              "topicId": "topic:12:math:diff-eq-integration-complex",
+              "title": "Integration by Parts, Partial Fractions, Differential Equations & Argand Diagrams",
+              "summary": "\u222b u dv = uv - \u222b v du, separable first-order ODEs, and complex numbers z = x + iy = r\u00b7e^(i\u03b8).",
+              "keyFormulas": [
+                "Integration by Parts: \u222b u (dv/dx) dx = u\u00b7v - \u222b v (du/dx) dx",
+                "Euler's Form: r(cos \u03b8 + i sin \u03b8) = r\u00b7e^(i\u03b8)",
+                "Separable ODE: \u222b (1/g(y)) dy = \u222b f(x) dx"
+              ],
+              "sourceNotes": [
+                "To solve a separable differential equation dy/dx = f(x)g(y), separate variables onto respective sides, integrate both sides, and use initial conditions to determine the constant.",
+                "On an Argand diagram, multiplying a complex number by r\u00b7e^(i\u03b8) scales its modulus by r and rotates its argument anticlockwise by angle \u03b8."
+              ],
+              "workedExample": "Solve dy/dx = 2xy given y(0) = 3: Separate -> \u222b (1/y) dy = \u222b 2x dx -> ln|y| = x\u00b2 + C -> y = A\u00b7e^(x\u00b2). Since y(0) = 3, A = 3 -> y = 3e^(x\u00b2).",
+              "commonMisconception": "Adding the constant +C after exponentiating as y = e^(x\u00b2) + C instead of multiplying as y = A\u00b7e^(x\u00b2).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Advanced Calculus, Differential Equations & Complex Numbers",
+              "learningObjectives": [
+                "\u222b u dv = uv - \u222b v du, separable first-order ODEs, and complex numbers z = x + iy = r\u00b7e^(i\u03b8)."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:12:physics-9702",
+          "subjectName": "Quantum Physics, Electromagnetism & Nuclear Physics",
+          "iconName": "Science",
+          "topics": [
+            {
+              "topicId": "topic:12:phys:quantum-electromagnetic-nuclear",
+              "title": "Photoelectric Effect, Faraday's Induction & Mass-Energy Equivalence",
+              "summary": "Photon energy E = hf, work function \u03a6, de Broglie wavelength \u03bb = h/p, magnetic flux linkage, and \u0394E = \u0394mc\u00b2.",
+              "keyFormulas": [
+                "Einstein Photoelectric: hf = \u03a6 + KE_max",
+                "de Broglie: \u03bb = h / p = h / (mv)",
+                "Faraday-Lenz: E = -d(N\u03a6)/dt",
+                "Mass Defect Energy: \u0394E = \u0394m\u00b7c\u00b2"
+              ],
+              "sourceNotes": [
+                "The photoelectric effect demonstrates the particle nature of light: each photon interacts one-to-one with a single electron. Below threshold frequency f\u2080, no photoelectrons are emitted regardless of intensity.",
+                "Above threshold frequency, increasing light intensity increases the number of emitted electrons per second (photocurrent) but does NOT increase their maximum kinetic energy."
+              ],
+              "workedExample": "Light of photon energy 4.2 eV strikes a metal with work function \u03a6 = 2.5 eV. Maximum kinetic energy of emitted photoelectrons KE_max = 4.2 - 2.5 = 1.7 eV.",
+              "commonMisconception": "Thinking brighter light (higher intensity) increases the maximum kinetic energy of emitted photoelectrons.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Quantum Physics, Electromagnetism & Nuclear Physics",
+              "learningObjectives": [
+                "Photon energy E = hf, work function \u03a6, de Broglie wavelength \u03bb = h/p, magnetic flux linkage, and \u0394E = \u0394mc\u00b2."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:12:cs-ai",
+          "subjectName": "Computer Science, Algorithms & Artificial Intelligence",
+          "iconName": "Computer",
+          "topics": [
+            {
+              "topicId": "topic:12:cs:graphs-dijkstra-neural-networks",
+              "title": "Graph Algorithms (Dijkstra / A*), Big-O Complexity & Neural Networks",
+              "summary": "Shortest-path heuristics, recursion & dynamic programming, backpropagation, and transformer attention basics.",
+              "keyFormulas": [
+                "A* Cost Function: f(n) = g(n) + h(n)",
+                "Neuron Activation: y = \u03c3(w\u00b7x + b)",
+                "Gradient Descent: w_new = w - \u03b7 \u00b7 (\u2202L/\u2202w)"
+              ],
+              "sourceNotes": [
+                "Dijkstra's algorithm finds the shortest path from a source node in a graph with non-negative edge weights; A* adds an admissible heuristic h(n) to guide search toward the goal.",
+                "Neural networks learn by computing a loss function L on predictions and updating weights in the opposite direction of the gradient via backpropagation."
+              ],
+              "workedExample": "In A* search, if node B has actual path cost from start g(B) = 6 and estimated heuristic distance to goal h(B) = 4, its priority score is f(B) = 6 + 4 = 10.",
+              "commonMisconception": "Using an inadmissible heuristic h(n) that overestimates true distance, which can cause A* to miss the optimal shortest path.",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Computer Science, Algorithms & Artificial Intelligence",
+              "learningObjectives": [
+                "Shortest-path heuristics, recursion & dynamic programming, backpropagation, and transformer attention basics."
+              ]
+            }
+          ]
+        },
+        {
+          "subjectId": "subj:12:economics",
+          "subjectName": "Macroeconomics, Monetary Policy & Global Trade",
+          "iconName": "Public",
+          "topics": [
+            {
+              "topicId": "topic:12:econ:ad-as-monetary-fiscal",
+              "title": "Aggregate Demand/Supply (AD-AS), Fiscal Multipliers & Central Banking",
+              "summary": "GDP components (C + I + G + (X - M)), Keynesian multiplier, inflation vs. unemployment, and interest rates.",
+              "keyFormulas": [
+                "GDP (AD) = C + I + G + (X - M)",
+                "Multiplier: k = 1 / (1 - MPC) = 1 / MPS",
+                "Real GDP = Nominal GDP / Price Index"
+              ],
+              "sourceNotes": [
+                "Aggregate Demand (AD) is the total spending on domestically produced goods and services: Consumption (C) + Investment (I) + Government Spending (G) + Net Exports (X - M).",
+                "When a central bank raises interest rates (contractionary monetary policy), borrowing becomes more expensive, cooling investment and consumption to curb demand-pull inflation."
+              ],
+              "workedExample": "If the Marginal Propensity to Consume (MPC) is 0.8, the spending multiplier is k = 1 / (1 - 0.8) = 5. A $10B government infrastructure injection can expand equilibrium GDP by up to $50B.",
+              "commonMisconception": "Confusing Nominal GDP growth (which includes price inflation) with Real GDP growth (which measures actual output volume).",
+              "prerequisites": [],
+              "successors": [],
+              "syllabusCode": "Cambridge International A-Level Macroeconomics, Monetary Policy & Global Trade",
+              "learningObjectives": [
+                "GDP components (C + I + G + (X - M)), Keynesian multiplier, inflation vs. unemployment, and interest rates."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

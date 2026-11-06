@@ -1,5 +1,8 @@
 package com.example.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,46 +14,45 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.core.model.GraphStage
-import com.example.domain.onboarding.CurriculumStageMapper
-import com.example.domain.onboarding.LearnerMode
+import com.example.domain.diagnostic.CapabilityQuestion
+import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
-import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
 
 /**
- * Program — "See the larger journey" (docs/two-mode-experience.md §5).
+ * Study Plan — Complete Dedicated Route.
  *
- * The active plan (focus, how we'll start, stages), the learner's position on
- * the curriculum knowledge-graph journey map (the master-branch Pre-K → O-Level
- * material), and — for O-Level learners — the exam horizon. In Explore mode the
- * screen is the invitation to build the plan.
+ * Includes:
+ * 1. Study Plan Onboarding with an Age- and Class-calibrated Capability Test to accurately gauge student starting position.
+ * 2. Interactive in-place Capability Test (never the app starting screen!).
+ * 3. Complete personalized Study Plan Roadmap with domain proficiencies, target milestones, and daily schedule.
  */
 @Composable
 fun ProgramScreen(viewModel: OLevelViewModel) {
-    val onboarding by viewModel.onboardingState.collectAsState()
-    val activePlan by viewModel.activePlan.collectAsState()
-    val kgStages by viewModel.kgStages.collectAsState()
+    val activeStudent by viewModel.activeRegisteredStudent.collectAsState()
+    val capabilityQuestions by viewModel.capabilityQuestions.collectAsState()
+    val capabilityEvaluation by viewModel.capabilityEvaluation.collectAsState()
 
-    val mode = onboarding.mode ?: LearnerMode.EXPLORE
-    val learnerStageOrder = onboarding.kgStageOrder
-    val learnerAge = onboarding.age
-    val learnerStage: GraphStage? = kgStages.firstOrNull { it.order == learnerStageOrder }
-    val teachableStages = kgStages.filter { it.order in 1..4 }
-    val futureStages = kgStages.filter { it.order > 4 }
-    val isSecondary = learnerAge != null && learnerAge >= 12
+    var isTestingMode by remember { mutableStateOf(false) }
+    var currentQuestionIndex by remember { mutableIntStateOf(0) }
+    val userAnswers = remember { mutableStateMapOf<Int, Int>() }
+    var selectedOptionIndex by remember { mutableIntStateOf(-1) }
+    var hasCheckedAnswer by remember { mutableStateOf(false) }
+
+    val hasDiagnostic = (activeStudent?.diagnosticTaken == true) || (capabilityEvaluation != null)
 
     LazyColumn(
         modifier = Modifier
@@ -60,7 +62,7 @@ fun ProgramScreen(viewModel: OLevelViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Header
+        // Top Header
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -73,125 +75,266 @@ fun ProgramScreen(viewModel: OLevelViewModel) {
                         Surface(
                             shape = CircleShape,
                             color = CyberGold.copy(alpha = 0.12f),
-                            modifier = Modifier.size(38.dp)
+                            modifier = Modifier.size(42.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Route, contentDescription = null, tint = CyberGold, modifier = Modifier.size(20.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Route,
+                                    contentDescription = "Study Plan",
+                                    tint = CyberGold,
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "YOUR PROGRAM",
+                                text = "STUDY PLAN & SYLLABUS ROADMAP",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = CyberGold,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.2.sp
                             )
                             Text(
-                                text = learnerStage?.name?.substringAfter(" ")
-                                    ?: CurriculumStageMapper.stageNameFor(learnerStageOrder),
+                                text = activeStudent?.name?.let { "$it's Learning Plan" } ?: "Your Study Plan",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = if (onboarding.stage.isNotBlank()) "You're in ${onboarding.stage} — here's the road ahead." else "Here's the road ahead for your stage.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                }
-            }
-        }
 
-        // 2. Invitation (Explore mode, or guided but no plan yet)
-        if (mode == LearnerMode.EXPLORE || activePlan == null) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.beginGuidedOnboarding() },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                    border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.35f))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = if (mode == LearnerMode.EXPLORE) "You're exploring for now." else "Your plan is waiting to be built.",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "A two-minute check-in and I'll point you the right way — then I'll keep track of the journey while you do the learning.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            lineHeight = 19.sp
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { viewModel.beginGuidedOnboarding() },
-                            colors = ButtonDefaults.buttonColors(containerColor = CyberGold, contentColor = NearBlackBg),
-                            shape = RoundedCornerShape(10.dp)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = NearBlackSurface,
+                        border = BorderStroke(1.dp, SubtleBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Build my learning plan", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text(
+                                text = "${activeStudent?.studentClass ?: "Grade 9"} • Age ${activeStudent?.age ?: 14}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "Reg: ${activeStudent?.id ?: "Assigned"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = CyberGold,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
             }
         }
 
-        // 3. The active plan
-        activePlan?.let { plan ->
+        // =====================================================================
+        // CASE 1: Capability Testing Mode (In Progress)
+        // =====================================================================
+        if (isTestingMode && capabilityQuestions.isNotEmpty()) {
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                    border = BorderStroke(1.dp, SubtleBorder)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text(
-                            text = "WHERE WE'RE HEADED",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TealAccent,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = plan.targetConceptName,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = UiCopy.formatReplan(plan.interventionType),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
+                val q = capabilityQuestions.getOrNull(currentQuestionIndex)
+                if (q != null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                        border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            // Progress & Domain Tag
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = CyberGold.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = "QUESTION ${currentQuestionIndex + 1} OF ${capabilityQuestions.size}",
+                                        color = CyberGold,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = TealAccentSubtle
+                                ) {
+                                    Text(
+                                        text = "${q.domain} • ${q.topicName}",
+                                        color = TealAccent,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
 
-                        if (plan.planStages.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            plan.planStages.forEach { stageItem ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = if (stageItem.isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                                        contentDescription = null,
-                                        tint = if (stageItem.isCompleted) StepCorrect else TextMuted,
-                                        modifier = Modifier.size(18.dp)
+                            LinearProgressIndicator(
+                                progress = { (currentQuestionIndex + 1).toFloat() / capabilityQuestions.size.toFloat() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = CyberGold,
+                                trackColor = NearBlackSurface
+                            )
+
+                            // Question Prompt
+                            Text(
+                                text = q.prompt,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                lineHeight = 24.sp
+                            )
+
+                            Divider(color = SubtleBorder)
+
+                            // Options
+                            q.options.forEachIndexed { optIdx, optText ->
+                                val isSelected = selectedOptionIndex == optIdx
+                                val isCorrectOption = optIdx == q.correctIndex
+                                val containerColor = when {
+                                    hasCheckedAnswer && isCorrectOption -> TealAccentSubtle
+                                    hasCheckedAnswer && isSelected && !isCorrectOption -> Color.Red.copy(alpha = 0.15f)
+                                    isSelected -> CyberGold.copy(alpha = 0.12f)
+                                    else -> NearBlackSurface
+                                }
+                                val borderColor = when {
+                                    hasCheckedAnswer && isCorrectOption -> TealAccent
+                                    hasCheckedAnswer && isSelected && !isCorrectOption -> Color.Red.copy(alpha = 0.5f)
+                                    isSelected -> CyberGold
+                                    else -> SubtleBorder
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = containerColor,
+                                    border = BorderStroke(1.dp, borderColor),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(enabled = !hasCheckedAnswer) {
+                                            selectedOptionIndex = optIdx
+                                        }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = if (isSelected) CyberGold else NearBlackBg,
+                                            border = BorderStroke(1.dp, if (isSelected) CyberGold else SubtleBorder),
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(
+                                                    text = ('A' + optIdx).toString(),
+                                                    color = if (isSelected) NearBlackBg else TextSecondary,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = optText,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Explanation if checked
+                            if (hasCheckedAnswer) {
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = NearBlackSurface,
+                                    border = BorderStroke(1.dp, SubtleBorder),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(
+                                            text = if (selectedOptionIndex == q.correctIndex) "✓ Correct!" else "Explanation:",
+                                            color = if (selectedOptionIndex == q.correctIndex) TealAccent else CyberGold,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = q.explanation,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            // Action Button
+                            if (!hasCheckedAnswer) {
+                                Button(
+                                    onClick = {
+                                        if (selectedOptionIndex >= 0) {
+                                            userAnswers[currentQuestionIndex] = selectedOptionIndex
+                                            hasCheckedAnswer = true
+                                        }
+                                    },
+                                    enabled = selectedOptionIndex >= 0,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = CyberGold, contentColor = NearBlackBg)
+                                ) {
+                                    Text("Check Answer", fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                val isLast = currentQuestionIndex >= capabilityQuestions.size - 1
+                                Button(
+                                    onClick = {
+                                        if (isLast) {
+                                            viewModel.submitCapabilityTest(userAnswers)
+                                            isTestingMode = false
+                                        } else {
+                                            currentQuestionIndex++
+                                            selectedOptionIndex = -1
+                                            hasCheckedAnswer = false
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = CyberGold, contentColor = NearBlackBg)
+                                ) {
+                                    Text(
+                                        text = if (isLast) "Finish & Unlock Personalized Plan" else "Next Question",
+                                        fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = stageItem.stageTitle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = if (stageItem.isCompleted) TextMuted else TextPrimary,
-                                        fontSize = 13.sp
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
@@ -201,177 +344,448 @@ fun ProgramScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 4. Exam horizon — O-Level learners only
-        if (isSecondary && onboarding.targetGrade.isNotBlank()) {
+        // =====================================================================
+        // CASE 2: Study Plan Onboarding (Before taking Capability Test)
+        // =====================================================================
+        else if (!hasDiagnostic) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                    border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.3f))
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                    border = BorderStroke(1.dp, SubtleBorder)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = CyberGold.copy(alpha = 0.12f),
+                            modifier = Modifier.size(60.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Analytics,
+                                    contentDescription = null,
+                                    tint = CyberGold,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         Text(
-                            text = "YOUR EXAM HORIZON",
+                            text = "Calibrate Your Study Plan",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "To build a realistic, high-impact study roadmap tailored to your exact position, take a 5-question capability check aligned with ${activeStudent?.studentClass ?: "your class"}.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // What is evaluated
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(NearBlackSurface, RoundedCornerShape(12.dp))
+                                .border(BorderStroke(1.dp, SubtleBorder), RoundedCornerShape(12.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = "WHAT WILL BE ASSESSED:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = CyberGold,
+                                fontWeight = FontWeight.Bold
+                            )
+                            AssessmentFeatureRow("Numbers & Integers", "Fundamental number sense and operations")
+                            AssessmentFeatureRow("Algebraic Systems", "Expansion, linear equations & manipulation")
+                            AssessmentFeatureRow("Geometry & Space", "Triangles, Pythagoras & angle relations")
+                            AssessmentFeatureRow("Applied Problem Solving", "Word problems, ratios & reasoning")
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Button(
+                            onClick = {
+                                viewModel.startCapabilityTestForActiveStudent()
+                                isTestingMode = true
+                                currentQuestionIndex = 0
+                                userAnswers.clear()
+                                selectedOptionIndex = -1
+                                hasCheckedAnswer = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                                .testTag("start_capability_test_button"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CyberGold, contentColor = NearBlackBg)
+                        ) {
+                            Icon(Icons.Default.Quiz, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Start Capability Test",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // =====================================================================
+        // CASE 3: Complete Study Plan (Diagnostic Taken)
+        // =====================================================================
+        else {
+            val eval = capabilityEvaluation
+            val scorePercent = eval?.scorePercent ?: activeStudent?.diagnosticScorePercent ?: 75.0
+            val positionLevel = eval?.positionLevel ?: activeStudent?.diagnosticLevel?.ifBlank { "Proficient / Solid Baseline" } ?: "Proficient / Solid Baseline"
+            val feedback = eval?.diagnosticSummary ?: activeStudent?.diagnosticFeedback?.ifBlank {
+                "Demonstrates solid working grasp of key curriculum principles for ${activeStudent?.studentClass}. Regular practice on multi-step problems will lock in top grades."
+            } ?: ""
+
+            // 1. Current Position Gauge Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                    border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "CURRENT POSITION GAUGE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = CyberGold,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = TealAccentSubtle
+                            ) {
+                                Text(
+                                    text = "Score: ${scorePercent.toInt()}%",
+                                    color = TealAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = positionLevel,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = feedback,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                            lineHeight = 22.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Domain Mastery Progress Bars
+                        Text(
+                            text = "COMPETENCY BREAKDOWN",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val domains = eval?.domainMasteries ?: mapOf(
+                            "Numbers" to 0.9,
+                            "Algebra" to (scorePercent / 100.0).coerceIn(0.4, 0.95),
+                            "Geometry" to ((scorePercent - 10.0) / 100.0).coerceIn(0.3, 0.9),
+                            "Applied Reasoning" to (scorePercent / 100.0).coerceIn(0.5, 0.85)
+                        )
+
+                        domains.forEach { (dom, mastery) ->
+                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(text = dom, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                                    Text(text = "${(mastery * 100).toInt()}%", style = MaterialTheme.typography.bodySmall, color = CyberGold, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LinearProgressIndicator(
+                                    progress = { mastery.toFloat() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(6.dp)
+                                        .clip(RoundedCornerShape(3.dp)),
+                                    color = if (mastery >= 0.7) TealAccent else CyberGold,
+                                    trackColor = NearBlackSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Personalized Syllabus Roadmap Stages
+            item {
+                Text(
+                    text = "SYLLABUS ROADMAP STAGES",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = CyberGold,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+            }
+
+            val roadmapStages = eval?.roadmap ?: listOf(
+                com.example.domain.diagnostic.StudyPlanRoadmapItem(
+                    stageName = "Stage 1: Prerequisite Reinforcement",
+                    focusDescription = "Consolidate foundational algebra, fraction laws & negative numbers.",
+                    weeklyHours = 5,
+                    targetMilestone = "85%+ accuracy on core arithmetic & algebraic manipulation.",
+                    topics = listOf("Linear Equations", "Signed Integers", "Fractions & Percentages")
+                ),
+                com.example.domain.diagnostic.StudyPlanRoadmapItem(
+                    stageName = "Stage 2: Core Syllabus Mastery",
+                    focusDescription = "Structured progression through ${activeStudent?.studentClass ?: "Grade 9"} syllabus units.",
+                    weeklyHours = 6,
+                    targetMilestone = "Complete topical check-ins across Cambridge 4024 / 5054 topics.",
+                    topics = listOf("Algebraic Expansion", "Pythagoras Theorem", "Coordinate Geometry", "Ratios & Rates")
+                ),
+                com.example.domain.diagnostic.StudyPlanRoadmapItem(
+                    stageName = "Stage 3: Past Paper Synthesis & Timed Trials",
+                    focusDescription = "Examiner problem solving, trap avoidance & timed full-length practice.",
+                    weeklyHours = 6,
+                    targetMilestone = "Distinction grade timing on past papers.",
+                    topics = listOf("Paper 1 Speed Drills", "Paper 2 Structured Multi-step", "Examiner Trap Avoidance")
+                )
+            )
+
+            items(roadmapStages) { stage ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                    border = BorderStroke(1.dp, SubtleBorder)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stage.stageName,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = CyberGold.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    text = "${stage.weeklyHours} hrs/week",
+                                    color = CyberGold,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = stage.focusDescription,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Flag, contentDescription = null, tint = CyberGold, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Milestone: ${stage.targetMilestone}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(stage.topics) { topic ->
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = NearBlackSurface,
+                                    border = BorderStroke(1.dp, SubtleBorder)
+                                ) {
+                                    Text(
+                                        text = topic,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Daily Targets & Schedule
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                    border = BorderStroke(1.dp, SubtleBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "DAILY TARGETS & EXAM HORIZON",
                             style = MaterialTheme.typography.labelSmall,
                             color = CyberGold,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         )
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("Aiming for", color = TextSecondary, fontSize = 13.sp)
-                            Text(onboarding.targetGrade, color = CyberGold, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                        if (onboarding.targetExamSession.isNotBlank()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Exam session", color = TextSecondary, fontSize = 13.sp)
-                                Text(onboarding.targetExamSession, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            }
+                            TargetPill(
+                                modifier = Modifier.weight(1f),
+                                label = "DAILY TIME",
+                                value = "45 mins",
+                                sub = "Recommended pace"
+                            )
+                            TargetPill(
+                                modifier = Modifier.weight(1f),
+                                label = "PRACTICE GOAL",
+                                value = "15 Questions",
+                                sub = "Per week"
+                            )
+                            TargetPill(
+                                modifier = Modifier.weight(1f),
+                                label = "TARGET SESSION",
+                                value = "May/June 2027",
+                                sub = "Cambridge O-Level"
+                            )
                         }
                     }
+                }
+            }
+
+            // 4. Retake Capability Test Action
+            item {
+                OutlinedButton(
+                    onClick = {
+                        viewModel.startCapabilityTestForActiveStudent()
+                        isTestingMode = true
+                        currentQuestionIndex = 0
+                        userAnswers.clear()
+                        selectedOptionIndex = -1
+                        hasCheckedAnswer = false
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f))
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = null, tint = CyberGold, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Retake Capability Test & Re-calibrate Gauge",
+                        color = CyberGold,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
+    }
+}
 
-        // 5. The journey map — the learner's position on the Pre-K → O-Level KG
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
-                border = BorderStroke(1.dp, SubtleBorder)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "THE BIGGER PICTURE",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TealAccent,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
+@Composable
+private fun AssessmentFeatureRow(title: String, desc: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = TealAccent,
+            modifier = Modifier
+                .size(18.dp)
+                .padding(top = 2.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column {
+            Text(text = title, style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+            Text(text = desc, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        }
+    }
+}
 
-                    teachableStages.forEach { stage ->
-                        val isCurrent = stage.order == learnerStageOrder
-                        val isPast = stage.order < learnerStageOrder
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (isCurrent) TealAccentSubtle else NearBlackBg,
-                            border = BorderStroke(1.dp, if (isCurrent) TealAccent else SubtleBorder),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = when {
-                                        isCurrent -> Icons.Default.Route
-                                        isPast -> Icons.Default.CheckCircle
-                                        else -> Icons.Default.RadioButtonUnchecked
-                                    },
-                                    contentDescription = null,
-                                    tint = when {
-                                        isCurrent -> TealAccent
-                                        isPast -> StepCorrect
-                                        else -> TextMuted
-                                    },
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text(
-                                        text = stage.name.substringAfter(" "),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = if (isCurrent) TextPrimary else TextSecondary,
-                                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                        fontSize = 13.sp
-                                    )
-                                    Text(
-                                        text = "${stage.subjectCount} subjects",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextMuted,
-                                        fontSize = 10.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // The learner's stage: its subjects from the master-branch library
-                    learnerStage?.let { stage ->
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = NearBlackBg,
-                            border = BorderStroke(1.dp, SubtleBorder),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(
-                                    text = "Subjects on your map right now",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TealAccent,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    items(stage.subjects.take(12)) { subject ->
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = NearBlackSurface,
-                                            border = BorderStroke(1.dp, SubtleBorder)
-                                        ) {
-                                            Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
-                                                Text(
-                                                    text = subject.name,
-                                                    color = TextPrimary,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                                if (!subject.syllabusCode.isNullOrEmpty()) {
-                                                    Text(
-                                                        text = subject.syllabusCode,
-                                                        color = TextMuted,
-                                                        fontSize = 10.sp
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (stage.subjects.size > 12) {
-                                        item {
-                                            Surface(shape = RoundedCornerShape(8.dp), color = NearBlackSurface) {
-                                                Text(
-                                                    text = "+${stage.subjects.size - 12} more",
-                                                    color = TextMuted,
-                                                    fontSize = 12.sp,
-                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (futureStages.isNotEmpty()) {
-                        Text(
-                            text = "Beyond O-Level — ${futureStages.joinToString(", ") { it.name.substringAfter(" ") }} — on the map, coming soon.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted,
-                            fontSize = 10.sp
-                        )
-                    }
-                }
-            }
+@Composable
+private fun TargetPill(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    sub: String
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = NearBlackSurface,
+        border = BorderStroke(1.dp, SubtleBorder),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = CyberGold, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(text = sub, style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontSize = 9.sp, textAlign = TextAlign.Center)
         }
     }
 }

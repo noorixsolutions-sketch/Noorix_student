@@ -49,11 +49,15 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
     val activePlan by viewModel.activePlan.collectAsState()
     val userAccount by viewModel.userAccount.collectAsState()
     val gamification by viewModel.gamificationSnapshot.collectAsState()
+    val activeStudent by viewModel.activeRegisteredStudent.collectAsState()
+    val oLevelSubjectMastery by viewModel.oLevelSubjectMastery.collectAsState()
+    val curriculumEventCount by viewModel.curriculumEventCount.collectAsState()
+    val pendingNewContent by viewModel.pendingNewContentForClass.collectAsState()
 
     val mode = onboarding.mode ?: LearnerMode.EXPLORE
     val band = onboarding.band
     val profile = onboarding.profile
-    val displayName = (userAccount?.displayName ?: onboarding.learnerName.trim()).ifBlank { null }
+    val displayName = (activeStudent?.name ?: userAccount?.displayName ?: onboarding.learnerName.trim()).ifBlank { "Learner" }
 
     LazyColumn(
         modifier = Modifier
@@ -63,36 +67,276 @@ fun DashboardScreen(viewModel: OLevelViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Greeting — age-adaptive line, no "WELCOME BACK, CANDIDATE!"
+        // 1. Greeting & Student Badge
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Hi, $displayName",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = activeStudent?.studentClass ?: profile.greeting,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = TealAccentSubtle,
+                        border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.4f))
+                    ) {
+                        Text(
+                            text = activeStudent?.id ?: "Enrolled",
+                            color = TealAccent,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                // Student Registration & Study Plan Quick Access
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = NearBlackElevated,
+                    border = BorderStroke(1.dp, SubtleBorder),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.setTab(AppNavigationTab.PROGRAM) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (activeStudent?.diagnosticTaken == true) TealAccentSubtle else CyberGold.copy(alpha = 0.15f),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = if (activeStudent?.diagnosticTaken == true) Icons.Default.CheckCircle else Icons.Default.Route,
+                                    contentDescription = null,
+                                    tint = if (activeStudent?.diagnosticTaken == true) TealAccent else CyberGold,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (activeStudent?.diagnosticTaken == true) {
+                                    "Study Plan • ${activeStudent?.diagnosticLevel?.ifBlank { "Calibrated" }}"
+                                } else {
+                                    "Build Study Plan • Gauge Current Position"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = if (activeStudent?.diagnosticTaken == true) {
+                                    "Score: ${activeStudent?.diagnosticScorePercent?.toInt()}% • Tap to view syllabus roadmap"
+                                } else {
+                                    "Take ${activeStudent?.studentClass ?: "class"} capability test to gauge your baseline"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // 1a. Pending Class Content Sync Notice (User Preference Content Sync)
+        if (pendingNewContent.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("dashboard_pending_content_card"),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                    border = BorderStroke(1.5.dp, TealAccent)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = TealAccentSubtle,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudDownload,
+                                        contentDescription = null,
+                                        tint = TealAccent,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "New Class Study Materials Available",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${pendingNewContent.size} new study pack(s), notes, or quizzes match your registered curriculum.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = { viewModel.syncPendingContentForClass() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = TealAccent,
+                                    contentColor = NearBlackBg
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Sync Now (${pendingNewContent.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 1b. Complete K–12 Curriculum & NotebookLM Studio Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.setTab(AppNavigationTab.MEDIA_TRANSFER) }
+                    .testTag("dashboard_notebooklm_studio_card"),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.5f))
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (displayName != null) "Hi, $displayName" else "Hi there",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = profile.greeting,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = TealAccentSubtle,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Podcasts,
+                                contentDescription = "NotebookLM Studio",
+                                tint = TealAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "K–12 Curriculum & NotebookLM Studio",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "All K–12 subjects & topics • 2-Host Audio Podcasts, Video Explainers & Grounded Quizzes",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = TealAccent,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (mode == LearnerMode.GUIDED) TealAccentSubtle else NearBlackSurface,
-                    border = BorderStroke(1.dp, if (mode == LearnerMode.GUIDED) TealAccent.copy(alpha = 0.4f) else SubtleBorder)
+            }
+        }
+
+        // 1c. O-Level Subject Mastery Diagnostic & EventLogger Trail Card
+        item {
+            val avgPct = remember(oLevelSubjectMastery) {
+                if (oLevelSubjectMastery.isEmpty()) 0
+                else (oLevelSubjectMastery.map { it.averageMastery }.average() * 100.0).toInt()
+            }
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.setTab(AppNavigationTab.DIAGNOSTIC) }
+                    .testTag("dashboard_olevel_diagnostic_card"),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, StepCorrect.copy(alpha = 0.45f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (mode == LearnerMode.GUIDED) " Guided" else " Explore",
-                        color = if (mode == LearnerMode.GUIDED) TealAccent else TextSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    Surface(
+                        shape = CircleShape,
+                        color = StepCorrect.copy(alpha = 0.15f),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Analytics,
+                                contentDescription = "O-Level Diagnostic Dashboard",
+                                tint = StepCorrect,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "O-Level Subject Diagnostic Dashboard",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${oLevelSubjectMastery.size} O-Level subjects ($avgPct% avg mastery) • $curriculumEventCount immutable EventLogger entries",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = StepCorrect,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

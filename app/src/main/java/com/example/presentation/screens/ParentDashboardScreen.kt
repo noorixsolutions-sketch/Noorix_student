@@ -2,6 +2,7 @@ package com.example.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,17 +57,7 @@ import com.example.domain.parent.ParentPrefs
 import com.example.domain.parent.ParentWeekStats
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
-import com.example.ui.theme.CyberGold
-import com.example.ui.theme.NearBlackBg
-import com.example.ui.theme.NearBlackElevated
-import com.example.ui.theme.NearBlackSurface
-import com.example.ui.theme.StepCorrect
-import com.example.ui.theme.StepIssue
-import com.example.ui.theme.SubtleBorder
-import com.example.ui.theme.TealAccent
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
+import com.example.ui.theme.*
 
 /**
  * Parent Dashboard — ADDITIVE (§11 Goal Architecture).
@@ -356,6 +347,134 @@ private fun ParentContent(viewModel: OLevelViewModel, onLock: () -> Unit) {
                     stats.strongestConceptName?.take(14) ?: "—",
                     Modifier.weight(1f)
                 )
+            }
+        }
+
+        // Family Group & Enrolled Children
+        item {
+            val allStudents by viewModel.studentRegistryRepo.getAllStudentsFlow().collectAsState(initial = emptyList())
+            val activeStudent by viewModel.activeRegisteredStudent.collectAsState()
+            val parentEmail = activeStudent?.parentEmail ?: ""
+            val familyKids = remember(allStudents, parentEmail) {
+                if (parentEmail.isBlank()) allStudents else allStudents.filter { it.parentEmail == parentEmail }
+            }
+
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackSurface),
+                border = BorderStroke(1.dp, SubtleBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = TealAccent, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "FAMILY GROUP & ENROLLED CHILDREN",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TealAccent,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+
+                    if (parentEmail.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Parent Email: $parentEmail",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (familyKids.isEmpty()) {
+                        Text(
+                            text = "No children registered under this family group yet.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    } else {
+                        familyKids.forEach { kid ->
+                            val isActive = kid.id == activeStudent?.id
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isActive) TealAccentSubtle else NearBlackBg,
+                                border = BorderStroke(1.dp, if (isActive) TealAccent.copy(alpha = 0.5f) else SubtleBorder),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable {
+                                        if (!isActive) viewModel.switchActiveStudent(kid.id)
+                                    }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = kid.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = TextPrimary
+                                            )
+                                            if (isActive) {
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = TealAccent
+                                                ) {
+                                                    Text(
+                                                        text = "ACTIVE",
+                                                        color = NearBlackBg,
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Text(
+                                            text = "${kid.studentClass} • Age ${kid.age} • Reg: ${kid.id}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+
+                                    if (!isActive) {
+                                        TextButton(onClick = { viewModel.switchActiveStudent(kid.id) }) {
+                                            Text("Switch", color = CyberGold, fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = {
+                            viewModel.setTab(AppNavigationTab.ONBOARDING)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, SubtleBorder)
+                    ) {
+                        Text("+ Register Another Child in Family Group", color = CyberGold, fontSize = 13.sp)
+                    }
+                }
             }
         }
 

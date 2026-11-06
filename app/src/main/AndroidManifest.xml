@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Aisha Bubble overlay + Tutor Keyboard (§3): draw-over-apps, FGS, notification. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -57,6 +58,16 @@
                 android:name="android.view.im"
                 android:resource="@xml/method" />
         </service>
+        <!-- FileProvider for exporting and sharing printable PDF student notes -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

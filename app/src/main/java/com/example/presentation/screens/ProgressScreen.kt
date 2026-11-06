@@ -23,6 +23,7 @@ import com.example.presentation.OLevelViewModel
 import com.example.presentation.components.BadgesCard
 import com.example.presentation.components.ConceptMasteryCard
 import com.example.presentation.components.DailyGoalCard
+import com.example.presentation.components.OLevelDiagnosticDashboardView
 import com.example.presentation.components.WeeklyActivityCard
 import com.example.presentation.components.XpLevelCard
 import com.example.ui.theme.*
@@ -99,6 +100,7 @@ fun ProgressScreen(viewModel: OLevelViewModel) {
 
         item { XpLevelCard(snapshot = gamification) }
         item { DailyGoalCard(snapshot = gamification, analytics = analytics) }
+        item { OLevelDiagnosticDashboardView(viewModel = viewModel) }
         item { WeeklyActivityCard(snapshot = analytics) }
         item {
             ConceptMasteryCard(

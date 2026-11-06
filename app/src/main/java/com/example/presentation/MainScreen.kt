@@ -43,9 +43,24 @@ data class NoorixNavDestination(
 
 @Composable
 fun MainScreen(viewModel: OLevelViewModel) {
+    var isAppLoading by remember { mutableStateOf(true) }
+    val indexStats by viewModel.curriculumIndexStats.collectAsState()
+    val eventCount by viewModel.curriculumEventCount.collectAsState()
+
+    if (isAppLoading) {
+        NoorixLoadingScreen(
+            indexedTopicCount = indexStats?.totalTopics?.takeIf { it > 0 } ?: 108,
+            eventLedgerCount = eventCount,
+            isIndexing = (indexStats == null),
+            onLoadingComplete = { isAppLoading = false }
+        )
+        return
+    }
+
     val currentTab by viewModel.currentTab.collectAsState()
     val onboarding by viewModel.onboardingState.collectAsState()
     val statusBanner by viewModel.statusBanner.collectAsState()
+    val newContentNotification by viewModel.newContentNotification.collectAsState()
     val activePkg by viewModel.activePackage.collectAsState()
     val hudGamification by viewModel.gamificationSnapshot.collectAsState()
     val hudAnalytics by viewModel.analyticsSnapshot.collectAsState()
@@ -57,7 +72,7 @@ fun MainScreen(viewModel: OLevelViewModel) {
         NoorixNavDestination(AppNavigationTab.DASHBOARD, "Home", Icons.Default.Home),
         NoorixNavDestination(AppNavigationTab.LEARNING_HUB, "Explore", Icons.Default.Explore),
         NoorixNavDestination(AppNavigationTab.PROGRESS, "Progress", Icons.Default.Insights),
-        NoorixNavDestination(AppNavigationTab.PROGRAM, "Program", Icons.Default.Route),
+        NoorixNavDestination(AppNavigationTab.PROGRAM, "Study Plan", Icons.Default.Route),
         NoorixNavDestination(AppNavigationTab.AI_AGENTS, "Tutors", Icons.AutoMirrored.Filled.Chat)
     )
 
@@ -143,6 +158,104 @@ fun MainScreen(viewModel: OLevelViewModel) {
                 AppNavigationTab.PROGRAM -> ProgramScreen(viewModel)
                 AppNavigationTab.AUDIT -> AuditScreen(viewModel, activity)
                 AppNavigationTab.PARENT -> ParentDashboardScreen(viewModel)
+            }
+
+            // Dynamic Cloud Content Notification for Student's Class (User Preference Content Sync)
+            AnimatedVisibility(
+                visible = newContentNotification != null,
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(16.dp)
+            ) {
+                newContentNotification?.let { notifText ->
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = NearBlackElevated,
+                        border = BorderStroke(1.5.dp, TealAccent),
+                        shadowElevation = 8.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = 600.dp)
+                            .testTag("new_content_class_notification_card")
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = TealAccentSubtle,
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.CloudDownload,
+                                            contentDescription = null,
+                                            tint = TealAccent,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "NEW CURRICULUM CONTENT",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TealAccent,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    )
+                                    Text(
+                                        text = notifText,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { viewModel.dismissNewContentNotification() },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Dismiss",
+                                        tint = TextMuted,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(
+                                    onClick = { viewModel.dismissNewContentNotification() }
+                                ) {
+                                    Text("Not Now", color = TextSecondary, fontSize = 12.sp)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = { viewModel.syncPendingContentForClass() },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = TealAccent,
+                                        contentColor = NearBlackBg
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.testTag("sync_new_content_button")
+                                ) {
+                                    Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Sync & Download", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // High-Tech Cyber Notification Banner -> Calm Notification Banner

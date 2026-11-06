@@ -1,0 +1,31 @@
+{
+  "curriculumTitle": "Noorix Complete K-12 Global & Cambridge Curriculum",
+  "version": "2026.1",
+  "notebookLmEnabled": true,
+  "bands": [
+    {
+      "bandId": "band:k-5",
+      "bandName": "Elementary School (K – Grade 5)",
+      "assetFile": "curriculum/k12_elementary_k_5.json",
+      "gradeRange": ["Kindergarten", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]
+    },
+    {
+      "bandId": "band:6-8",
+      "bandName": "Middle School (Grades 6 – 8)",
+      "assetFile": "curriculum/k12_middle_6_8.json",
+      "gradeRange": ["Grade 6", "Grade 7", "Grade 8"]
+    },
+    {
+      "bandId": "band:9-10",
+      "bandName": "High School / O-Level (Grades 9 – 10)",
+      "assetFile": "curriculum/k12_high_9_10_olevel.json",
+      "gradeRange": ["Grade 9", "Grade 10"]
+    },
+    {
+      "bandId": "band:11-12",
+      "bandName": "Senior High / A-Level (Grades 11 – 12)",
+      "assetFile": "curriculum/k12_senior_11_12_alevel.json",
+      "gradeRange": ["Grade 11", "Grade 12"]
+    }
+  ]
+}

@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.BuildConfig
 import com.example.core.model.MasteryStatus
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
@@ -37,6 +38,9 @@ fun DecaySyncScreen(viewModel: OLevelViewModel) {
     val syncResult by viewModel.syncResult.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val events by viewModel.eventsList.collectAsState()
+    val pendingSyncCount by viewModel.pendingSyncCount.collectAsState()
+    val periodicSyncStatus by viewModel.periodicSyncStatus.collectAsState()
+    val workManagerStateLabel by viewModel.workManagerStateLabel.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -265,7 +269,7 @@ fun DecaySyncScreen(viewModel: OLevelViewModel) {
             }
         }
 
-        // 4. Offline HLC Synchronization Card
+        // 4. Offline HLC & WorkManager Periodic Synchronization Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -287,31 +291,115 @@ fun DecaySyncScreen(viewModel: OLevelViewModel) {
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = "${events.size} Events Stored",
+                            text = "${events.size} Stored • $pendingSyncCount Pending",
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary
+                            color = if (pendingSyncCount > 0) CyberGold else StepCorrect
                         )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Ensures conflict-free, causally-ordered event merges across offline devices using confidence-weighted resolution.",
+                        text = "Ensures conflict-free, causally-ordered event merges across offline devices using confidence-weighted resolution and periodic WorkManager background pushes via Retrofit.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Button(
-                        onClick = { viewModel.triggerSyncNow() },
-                        enabled = !isSyncing,
-                        colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
+                    // WorkManager Periodic Schedule Panel
+                    Surface(
                         shape = RoundedCornerShape(10.dp),
+                        color = NearBlackBg,
+                        border = BorderStroke(1.dp, SubtleBorder),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (isSyncing) "Syncing…" else "Sync Now", fontWeight = FontWeight.Bold)
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "WORKMANAGER PERIODIC SYNC",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = TealAccent,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 10.sp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = if (periodicSyncStatus.isPeriodicEnabled) StepCorrect.copy(alpha = 0.15f) else TextMuted.copy(alpha = 0.15f)
+                                        ) {
+                                            Text(
+                                                text = workManagerStateLabel,
+                                                color = if (periodicSyncStatus.isPeriodicEnabled) StepCorrect else TextMuted,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Endpoint: ${BuildConfig.NOORIX_SYNC_BASE_URL}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = TextMuted,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                                Switch(
+                                    checked = periodicSyncStatus.isPeriodicEnabled,
+                                    onCheckedChange = { viewModel.setPeriodicSyncEnabled(it) },
+                                    modifier = Modifier.testTag("periodic_sync_toggle")
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = periodicSyncStatus.lastMessage,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { viewModel.triggerSyncNow() },
+                            enabled = !isSyncing,
+                            colors = ButtonDefaults.buttonColors(containerColor = TealAccent, contentColor = NearBlackBg),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("sync_now_button")
+                        ) {
+                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (isSyncing) "Syncing…" else "Sync Now", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { viewModel.enqueueWorkManagerSyncNow() },
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.6f)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("enqueue_workmanager_sync_button")
+                        ) {
+                            Icon(Icons.Default.Schedule, contentDescription = null, tint = TealAccent, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Run Worker", color = TealAccent, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
                     }
 
                     syncResult?.let { res ->

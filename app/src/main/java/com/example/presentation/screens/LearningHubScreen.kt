@@ -39,9 +39,14 @@ import com.example.core.model.ExplainerVideo
 import com.example.core.model.Flashcard
 import com.example.core.model.LearningQuiz
 import com.example.core.model.safeEmbedUrl
+import com.example.data.cloud.ArtifactAvailabilityState
+import com.example.data.cloud.CatalogSyncState
+import com.example.data.cloud.CloudArtifactRecord
+import com.example.data.cloud.NoorixArtifactType
 import com.example.presentation.OLevelViewModel
 import com.example.presentation.components.FlashcardReviewSession
 import com.example.presentation.components.NotesEditorDialog
+import com.example.presentation.components.OfficialYouTubeEmbedPlayer
 import com.example.ui.theme.*
 
 @Composable
@@ -173,6 +178,75 @@ fun LearningHubScreen(viewModel: OLevelViewModel) {
         // material from the master-branch Cambridge_Curriculum_Library)
         item {
             KgBrowseCard(viewModel)
+        }
+
+        // 1c. NotebookLM K-12 Studio Banner (Podcast, Video Explainer & Quiz per Topic)
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        viewModel.selectK12TopicById(selectedConceptId)
+                        viewModel.setTab(com.example.presentation.AppNavigationTab.MEDIA_TRANSFER)
+                    }
+                    .testTag("explore_open_notebooklm_button"),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+                border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.55f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = CyberGold.copy(alpha = 0.18f),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Podcasts,
+                                contentDescription = "NotebookLM Studio",
+                                tint = CyberGold,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "NOTEBOOKLM STUDIO • ALL K–12 SUBJECTS & TOPICS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = CyberGold,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                        Text(
+                            text = "Generate 2-Host Audio Podcast, 5-Scene Video Explainer & Topic Quiz for $selectedConceptName",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ArrowForward,
+                        contentDescription = "Open NotebookLM Studio",
+                        tint = CyberGold,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
+        // 1d. Dynamically Delivered Google Drive & YouTube Resources (Sections 6 & 7)
+        item {
+            TopicCloudResourcesCard(
+                topicId = selectedConceptId,
+                topicName = selectedConceptName,
+                viewModel = viewModel
+            )
         }
 
         // 2. Concept Selector Carousel
@@ -557,43 +631,13 @@ private fun HubVideoCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                border = BorderStroke(1.dp, SubtleBorder),
+            OfficialYouTubeEmbedPlayer(
+                videoId = video.youtubeVideoId,
+                title = video.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(210.dp)
-                    .clip(RoundedCornerShape(10.dp))
-            ) {
-                AndroidView(
-                    modifier = Modifier.fillMaxSize(),
-                    factory = { context ->
-                        WebView(context).apply {
-                            webViewClient = object : WebViewClient() {
-                                override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
-                                    val url = request?.url?.toString()
-                                    return if (url != null && url.startsWith("https://www.youtube.com/")) {
-                                        false
-                                    } else {
-                                        true
-                                    }
-                                }
-                            }
-                            settings.javaScriptEnabled = true
-                            settings.domStorageEnabled = true
-                            settings.mediaPlaybackRequiresUserGesture = true
-                            loadDataWithBaseURL(
-                                "https://www.youtube.com",
-                                "<html><body style='margin:0;background:#090D12;'><iframe width='100%' height='100%' src='${video.safeEmbedUrl() ?: "about:blank"}' title='YouTube video' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe></body></html>",
-                                "text/html",
-                                "UTF-8",
-                                null
-                            )
-                        }
-                    },
-                    update = { it.loadUrl(video.safeEmbedUrl() ?: "about:blank") }
-                )
-            }
+            )
         }
     }
 }
@@ -1087,3 +1131,324 @@ private fun KgBrowseCard(viewModel: OLevelViewModel) {
         }
     }
 }
+
+/**
+ * Renders dynamically delivered learning resources conforming to Sections 6 & 7:
+ * - Shows resources independently (Study Pack, Quiz, Video Explanation, Podcast, Worksheet).
+ * - Distinguishes AVAILABLE, COMING_SOON, TEMPORARILY_UNAVAILABLE, ACCESS_DENIED, UPDATING, and UNSUPPORTED.
+ * - Handles download, offline caching, and direct playback/viewing.
+ */
+@Composable
+private fun TopicCloudResourcesCard(
+    topicId: String,
+    topicName: String,
+    viewModel: OLevelViewModel
+) {
+    val syncState by viewModel.cloudCatalogSyncState.collectAsState()
+    val downloadingIds by viewModel.downloadingArtifactIds.collectAsState()
+    val activeCatalog by viewModel.activeCloudCatalog.collectAsState()
+
+    val topicResources = remember(topicId, syncState, activeCatalog) {
+        viewModel.resolveTopicCloudArtifacts(topicId)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = NearBlackElevated),
+        border = BorderStroke(1.dp, SubtleBorder)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "PUBLISHED LEARNING CONTENT",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealAccent,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = "Resources for $topicName",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                IconButton(
+                    onClick = { viewModel.refreshCloudCatalog(force = true) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Refresh,
+                        contentDescription = "Refresh published index",
+                        tint = if (syncState is CatalogSyncState.Refreshing) TealAccent else TextMuted,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            // Sync or provider status banner if outage / access denied
+            if (syncState is CatalogSyncState.Outage) {
+                val outage = syncState as CatalogSyncState.Outage
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = CyberGold.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = CyberGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = outage.message,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            } else if (syncState is CatalogSyncState.AccessDenied) {
+                val denied = syncState as CatalogSyncState.AccessDenied
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = StepIssue.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, StepIssue.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = StepIssue, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = denied.message,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Resource list
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    NoorixArtifactType.STUDY_PACK to "Study Pack (PDF)",
+                    NoorixArtifactType.VIDEO to "Video Explanation (YouTube)",
+                    NoorixArtifactType.QUIZ to "Practice Quiz (JSON)",
+                    NoorixArtifactType.PODCAST to "Audio Lesson & Podcast",
+                    NoorixArtifactType.WORKSHEET to "Worksheet & Tasks"
+                ).forEach { (type, label) ->
+                    val (status, record) = topicResources[type] ?: Pair(ArtifactAvailabilityState.COMING_SOON, null)
+                    val isDownloading = record != null && record.artifactId in downloadingIds
+                    val isCached = record != null && viewModel.isArtifactCachedLocally(record)
+
+                    ResourceStatusRow(
+                        label = label,
+                        type = type,
+                        status = status,
+                        record = record,
+                        isDownloading = isDownloading,
+                        isCached = isCached,
+                        onDownloadClick = {
+                            if (record != null) {
+                                viewModel.downloadCloudArtifact(record)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResourceStatusRow(
+    label: String,
+    type: NoorixArtifactType,
+    status: ArtifactAvailabilityState,
+    record: CloudArtifactRecord?,
+    isDownloading: Boolean,
+    isCached: Boolean,
+    onDownloadClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = NearBlackSurface,
+        border = BorderStroke(1.dp, SubtleBorder),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (record != null && record.version.isNotBlank()) {
+                    Text(
+                        text = "v${record.version} • ${record.format.uppercase()}" +
+                            (if (record.sizeBytes > 0) " • ${record.sizeBytes / 1024} KB" else "") +
+                            (if (isCached) " • Saved Offline" else ""),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isCached) TealAccent else TextMuted,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            when (status) {
+                ArtifactAvailabilityState.AVAILABLE -> {
+                    if (type == NoorixArtifactType.VIDEO) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = TealAccentSubtle,
+                            border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.5f))
+                        ) {
+                            Text(
+                                text = "Available",
+                                color = TealAccent,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    } else if (isCached) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = TealAccentSubtle,
+                            border = BorderStroke(1.dp, TealAccent.copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = TealAccent, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Offline Ready", color = TealAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else if (isDownloading) {
+                        CircularProgressIndicator(
+                            color = TealAccent,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Button(
+                            onClick = onDownloadClick,
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = TealAccentSubtle, contentColor = TealAccent),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = "Download", modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Download", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                ArtifactAvailabilityState.COMING_SOON -> {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = NearBlackElevated,
+                        border = BorderStroke(1.dp, SubtleBorder)
+                    ) {
+                        Text(
+                            text = "Coming Soon",
+                            color = TextMuted,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                ArtifactAvailabilityState.TEMPORARILY_UNAVAILABLE -> {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = CyberGold.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            text = "Temporarily Unavailable",
+                            color = CyberGold,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                ArtifactAvailabilityState.ACCESS_DENIED -> {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = StepIssue.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, StepIssue.copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            text = "Access Denied",
+                            color = StepIssue,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                ArtifactAvailabilityState.UPDATING -> {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = TealAccentSubtle
+                    ) {
+                        Text(
+                            text = "Updating…",
+                            color = TealAccent,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                ArtifactAvailabilityState.UNSUPPORTED -> {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = NearBlackElevated
+                    ) {
+                        Text(
+                            text = "Unsupported Format",
+                            color = TextMuted,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+

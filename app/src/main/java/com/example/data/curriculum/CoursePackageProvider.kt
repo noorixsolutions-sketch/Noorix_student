@@ -113,10 +113,12 @@ class CoursePackageProvider(private val context: Context) {
             questions.add(
                 QuestionItem(
                     id = q.getString("id"),
-                    courseVersionId = q.getString("courseVersionId"),
-                    targetConceptId = q.getString("targetConceptId"),
+                    courseVersionId = q.optString("courseVersionId").takeIf { it.isNotEmpty() }
+                        ?: manifest.version.takeIf { it.isNotEmpty() }
+                        ?: "2025-2027",
+                    targetConceptId = q.optString("targetConceptId", ""),
                     questionType = q.optString("questionType", "STRUCTURED"),
-                    prompt = q.getString("prompt"),
+                    prompt = q.optString("prompt", ""),
                     options = options,
                     correctIndex = q.optInt("correctIndex", -1),
                     targetLaTeX = q.optString("targetLaTeX", ""),
@@ -242,10 +244,12 @@ class CoursePackageProvider(private val context: Context) {
             questions.add(
                 QuestionItem(
                     id = q.getString("id"),
-                    courseVersionId = q.getString("courseVersionId"),
-                    targetConceptId = q.getString("targetConceptId"),
+                    courseVersionId = q.optString("courseVersionId").takeIf { it.isNotEmpty() }
+                        ?: entity.version.takeIf { it.isNotEmpty() }
+                        ?: "2025-2027",
+                    targetConceptId = q.optString("targetConceptId", ""),
                     questionType = q.optString("questionType", "STRUCTURED"),
-                    prompt = q.getString("prompt"),
+                    prompt = q.optString("prompt", ""),
                     options = options,
                     correctIndex = q.optInt("correctIndex", -1),
                     targetLaTeX = q.optString("targetLaTeX", ""),

@@ -1,5 +1,6 @@
 package com.example.presentation.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -31,11 +32,15 @@ import com.example.R
 import com.example.presentation.AppNavigationTab
 import com.example.presentation.OLevelViewModel
 import com.example.presentation.components.NoorixSegmentedProgressBar
+import com.example.presentation.components.OLevelDiagnosticDashboardView
 import com.example.presentation.util.UiCopy
 import com.example.ui.theme.*
 
 @Composable
 fun DiagnosticScreen(viewModel: OLevelViewModel) {
+    BackHandler {
+        viewModel.setTab(AppNavigationTab.DASHBOARD)
+    }
     val session by viewModel.diagnosticSession.collectAsState()
     val studentModel by viewModel.studentModel.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
@@ -463,6 +468,11 @@ fun DiagnosticScreen(viewModel: OLevelViewModel) {
                     }
                 }
             }
+        }
+
+        // 3. Room-Backed O-Level Subject Mastery Diagnostic Dashboard & Immutable EventLogger Trail
+        item {
+            OLevelDiagnosticDashboardView(viewModel = viewModel)
         }
     }
 }

@@ -35,9 +35,34 @@ import com.example.domain.gamification.GamificationEngine
 import com.example.domain.studytools.FlashcardReviewEngine
 import com.example.domain.studytools.StudyToolsRepository
 import com.example.BuildConfig
+import com.example.data.cloud.ArtifactAvailabilityState
+import com.example.data.cloud.ArtifactDownloadResult
+import com.example.data.cloud.CatalogSyncState
+import com.example.data.cloud.CloudArtifactDownloader
+import com.example.data.cloud.CloudArtifactRecord
+import com.example.data.cloud.CloudContentConfig
+import com.example.data.cloud.CloudContentPrefs
+import com.example.data.cloud.CloudContentRepository
+import com.example.data.cloud.CloudQuizPayload
+import com.example.data.cloud.CloudTopicRecord
+import com.example.data.cloud.ContentSyncPolicy
+import com.example.data.cloud.NoorixArtifactType
+import com.example.data.cloud.PublishedContentCatalog
 import com.example.data.curriculum.CoursePackageProvider
+import com.example.data.curriculum.CurriculumFilter
+import com.example.data.curriculum.CurriculumIndexStats
+import com.example.data.curriculum.CurriculumInteractionType
+import com.example.data.curriculum.CurriculumManager
+import com.example.data.curriculum.EventLogger
 import com.example.data.curriculum.LearningContentProvider
+import com.example.data.curriculum.LongTermMasteryAnalysis
 import com.example.data.local.AuditLogEntity
+import com.example.data.local.CurriculumIndexMetaEntity
+import com.example.data.local.CurriculumInteractionEventEntity
+import com.example.data.local.CurriculumTopicEntity
+import com.example.data.local.OLevelGradeSubjectMasteryRow
+import com.example.data.local.OLevelSubjectMasteryAggregate
+import com.example.data.local.SubjectActivityTrailSummary
 import com.example.presentation.util.UiCopy
 import com.example.domain.ai.NoorixAiAgentManager
 import com.example.domain.ai.OpenRouterPrefs
@@ -68,6 +93,21 @@ import com.example.domain.onboarding.OnboardingState
 import com.example.domain.onboarding.OnboardingPhase
 import com.example.domain.diagnostic.BuiltInCheckinBank
 import com.example.domain.parent.ParentPrefs
+import com.example.data.local.RegisteredStudentEntity
+import com.example.data.local.ParentFamilyGroupEntity
+import com.example.data.local.OfflineSyncQueueEntity
+import com.example.domain.registry.StudentRegistryRepository
+import com.example.domain.diagnostic.AgeClassCapabilityEngine
+import com.example.domain.diagnostic.CapabilityQuestion
+import com.example.domain.diagnostic.CapabilityEvaluation
+import com.example.domain.sync.LearningEventSyncScheduler
+import com.example.domain.sync.PeriodicSyncStatusSnapshot
+import com.example.domain.notebooklm.K12Band
+import com.example.domain.notebooklm.K12Topic
+import com.example.domain.notebooklm.NotebookLmQuizItem
+import com.example.domain.notebooklm.NotebookLmStudioEngine
+import com.example.domain.notebooklm.NotebookLmTopicBundle
+import com.example.core.model.EventType
 
 
 import com.example.core.network.OpenRouterApi
@@ -98,6 +138,7 @@ enum class AppNavigationTab {
 class OLevelViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = LearningRepository(application.applicationContext)
+    val studentRegistryRepo = StudentRegistryRepository(application.applicationContext)
 
     // Two-mode model (docs/two-mode-experience.md): a returning learner goes
     // straight to Home in the mode they chose; onboarding never replays.
@@ -106,6 +147,29 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     val currentTab = MutableStateFlow(
         if (persistedLearner != null) AppNavigationTab.DASHBOARD else AppNavigationTab.ONBOARDING
     )
+
+    val activeRegisteredStudent: StateFlow<RegisteredStudentEntity?> = studentRegistryRepo.activeStudent.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null
+    )
+
+    private val _capabilityQuestions = MutableStateFlow<List<CapabilityQuestion>>(emptyList())
+    val capabilityQuestions: StateFlow<List<CapabilityQuestion>> = _capabilityQuestions.asStateFlow()
+
+    private val _capabilityEvaluation = MutableStateFlow<CapabilityEvaluation?>(null)
+    val capabilityEvaluation: StateFlow<CapabilityEvaluation?> = _capabilityEvaluation.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val student = studentRegistryRepo.getActiveStudent()
+            if (student == null) {
+                currentTab.value = AppNavigationTab.ONBOARDING
+            } else {
+                currentTab.value = AppNavigationTab.DASHBOARD
+            }
+        }
+    }
     val simulatedWallTimeMs: StateFlow<Long> = repository.simulatedWallTimeMs
     val activePackage: StateFlow<CoursePackage?> = repository.activePackage
     val studentModel: StateFlow<StudentModel> = repository.studentModel
@@ -113,6 +177,277 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     val learningContent = runCatching {
         LearningContentProvider(application.applicationContext).load()
     }.getOrDefault(com.example.core.model.KnowledgeLearningContent())
+
+    // Complete K-12 Curriculum & NotebookLM Studio State (Room-indexed via CurriculumManager)
+    val curriculumManager = CurriculumManager(application.applicationContext)
+    val eventLogger: EventLogger = curriculumManager.eventLogger
+
+    // Dynamic Google Drive & YouTube Cloud Content Integration (Sections 1, 4, 8, 9, 11)
+    val cloudContentRepo = CloudContentRepository(application.applicationContext)
+    val cloudContentConfig: StateFlow<CloudContentConfig> = MutableStateFlow(cloudContentRepo.getConfig()).asStateFlow()
+    val cloudCatalogSyncState: StateFlow<CatalogSyncState> = cloudContentRepo.syncState
+    val activeCloudCatalog: StateFlow<PublishedContentCatalog?> = cloudContentRepo.activeCatalog
+
+    private val _downloadingArtifactIds = MutableStateFlow<Set<String>>(emptySet())
+    val downloadingArtifactIds: StateFlow<Set<String>> = _downloadingArtifactIds.asStateFlow()
+
+    // Pending new content discovered for student's class
+    val pendingNewContentForClass: StateFlow<List<Pair<CloudTopicRecord, CloudArtifactRecord>>> = cloudContentRepo.pendingNewContentForClass
+
+    private val _newContentNotification = MutableStateFlow<String?>(null)
+    val newContentNotification: StateFlow<String?> = _newContentNotification.asStateFlow()
+
+    fun dismissNewContentNotification() {
+        _newContentNotification.value = null
+        cloudContentRepo.dismissPendingNewContent()
+    }
+
+    /**
+     * User choice: load / sync all newly discovered learning assets for their class.
+     */
+    fun syncPendingContentForClass() {
+        val pending = cloudContentRepo.pendingNewContentForClass.value
+        _newContentNotification.value = null
+        cloudContentRepo.dismissPendingNewContent()
+
+        if (pending.isEmpty()) return
+
+        viewModelScope.launch {
+            var downloadedCount = 0
+            for ((_, record) in pending) {
+                _downloadingArtifactIds.value = _downloadingArtifactIds.value + record.artifactId
+                val result = cloudContentRepo.getDownloader().downloadArtifact(
+                    record = record,
+                    allowedHosts = cloudContentConfig.value.allowedHosts
+                )
+                _downloadingArtifactIds.value = _downloadingArtifactIds.value - record.artifactId
+                if (result is ArtifactDownloadResult.Success) {
+                    downloadedCount++
+                }
+            }
+            if (downloadedCount > 0) {
+                _statusBanner.value = "Synced $downloadedCount new learning material(s) for your class!"
+            }
+        }
+    }
+
+    fun refreshCloudCatalog(force: Boolean = false) {
+        viewModelScope.launch {
+            val syncResult = cloudContentRepo.refreshCatalog(force = force)
+            if (syncResult is CatalogSyncState.Success) {
+                evaluateNewContentForActiveStudent()
+            }
+        }
+    }
+
+    fun updateCloudContentConfig(newConfig: CloudContentConfig) {
+        cloudContentRepo.updateConfig(newConfig)
+        (cloudContentConfig as MutableStateFlow).value = newConfig
+        refreshCloudCatalog(force = true)
+    }
+
+    fun resolveTopicCloudArtifacts(topicId: String): Map<NoorixArtifactType, Pair<ArtifactAvailabilityState, CloudArtifactRecord?>> {
+        return cloudContentRepo.resolveAllTopicResources(topicId)
+    }
+
+    fun isArtifactCachedLocally(record: CloudArtifactRecord): Boolean {
+        return cloudContentRepo.getDownloader().getCachedFile(record) != null
+    }
+
+    fun downloadCloudArtifact(record: CloudArtifactRecord, onComplete: ((ArtifactDownloadResult) -> Unit)? = null) {
+        viewModelScope.launch {
+            _downloadingArtifactIds.value = _downloadingArtifactIds.value + record.artifactId
+            val result = cloudContentRepo.getDownloader().downloadArtifact(
+                record = record,
+                allowedHosts = cloudContentConfig.value.allowedHosts
+            )
+            _downloadingArtifactIds.value = _downloadingArtifactIds.value - record.artifactId
+            onComplete?.invoke(result)
+            if (result is ArtifactDownloadResult.Failure) {
+                _statusBanner.value = "Download failed: ${result.error}"
+            } else if (result is ArtifactDownloadResult.Success) {
+                _statusBanner.value = "Downloaded ${record.title.ifBlank { "Study Material" }} for offline study"
+            }
+        }
+    }
+
+    fun evaluateNewContentForActiveStudent() {
+        val student = activeRegisteredStudent.value
+        val onboarding = onboardingState.value
+        val studentClass = student?.studentClass?.ifBlank { null }
+            ?: onboarding.stage.ifBlank { null }
+            ?: "Grade 9"
+
+        val newItems = cloudContentRepo.checkForNewContentForClass(studentClass)
+        if (newItems.isNotEmpty() && cloudContentConfig.value.notifyOnNewContent) {
+            when (cloudContentConfig.value.contentSyncPolicy) {
+                ContentSyncPolicy.AUTOMATIC -> {
+                    // Sync automatically per user preference
+                    syncPendingContentForClass()
+                }
+                ContentSyncPolicy.NOTIFY_FIRST -> {
+                    val count = newItems.size
+                    _newContentNotification.value = "$count new study material(s) available for $studentClass! Tap to review and sync."
+                }
+                ContentSyncPolicy.MANUAL_ONLY -> {
+                    // Kept visible in explore screen, no prompt
+                }
+            }
+        }
+    }
+
+    val k12Bands: List<K12Band> = runCatching {
+        NotebookLmStudioEngine.loadAllK12Bands(application.applicationContext)
+    }.getOrDefault(emptyList())
+
+    val allK12Topics: List<K12Topic> = k12Bands.flatMap { band ->
+        band.grades.flatMap { grade ->
+            grade.subjects.flatMap { subj -> subj.topics }
+        }
+    }
+
+    private val _curriculumIndexStats = MutableStateFlow<CurriculumIndexStats?>(null)
+    val curriculumIndexStats: StateFlow<CurriculumIndexStats?> = _curriculumIndexStats.asStateFlow()
+
+    val curriculumIndexMeta: StateFlow<CurriculumIndexMetaEntity?> = curriculumManager.indexMetaFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null
+    )
+
+    val indexedK12Bands: StateFlow<List<K12Band>> = curriculumManager.bandsHierarchyFlow
+        .map { roomBands -> roomBands.ifEmpty { k12Bands } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = k12Bands
+        )
+
+    // Room-backed O-Level Subject Mastery & Diagnostic Dashboard StateFlows
+    val oLevelSubjectMastery: StateFlow<List<OLevelSubjectMasteryAggregate>> =
+        curriculumManager.oLevelSubjectMasteryFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    val oLevelGradeSubjectMastery: StateFlow<List<OLevelGradeSubjectMasteryRow>> =
+        curriculumManager.oLevelGradeSubjectMasteryFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    val oLevelPriorityTopics: StateFlow<List<CurriculumTopicEntity>> =
+        curriculumManager.oLevelDiagnosticPriorityTopicsFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    val curriculumInteractionEvents: StateFlow<List<CurriculumInteractionEventEntity>> =
+        eventLogger.recentEventsFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    val curriculumEventCount: StateFlow<Int> =
+        eventLogger.eventCountFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = 0
+        )
+
+    val subjectActivityTrails: StateFlow<List<SubjectActivityTrailSummary>> =
+        eventLogger.subjectActivityTrailsFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    private val _longTermMasteryAnalysis = MutableStateFlow(
+        LongTermMasteryAnalysis(
+            totalInteractions = 0,
+            totalAssessmentEvents = 0,
+            overallAverageQuizAccuracy = 0.0,
+            averageMasteryGainPerInteraction = 0.0,
+            totalStudyDurationSeconds = 0,
+            strongestSubject = null,
+            focusNeededSubject = null,
+            isChainIntegrityVerified = true,
+            subjectTrails = emptyList(),
+            recentEvents = emptyList()
+        )
+    )
+    val longTermMasteryAnalysis: StateFlow<LongTermMasteryAnalysis> = _longTermMasteryAnalysis.asStateFlow()
+
+    private val _curriculumSearchQuery = MutableStateFlow("")
+    val curriculumSearchQuery: StateFlow<String> = _curriculumSearchQuery.asStateFlow()
+
+    private val _browsedK12Topics = MutableStateFlow<List<K12Topic>>(allK12Topics)
+    val browsedK12Topics: StateFlow<List<K12Topic>> = _browsedK12Topics.asStateFlow()
+
+    private val _selectedK12Topic = MutableStateFlow<K12Topic?>(
+        allK12Topics.firstOrNull { it.topicId == "concept:4024:factorisation" } ?: allK12Topics.firstOrNull()
+    )
+    val selectedK12Topic: StateFlow<K12Topic?> = _selectedK12Topic.asStateFlow()
+
+    private val _customNotebookSources = MutableStateFlow<Map<String, List<String>>>(emptyMap())
+    val customNotebookSources: StateFlow<Map<String, List<String>>> = _customNotebookSources.asStateFlow()
+
+    private val _notebookLmBundle = MutableStateFlow<NotebookLmTopicBundle?>(
+        _selectedK12Topic.value?.let { NotebookLmStudioEngine.generateBundleForTopic(it) }
+    )
+    val notebookLmBundle: StateFlow<NotebookLmTopicBundle?> = _notebookLmBundle.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            runCatching {
+                val stats = curriculumManager.ensureIndexed(forceReindex = false)
+                _curriculumIndexStats.value = stats
+                _browsedK12Topics.value = curriculumManager.browseTopics(CurriculumFilter(query = _curriculumSearchQuery.value))
+                curriculumManager.syncMasteryFromAcademicStates(
+                    academicStates = studentModel.value.academicStates,
+                    studentId = studentModel.value.studentId
+                )
+                refreshLongTermMasteryAnalysis()
+            }
+        }
+        viewModelScope.launch {
+            studentModel.collect { model ->
+                runCatching {
+                    curriculumManager.syncMasteryFromAcademicStates(
+                        academicStates = model.academicStates,
+                        studentId = model.studentId
+                    )
+                    refreshLongTermMasteryAnalysis()
+                }
+            }
+        }
+        // Asynchronously check / refresh the cloud content catalog on startup without blocking navigation
+        viewModelScope.launch {
+            runCatching {
+                val syncResult = cloudContentRepo.refreshCatalog(force = false)
+                if (syncResult is CatalogSyncState.Success) {
+                    evaluateNewContentForActiveStudent()
+                }
+            }
+        }
+        viewModelScope.launch {
+            activeRegisteredStudent.collect { student ->
+                if (student != null) {
+                    evaluateNewContentForActiveStudent()
+                }
+            }
+        }
+    }
+
+    private suspend fun refreshLongTermMasteryAnalysis() {
+        runCatching {
+            _longTermMasteryAnalysis.value = eventLogger.analyzeLongTermMastery()
+        }
+    }
 
     // Noorix AI Agent state (initialized early so OpenRouter & Local config bind properly)
     private val agentManager = NoorixAiAgentManager(application.applicationContext, repository.chatMessageDao)
@@ -407,6 +742,81 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
         runCatching { LearnerPrefs.save(getApplication(), _onboardingState.value) }
     }
 
+    suspend fun checkExistingKidsForParent(parentEmail: String): List<RegisteredStudentEntity> {
+        return studentRegistryRepo.getStudentsByParentEmail(parentEmail)
+    }
+
+    fun registerStudent(
+        name: String,
+        parentEmail: String,
+        studentEmail: String?,
+        age: Int,
+        studentClass: String,
+        onComplete: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val student = studentRegistryRepo.registerStudent(
+                name = name,
+                parentEmail = parentEmail,
+                studentEmail = studentEmail,
+                age = age,
+                studentClass = studentClass
+            )
+            _onboardingState.value = _onboardingState.value.copy(
+                learnerName = student.name,
+                age = student.age,
+                stage = student.studentClass,
+                mode = LearnerMode.GUIDED,
+                isComplete = true,
+                phase = OnboardingPhase.COMPLETE
+            )
+            saveLearnerPrefs()
+            currentTab.value = AppNavigationTab.DASHBOARD
+            onComplete()
+        }
+    }
+
+    fun startCapabilityTestForActiveStudent() {
+        val student = activeRegisteredStudent.value
+        val studentClass = student?.studentClass ?: "Grade 9"
+        val age = student?.age ?: 14
+        _capabilityQuestions.value = AgeClassCapabilityEngine.getQuestionsFor(studentClass, age)
+        _capabilityEvaluation.value = null
+    }
+
+    fun submitCapabilityTest(answers: Map<Int, Int>) {
+        val student = activeRegisteredStudent.value
+        val studentClass = student?.studentClass ?: "Grade 9"
+        val age = student?.age ?: 14
+        val eval = AgeClassCapabilityEngine.evaluate(_capabilityQuestions.value, answers, studentClass, age)
+        _capabilityEvaluation.value = eval
+        viewModelScope.launch {
+            if (student != null) {
+                studentRegistryRepo.updateDiagnosticResult(
+                    studentId = student.id,
+                    scorePercent = eval.scorePercent,
+                    level = eval.positionLevel,
+                    feedback = eval.diagnosticSummary
+                )
+            }
+        }
+    }
+
+    fun switchActiveStudent(studentId: String) {
+        viewModelScope.launch {
+            studentRegistryRepo.switchActiveStudent(studentId)
+            val updated = studentRegistryRepo.getActiveStudent()
+            if (updated != null) {
+                _onboardingState.value = _onboardingState.value.copy(
+                    learnerName = updated.name,
+                    age = updated.age,
+                    stage = updated.studentClass
+                )
+                saveLearnerPrefs()
+            }
+        }
+    }
+
     fun startOnboardingPhase(phase: OnboardingPhase) {
         _onboardingState.value = _onboardingState.value.copy(phase = phase)
         if (phase == OnboardingPhase.GUIDED_FIRST_CHECK) {
@@ -621,8 +1031,19 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun submitDiagnosticItem(question: QuestionItem, selectedIndex: Int) {
+        val isCorrect = selectedIndex == question.correctIndex
         viewModelScope.launch {
             repository.submitDiagnosticAnswer(question, selectedIndex)
+            runCatching {
+                eventLogger.logDiagnosticAssessment(
+                    topicId = question.targetConceptId,
+                    observedScore = if (isCorrect) 1.0 else 0.25,
+                    studentId = studentModel.value.studentId,
+                    durationSeconds = 45,
+                    note = "Adaptive diagnostic item ${question.id}"
+                )
+                refreshLongTermMasteryAnalysis()
+            }
         }
     }
 
@@ -658,8 +1079,192 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     fun getEmpiricalEfficacy() = AdaptivePlannerEngine.getInterventionEfficacyList()
 
     // ==========================================
-    // Media & Transfer
+    // Media, Transfer & NotebookLM Studio
     // ==========================================
+
+    fun selectK12Topic(topic: K12Topic) {
+        _selectedK12Topic.value = topic
+        val customNotes = _customNotebookSources.value[topic.topicId].orEmpty()
+        _notebookLmBundle.value = NotebookLmStudioEngine.generateBundleForTopic(topic, customNotes)
+        generateMedia(topic.topicId)
+        viewModelScope.launch {
+            runCatching {
+                eventLogger.logTopicViewed(
+                    topic = topic,
+                    studentId = studentModel.value.studentId
+                )
+                refreshLongTermMasteryAnalysis()
+            }
+        }
+    }
+
+    fun recordTopicMasteryCalibration(
+        topicId: String,
+        masteryScore: Double,
+        note: String = "O-Level Diagnostic Dashboard mastery calibration"
+    ) {
+        viewModelScope.launch {
+            runCatching {
+                val evt = curriculumManager.updateTopicMastery(
+                    topicId = topicId,
+                    masteryScore = masteryScore,
+                    studentId = studentModel.value.studentId,
+                    interactionType = CurriculumInteractionType.MASTERY_CALIBRATED,
+                    durationSeconds = 45,
+                    note = note
+                )
+                refreshLongTermMasteryAnalysis()
+                val pct = (evt.masteryAfter * 100).toInt()
+                _statusBanner.value = "Logged immutable mastery event for '${evt.topicTitle}' -> $pct% (${evt.subjectName})."
+            }
+        }
+    }
+
+    fun selectK12TopicById(topicId: String) {
+        val immediate = allK12Topics.firstOrNull { it.topicId == topicId }
+        if (immediate != null) {
+            selectK12Topic(immediate)
+        } else {
+            viewModelScope.launch {
+                val fromRoom = runCatching { curriculumManager.getTopicById(topicId) }.getOrNull()
+                if (fromRoom != null) {
+                    selectK12Topic(fromRoom)
+                } else {
+                    generateMedia(topicId)
+                }
+            }
+        }
+    }
+
+    fun updateCurriculumSearchQuery(
+        query: String,
+        bandId: String? = null,
+        gradeId: String? = null,
+        subjectId: String? = null
+    ) {
+        _curriculumSearchQuery.value = query
+        viewModelScope.launch {
+            val results = runCatching {
+                curriculumManager.browseTopics(
+                    CurriculumFilter(
+                        bandId = bandId,
+                        gradeId = gradeId,
+                        subjectId = subjectId,
+                        query = query
+                    )
+                )
+            }.getOrElse {
+                val q = query.trim().lowercase()
+                if (q.isBlank()) allK12Topics else allK12Topics.filter {
+                    it.title.lowercase().contains(q) ||
+                        it.summary.lowercase().contains(q) ||
+                        it.subjectName.lowercase().contains(q) ||
+                        it.gradeName.lowercase().contains(q)
+                }
+            }
+            _browsedK12Topics.value = results
+        }
+    }
+
+    fun reindexK12Curriculum() {
+        viewModelScope.launch {
+            runCatching {
+                val stats = curriculumManager.ensureIndexed(forceReindex = true)
+                _curriculumIndexStats.value = stats
+                _browsedK12Topics.value = curriculumManager.browseTopics(
+                    CurriculumFilter(query = _curriculumSearchQuery.value)
+                )
+                _statusBanner.value = "Room Curriculum Index refreshed: ${stats.totalBands} bands, ${stats.totalGrades} grades, ${stats.totalSubjects} subjects, ${stats.totalTopics} topics."
+            }
+        }
+    }
+
+    fun openNotebookLmStudioForTopic(topic: K12Topic) {
+        selectK12Topic(topic)
+        setTab(AppNavigationTab.MEDIA_TRANSFER)
+    }
+
+    fun addCustomSourceToNotebook(noteText: String) {
+        val trimmed = noteText.trim()
+        if (trimmed.isBlank()) return
+        val topic = _selectedK12Topic.value ?: return
+        val updatedNotes = _customNotebookSources.value[topic.topicId].orEmpty() + trimmed
+        _customNotebookSources.value = _customNotebookSources.value + (topic.topicId to updatedNotes)
+        _notebookLmBundle.value = NotebookLmStudioEngine.generateBundleForTopic(topic, updatedNotes)
+        _statusBanner.value = "NotebookLM grounded source added & Podcast/Video regenerated for '${topic.title}'."
+        viewModelScope.launch {
+            runCatching {
+                eventLogger.logSourceNoteAdded(
+                    topicId = topic.topicId,
+                    notePreview = trimmed,
+                    studentId = studentModel.value.studentId
+                )
+                refreshLongTermMasteryAnalysis()
+            }
+        }
+    }
+
+    fun askNotebookLmPodcastHosts(question: String) {
+        val q = question.trim()
+        if (q.isBlank()) return
+        val bundle = _notebookLmBundle.value ?: return
+        val extraTurns = NotebookLmStudioEngine.generateFollowUpTurns(
+            topic = bundle.topic,
+            studentQuestion = q,
+            startingTurnIndex = bundle.podcast.turns.size + 1
+        )
+        val updatedPodcast = bundle.podcast.copy(
+            turns = bundle.podcast.turns + extraTurns
+        )
+        _notebookLmBundle.value = bundle.copy(podcast = updatedPodcast)
+        _statusBanner.value = "Hosts Alex & Zoya answered your question using ${bundle.topic.title} sources."
+        viewModelScope.launch {
+            runCatching {
+                eventLogger.logPodcastExplored(
+                    topicId = bundle.topic.topicId,
+                    questionAsked = q,
+                    studentId = studentModel.value.studentId
+                )
+                refreshLongTermMasteryAnalysis()
+            }
+        }
+    }
+
+    fun recordNotebookLmQuizAnswer(
+        topic: K12Topic,
+        quizItem: NotebookLmQuizItem,
+        selectedIndex: Int
+    ) {
+        val isCorrect = selectedIndex == quizItem.correctIndex
+        viewModelScope.launch {
+            val payload = org.json.JSONObject().apply {
+                put("conceptId", topic.topicId)
+                put("conceptName", topic.title)
+                put("gradeName", topic.gradeName)
+                put("subjectName", topic.subjectName)
+                put("quizId", quizItem.id)
+                put("isCorrect", isCorrect)
+                put("score", if (isCorrect) 1.0 else 0.0)
+                put("source", "NOTEBOOKLM_QUIZ")
+            }.toString()
+            repository.recordEvent(
+                if (isCorrect) EventType.MASTERY_UPDATED else EventType.CONCEPT_ASSESSED,
+                payload
+            )
+            runCatching {
+                eventLogger.logQuizAttempt(
+                    topicId = topic.topicId,
+                    quizId = quizItem.id,
+                    isCorrect = isCorrect,
+                    score = if (isCorrect) 1.0 else 0.25,
+                    studentId = studentModel.value.studentId,
+                    topicTitle = topic.title,
+                    subjectName = topic.subjectName
+                )
+                refreshLongTermMasteryAnalysis()
+            }
+        }
+    }
 
     fun generateMedia(conceptId: String) {
         viewModelScope.launch {
@@ -697,6 +1302,59 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
+    val syncQueueItems: StateFlow<List<OfflineSyncQueueEntity>> =
+        repository.syncQueueFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val pendingSyncCount: StateFlow<Int> =
+        repository.pendingSyncCountFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
+        )
+
+    private val _periodicSyncStatus = MutableStateFlow(
+        LearningEventSyncScheduler.loadStatusSnapshot(getApplication())
+    )
+    val periodicSyncStatus: StateFlow<PeriodicSyncStatusSnapshot> = _periodicSyncStatus.asStateFlow()
+
+    val workManagerStateLabel: StateFlow<String> =
+        LearningEventSyncScheduler.observePeriodicWorkInfos(getApplication())
+            .map { infos ->
+                val info = infos.firstOrNull()
+                info?.state?.name ?: if (_periodicSyncStatus.value.isPeriodicEnabled) "ENQUEUED" else "PAUSED"
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = "ENQUEUED"
+            )
+
+    fun setPeriodicSyncEnabled(enabled: Boolean) {
+        val ctx = getApplication<Application>().applicationContext
+        if (enabled) {
+            LearningEventSyncScheduler.schedulePeriodicSync(ctx, replaceExisting = true)
+            _statusBanner.value = "Periodic WorkManager sync enabled (every 15 min when connected)."
+        } else {
+            LearningEventSyncScheduler.cancelPeriodicSync(ctx)
+            _statusBanner.value = "Periodic WorkManager sync paused."
+        }
+        _periodicSyncStatus.value = LearningEventSyncScheduler.loadStatusSnapshot(ctx)
+    }
+
+    fun enqueueWorkManagerSyncNow() {
+        val ctx = getApplication<Application>().applicationContext
+        LearningEventSyncScheduler.enqueueImmediateSync(ctx)
+        _statusBanner.value = "WorkManager background sync task enqueued."
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(500)
+            _periodicSyncStatus.value = LearningEventSyncScheduler.loadStatusSnapshot(ctx)
+        }
+    }
+
     fun triggerSyncNow() {
         if (_isSyncing.value) return
         viewModelScope.launch {
@@ -710,6 +1368,7 @@ class OLevelViewModel(application: Application) : AndroidViewModel(application) 
                 } else {
                     _statusBanner.value = UiCopy.formatSyncError()
                 }
+                _periodicSyncStatus.value = LearningEventSyncScheduler.loadStatusSnapshot(getApplication())
             } finally {
                 _isSyncing.value = false
             }
